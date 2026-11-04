@@ -1,11 +1,3 @@
-/**
- * Brings the smoke that is painted into desert-scene.png to life.
- * A copy of the exact same artwork is cropped to the smoke plume and run through an
- * animated turbulence displacement filter, so the original smoke itself drifts, curls
- * and rises instead of a separate effect being drawn on top of it.
- *
- * Box values are percentages of the 1584x672 scene and must stay aligned with it.
- */
 const BOX = { left: 68.5, top: 21, width: 24, height: 50 }
 
 const crop = {
@@ -28,7 +20,6 @@ function SmokeLayer({ filter, className }: { filter: string; className: string }
         filter: `url(#${filter})`,
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/desert-scene.png"
         alt=""
@@ -42,46 +33,56 @@ function SmokeLayer({ filter, className }: { filter: string; className: string }
 
 export function PaintedSmoke() {
   return (
-    <div className="pointer-events-none absolute inset-0">
+    <div className="pointer-events-none absolute inset-0 select-none">
       <svg aria-hidden="true" className="absolute h-0 w-0">
         <defs>
-          <filter id="smoke-flow" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.026" numOctaves="2" seed="4" result="noise">
+          <filter id="smoke-flow" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006 0.014" numOctaves="4" seed="7" result="noise">
               <animate
                 attributeName="baseFrequency"
-                dur="14s"
-                values="0.011 0.026;0.016 0.034;0.009 0.022;0.011 0.026"
+                dur="22s"
+                values="0.006 0.014;0.009 0.020;0.005 0.011;0.006 0.014"
                 repeatCount="indefinite"
               />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="22">
-              <animate attributeName="scale" dur="7s" values="16;30;20;16" repeatCount="indefinite" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="26">
+              <animate attributeName="scale" dur="11s" values="18;34;24;18" repeatCount="indefinite" />
             </feDisplacementMap>
+            <feGaussianBlur stdDeviation="3.2" />
           </filter>
-          <filter id="smoke-curl" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="turbulence" baseFrequency="0.02 0.045" numOctaves="2" seed="9" result="noise">
+
+          <filter id="smoke-curl" x="-30%" y="-30%" width="160%" height="160%">
+            <feTurbulence type="turbulence" baseFrequency="0.014 0.032" numOctaves="3" seed="15" result="noise">
               <animate
                 attributeName="baseFrequency"
-                dur="9s"
-                values="0.02 0.045;0.026 0.035;0.016 0.05;0.02 0.045"
+                dur="15s"
+                values="0.014 0.032;0.020 0.025;0.010 0.038;0.014 0.032"
                 repeatCount="indefinite"
               />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="R" scale="34">
-              <animate attributeName="scale" dur="5s" values="24;44;30;24" repeatCount="indefinite" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="R" scale="38">
+              <animate attributeName="scale" dur="8s" values="26;48;34;26" repeatCount="indefinite" />
             </feDisplacementMap>
-            <feGaussianBlur stdDeviation="1.2" />
+            <feGaussianBlur stdDeviation="4.5" />
           </filter>
         </defs>
       </svg>
 
-      <SmokeLayer filter="smoke-flow" className="painted-smoke-base" />
-      <SmokeLayer filter="smoke-curl" className="painted-smoke-glow mix-blend-screen" />
+      <SmokeLayer filter="smoke-flow" className="painted-smoke-base mix-blend-screen opacity-95" />
+      <SmokeLayer filter="smoke-curl" className="painted-smoke-glow mix-blend-color-dodge opacity-70" />
 
       <div
         aria-hidden="true"
-        className="lamp-spout-glow absolute rounded-full"
-        style={{ left: '73.2%', top: '61%', width: '6%', height: '14%' }}
+        className="lamp-spout-glow absolute rounded-full blur-[2px]"
+        style={{ 
+          left: '73.2%', 
+          top: '60.5%', 
+          width: '6.5%', 
+          height: '14.5%',
+          background: 'radial-gradient(circle at center, rgba(255,215,130,0.9) 0%, rgba(147,51,234,0.4) 45%, rgba(7,10,31,0) 80%)',
+          boxShadow: '0 0 35px 5px rgba(251,191,36,0.5), inset 0 0 15px rgba(255,255,255,0.4)',
+          mixBlendMode: 'screen'
+        }}
       />
     </div>
   )
