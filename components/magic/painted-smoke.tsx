@@ -17,7 +17,7 @@ function SmokeLayer({ filter, className }: { filter: string; className: string }
         top: `${BOX.top}%`,
         width: `${BOX.width}%`,
         height: `${BOX.height}%`,
-        filter: `url(#${filter})`,
+        filter: filter ? `url(#${filter})` : 'none',
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -38,42 +38,22 @@ export function PaintedSmoke() {
       <svg aria-hidden="true" className="absolute h-0 w-0">
         <defs>
           <filter id="smoke-flow" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.026" numOctaves="2" seed="4" result="noise">
-              <animate
-                attributeName="baseFrequency"
-                dur="14s"
-                values="0.011 0.026;0.016 0.034;0.009 0.022;0.011 0.026"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="22">
-              <animate attributeName="scale" dur="7s" values="16;30;20;16" repeatCount="indefinite" />
-            </feDisplacementMap>
-          </filter>
-          <filter id="smoke-curl" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="turbulence" baseFrequency="0.02 0.045" numOctaves="2" seed="9" result="noise">
-              <animate
-                attributeName="baseFrequency"
-                dur="9s"
-                values="0.02 0.045;0.026 0.035;0.016 0.05;0.02 0.045"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="R" scale="34">
-              <animate attributeName="scale" dur="5s" values="24;44;30;24" repeatCount="indefinite" />
-            </feDisplacementMap>
-            <feGaussianBlur stdDeviation="1.2" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.026" numOctaves="2" seed="4" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="4" />
           </filter>
         </defs>
       </svg>
 
-      <SmokeLayer filter="smoke-flow" className="painted-smoke-base" />
-      <SmokeLayer filter="smoke-curl" className="painted-smoke-glow mix-blend-screen" />
+      {/* The base layer is kept completely static with no filter to ensure the lamp and background pixels never shake */}
+      <SmokeLayer filter="" className="painted-smoke-base" />
+      
+      {/* A very subtle overlay with a near-zero scale to add a minor shimmer without breaking the asset shapes */}
+      <SmokeLayer filter="smoke-flow" className="painted-smoke-glow mix-blend-screen opacity-30" />
 
       <div
         aria-hidden="true"
         className="lamp-spout-glow absolute rounded-full"
-        style={{ left: '73.2%', top: '61%', width: '6%', height: '14%' }}
+        style={{ left: '73.2%', top: '61%', width: '6%', height: '14%', background: 'transparent' }}
       />
     </div>
   )
