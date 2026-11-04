@@ -1,10 +1,6 @@
 /**
- * Brings the smoke that is painted into desert-scene.png to life.
- * A copy of the exact same artwork is cropped to the smoke plume and run through an
- * animated turbulence displacement filter, so the original smoke itself drifts, curls
- * and rises instead of a separate effect being drawn on top of it.
- *
- * Box values are percentages of the 1584x672 scene and must stay aligned with it.
+ * Brings the smoke that is painted into desert-scene.png to life with a natural magical effect.
+ * Uses optimized fractal noise and multi-layered motion for a realistic mystical glow.
  */
 const BOX = { left: 68.5, top: 21, width: 24, height: 50 }
 
@@ -45,43 +41,55 @@ export function PaintedSmoke() {
     <div className="pointer-events-none absolute inset-0">
       <svg aria-hidden="true" className="absolute h-0 w-0">
         <defs>
-          <filter id="smoke-flow" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.011 0.026" numOctaves="2" seed="4" result="noise">
+          {/* Main rising flow of the natural smoke */}
+          <filter id="smoke-flow" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.018" numOctaves="3" seed="5" result="noise">
               <animate
                 attributeName="baseFrequency"
-                dur="14s"
-                values="0.011 0.026;0.016 0.034;0.009 0.022;0.011 0.026"
+                dur="18s"
+                values="0.008 0.018;0.012 0.024;0.006 0.014;0.008 0.018"
                 repeatCount="indefinite"
               />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="22">
-              <animate attributeName="scale" dur="7s" values="16;30;20;16" repeatCount="indefinite" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="28">
+              <animate attributeName="scale" dur="9s" values="20;38;25;20" repeatCount="indefinite" />
             </feDisplacementMap>
+            <feGaussianBlur stdDeviation="2.5" />
           </filter>
-          <filter id="smoke-curl" x="-10%" y="-10%" width="120%" height="120%">
-            <feTurbulence type="turbulence" baseFrequency="0.02 0.045" numOctaves="2" seed="9" result="noise">
+
+          {/* Ethereal micro-curls for the magical aura */}
+          <filter id="smoke-curl" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.015 0.035" numOctaves="3" seed="12" result="noise">
               <animate
                 attributeName="baseFrequency"
-                dur="9s"
-                values="0.02 0.045;0.026 0.035;0.016 0.05;0.02 0.045"
+                dur="12s"
+                values="0.015 0.035;0.022 0.028;0.012 0.042;0.015 0.035"
                 repeatCount="indefinite"
               />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="R" scale="34">
-              <animate attributeName="scale" dur="5s" values="24;44;30;24" repeatCount="indefinite" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="R" scale="40">
+              <animate attributeName="scale" dur="6s" values="30;55;38;30" repeatCount="indefinite" />
             </feDisplacementMap>
-            <feGaussianBlur stdDeviation="1.2" />
+            <feGaussianBlur stdDeviation="3.5" />
           </filter>
         </defs>
       </svg>
 
-      <SmokeLayer filter="smoke-flow" className="painted-smoke-base" />
-      <SmokeLayer filter="smoke-curl" className="painted-smoke-glow mix-blend-screen" />
+      {/* Layers blended dynamically for a deep, smoky look */}
+      <SmokeLayer filter="smoke-flow" className="painted-smoke-base mix-blend-screen opacity-90" />
+      <SmokeLayer filter="smoke-curl" className="painted-smoke-glow mix-blend-color-dodge opacity-60" />
 
+      {/* Mystical glowing spout filter effect */}
       <div
         aria-hidden="true"
-        className="lamp-spout-glow absolute rounded-full"
-        style={{ left: '73.2%', top: '61%', width: '6%', height: '14%' }}
+        className="lamp-spout-glow absolute rounded-full shadow-[0_0_30px_rgba(255,190,120,0.6)]"
+        style={{ 
+          left: '73.2%', 
+          top: '61%', 
+          width: '6%', 
+          height: '14%',
+          background: 'radial-gradient(circle, rgba(255,220,160,0.8) 0%, rgba(180,100,255,0.3) 50%, transparent 80%)'
+        }}
       />
     </div>
   )
