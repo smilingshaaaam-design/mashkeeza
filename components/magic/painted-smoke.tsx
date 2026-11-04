@@ -1,20 +1,24 @@
+const BOX = { left: 68.5, top: 21, width: 24, height: 50 }
+
 export function PaintedSmoke() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-10">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute overflow-hidden z-10"
+      style={{
+        left: `${BOX.left}%`,
+        top: `${BOX.top}%`,
+        width: `${BOX.width}%`,
+        height: `${BOX.height}%`,
+      }}
+    >
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute mix-blend-screen object-contain drop-shadow-[0_0_20px_rgba(255,215,0,0.5)]"
-        style={{
-          left: '62%',  /* Position ko exact lamp ki jagah lane ke liye ise thoda adjust kar sakte hain */
-          top: '20%',
-          width: '35%', /* Video ka size */
-          height: 'auto',
-        }}
+        className="w-full h-full object-cover mix-blend-screen"
       >
-        {/* Next.js me public folder ke andar padi file ko direct / ke sath likhte hain */}
         <source src="/VID-20261104-WA0031.mp4" type="video/mp4" />
       </video>
     </div>
