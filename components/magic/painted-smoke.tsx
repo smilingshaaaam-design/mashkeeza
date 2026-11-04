@@ -1,34 +1,36 @@
-import React from 'react';
+import React from 'react'
 
 /**
- * High-End Mathematical Fluid Dynamic Smoke Component.
- * Restricts all movements deep inside the native image matrix of the smoke plume.
- * Zero CSS translates ensure absolute pixel safety for the background desert and cards,
- * while multi-octave fractal offsets create an active, looping spiritual curl.
+ * Advanced Dynamic Magical Smoke Filter.
+ * Strictly relies on SVG vector displacement (feTurbulence + feOffset).
+ * Zero CSS viewport transforms to ensure 100% pixel-safe bounding.
  */
-const BOX = { left: 68.5, top: 21, width: 24, height: 50 };
+const BOX = { left: 68.5, top: 21, width: 24, height: 50 }
 
 const crop = {
   width: `${(100 / BOX.width) * 100}%`,
   height: `${(100 / BOX.height) * 100}%`,
   left: `${-(BOX.left / BOX.width) * 100}%`,
   top: `${-(BOX.top / BOX.height) * 100}%`,
-};
+}
 
-function SmokeLayer({ filter, className }: { filter: string; className: string }) {
+function SmokeLayer({ filter, className, opacity = 1 }: { filter: string; className: string; opacity?: number }) {
   return (
     <div
       aria-hidden="true"
-      className={`painted-smoke absolute overflow-hidden ${className}`}
+      className={`absolute overflow-hidden ${className}`}
       style={{
         left: `${BOX.left}%`,
         top: `${BOX.top}%`,
         width: `${BOX.width}%`,
         height: `${BOX.height}%`,
         filter: `url(#${filter})`,
+        opacity: opacity,
+        // CSS Masking ensures the smoke dissolves softly into the air at the bounds, preventing hard clipping.
+        WebkitMaskImage: 'radial-gradient(ellipse at 50% 65%, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 80%)',
+        maskImage: 'radial-gradient(ellipse at 50% 65%, rgba(0,0,0,1) 15%, rgba(0,0,0,0) 80%)',
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/images/desert-scene.png"
         alt=""
@@ -37,65 +39,87 @@ function SmokeLayer({ filter, className }: { filter: string; className: string }
         style={crop}
       />
     </div>
-  );
+  )
 }
 
 export function PaintedSmoke() {
   return (
-    <div className="pointer-events-none absolute inset-0 select-none overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 select-none">
       <svg aria-hidden="true" className="absolute h-0 w-0">
         <defs>
-          {/* Layer 1: Core Fluid Wave - Simulates rising gaseous smoke loops */}
-          <filter id="fluid-smoke-stream" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.016" numOctaves="5" seed="101" result="noise" />
+          {/* 
+            LAYER 1: Active Flow Motion 
+            Deep, slow billows pulling the pixels upward and swirling horizontally.
+          */}
+          <filter id="magical-fluid-flow" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="5" seed="42" result="noise" />
             
-            {/* Smooth vector translation loop that stays completely within bounds */}
-            <feOffset dx="0" dy="0" in="noise" result="driftingNoise">
-              <animate attributeName="dx" dur="24s" values="0; 20; -15; 0" repeatCount="indefinite" />
-              <animate attributeName="dy" dur="18s" values="0; -45; -20; 0" repeatCount="indefinite" />
+            {/* Drives the noise texture mathematically to simulate intense internal flow */}
+            <feOffset dx="0" dy="0" in="noise" result="movingNoise">
+              <animate attributeName="dx" dur="24s" values="0; 65; -45; 0" repeatCount="indefinite" />
+              <animate attributeName="dy" dur="20s" values="0; -90; 35; 0" repeatCount="indefinite" />
             </feOffset>
 
-            <feDisplacementMap in="SourceGraphic" in2="driftingNoise" xChannelSelector="R" yChannelSelector="G" scale="24">
-              <animate attributeName="scale" dur="12s" values="18;32;22;18" repeatCount="indefinite" />
+            <feDisplacementMap in="SourceGraphic" in2="movingNoise" xChannelSelector="R" yChannelSelector="G" scale="35">
+              <animate attributeName="scale" dur="18s" values="25; 48; 32; 25" repeatCount="indefinite" />
             </feDisplacementMap>
-            <feGaussianBlur stdDeviation="3.0" />
+            
+            {/* Deep blur required for ethereal atmosphere blending */}
+            <feGaussianBlur stdDeviation="3.8" />
           </filter>
 
-          {/* Layer 2: Mystical Curl - Creates the rolling, twisting downward wave effect towards the content */}
-          <filter id="mystical-smoke-curl" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="turbulence" baseFrequency="0.015 0.030" numOctaves="4" seed="202" result="noise2" />
-            <feOffset dx="0" dy="0" in="noise2" result="rollingNoise">
-              <animate attributeName="dx" dur="16s" values="0; -25; 15; 0" repeatCount="indefinite" />
-              <animate attributeName="dy" dur="22s" values="0; 35; 10; 0" repeatCount="indefinite" />
+          {/* 
+            LAYER 2: Downward Curl & Mystical Density
+            Finer frequencies mapping inverse channels to force the visual weight downwards.
+          */}
+          <filter id="magical-fluid-curl" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015 0.024" numOctaves="5" seed="88" result="noise" />
+            
+            <feOffset dx="0" dy="0" in="noise" result="driftingNoise">
+              <animate attributeName="dx" dur="18s" values="0; -55; 35; 0" repeatCount="indefinite" />
+              {/* Positive dy values pull the displacement mapping downward in a looping loop */}
+              <animate attributeName="dy" dur="22s" values="0; 85; -25; 0" repeatCount="indefinite" />
             </feOffset>
-            <feDisplacementMap in="SourceGraphic" in2="rollingNoise" xChannelSelector="G" yChannelSelector="R" scale="35">
-              <animate attributeName="scale" dur="9s" values="24;42;28;24" repeatCount="indefinite" />
+
+            {/* Inversing R and G channels creates a vastly different, chaotic swirling contour */}
+            <feDisplacementMap in="SourceGraphic" in2="driftingNoise" xChannelSelector="G" yChannelSelector="R" scale="42">
+              <animate attributeName="scale" dur="16s" values="30; 55; 38; 30" repeatCount="indefinite" />
             </feDisplacementMap>
-            <feGaussianBlur stdDeviation="4.2" />
+            
+            {/* Harsher blur on the micro-curls to blend seamlessly into the base layer */}
+            <feGaussianBlur stdDeviation="4.5" />
           </filter>
         </defs>
       </svg>
 
-      {/* Layer 1: Natural deep rising smoke flow */}
-      <SmokeLayer filter="fluid-smoke-stream" className="painted-smoke-base mix-blend-screen opacity-95" />
+      {/* Layer 1: Base Flow - Captures the primary light */}
+      <SmokeLayer 
+        filter="magical-fluid-flow" 
+        className="mix-blend-screen" 
+        opacity={0.9} 
+      />
       
-      {/* Layer 2: Bal khaata hua aura wave that bends gracefully downwards */}
-      <SmokeLayer filter="mystical-smoke-curl" className="painted-smoke-glow mix-blend-color-dodge opacity-70" />
+      {/* Layer 2: Heavy Curl - Pushes glowing color dodges through the downward loop */}
+      <SmokeLayer 
+        filter="magical-fluid-curl" 
+        className="mix-blend-color-dodge" 
+        opacity={0.65} 
+      />
 
-      {/* Premium balanced spiritual glow tailored perfectly to the dark night desert */}
+      {/* Origin Light/Lamp Spout Glow matching night sky palette */}
       <div
         aria-hidden="true"
-        className="lamp-spout-glow absolute rounded-full blur-[2px] z-10"
+        className="lamp-spout-glow absolute rounded-full blur-[2px]"
         style={{ 
           left: '73.2%', 
           top: '60.5%', 
           width: '6.5%', 
           height: '14.5%',
-          background: 'radial-gradient(circle at center, rgba(255,225,145,0.9) 0%, rgba(139,92,246,0.35) 45%, transparent 80%)',
-          boxShadow: '0 0 35px 5px rgba(245,158,11,0.5)',
+          background: 'radial-gradient(circle at center, rgba(255,230,150,0.9) 0%, rgba(139,92,246,0.35) 50%, transparent 85%)',
+          boxShadow: '0 0 35px 5px rgba(245,158,11,0.4)',
           mixBlendMode: 'screen'
         }}
       />
     </div>
-  );
+  )
 }
