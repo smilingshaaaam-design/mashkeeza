@@ -1,12 +1,19 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Noto_Nastaliq_Urdu } from 'next/font/google'
+import { Gulzar, Noto_Nastaliq_Urdu } from 'next/font/google'
+import { SparkleCursor } from '@/components/magic/sparkle-cursor'
 import './globals.css'
 
 const nastaliq = Noto_Nastaliq_Urdu({
   subsets: ['arabic'],
   weight: ['400', '700'],
   variable: '--font-nastaliq',
+})
+
+const gulzar = Gulzar({
+  subsets: ['arabic'],
+  weight: '400',
+  variable: '--font-gulzar',
 })
 
 export const metadata: Metadata = {
@@ -35,9 +42,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ur" dir="rtl" className={`${nastaliq.variable} bg-night`}>
+    <html lang="ur" dir="rtl" className={`${nastaliq.variable} ${gulzar.variable} bg-night`}>
       <body className="font-urdu antialiased bg-night text-gold-light">
         {children}
+        <SparkleCursor />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
