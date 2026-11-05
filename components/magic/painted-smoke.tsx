@@ -3,48 +3,40 @@
 
 import React, { useEffect, useRef } from "react";
 
-// ======================================================
-// ASMA UL HUSNA
-// ======================================================
-
 const ASMA = [
-  "الله", "الرحمن", "الرحيم", "الملك", "القدوس",
-  "السلام", "المؤمن", "المهيمن", "العزيز", "الجبار",
-  "المتكبر", "الخالق", "البارئ", "المصور", "الغفار",
-  "القهار", "الوهاب", "الرزاق", "الفتاح", "العليم",
-  "القابض", "الباسط", "الخافض", "الرافع", "المعز",
-  "المذل", "السميع", "البصير", "الحكم", "العدل",
-  "اللطيف", "الخبير", "الحليم", "العظيم", "الغفور",
-  "الشكور", "العلي", "الكبير", "الحفيظ", "المقيت",
-  "الحسيب", "الجليل", "الكريم", "الرقيب", "المجيب",
-  "الواسع", "الحكيم", "الودود", "المجيد", "الباعث",
-  "الشهيد", "الحق", "الوكيل", "القوي", "المتين",
-  "الولي", "الحميد", "المحصي", "المبدئ", "المعيد",
-  "المحيي", "المميت", "الحي", "القيوم", "الواجد",
-  "الماجد", "الواحد", "الصمد", "القادر", "المقتدر",
-  "المقدم", "المؤخر", "الأول", "الآخر", "الظاهر",
-  "الباطن", "الوالي", "المتعالي", "البر", "التواب",
-  "المنتقم", "العفو", "الرؤوف", "مالك الملك",
-  "ذو الجلال والإكرام", "المقسط", "الجامع", "الغني",
-  "المغني", "المانع", "الضار", "النافع", "النور",
-  "الهادي", "البديع", "الباقي", "الوارث", "الرشيد",
-  "الصبور"
+  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ",
+  "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ",
+  "الْجَبَّارُ", "الْمُتَكَبِّرُ", "الْخَالِقُ", "الْبَارِئُ",
+  "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ",
+  "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
+  "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ",
+  "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَكَمُ",
+  "الْعَدْلُ", "اللَّطِيفُ", "الْخَبِيرُ", "الْحَلِيمُ",
+  "الْعَظِيمُ", "الْغَفُورُ", "الشَّكُورُ", "الْعَلِيُّ",
+  "الْكَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
+  "الْجَلِيلُ", "الْكَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ",
+  "الْوَاسِعُ", "الْحَكِيمُ", "الْوَدُودُ", "الْمَجِيدُ",
+  "الْبَاعِثُ", "الشَّهِيدُ", "الْحَقُّ", "الْوَكِيلُ",
+  "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ",
+  "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
+  "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ",
+  "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ",
+  "الْمُقْتَدِرُ", "الْمُقَدِّمُ", "الْمُؤَخِّرُ", "الْأَوَّلُ",
+  "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي",
+  "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
+  "الْعَفُوُّ", "الرَّؤُوفُ", "مَالِكُ الْمُلْكِ",
+  "ذُو الْجَلَالِ وَالْإِكْرَامِ", "الْمُقْسِطُ",
+  "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ",
+  "الضَّارُّ", "النَّافِعُ", "النُّورُ", "الْهَادِي",
+  "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ",
+  "الصَّبُورُ"
 ];
-
-// ======================================================
-// HUROOF-E-MUQATTAAT
-// ======================================================
 
 const MUQATTAAT = [
   "الم", "المص", "الر", "المر",
   "كهيعص", "طه", "طسم", "طس",
-  "يس", "ص", "حم", "حم عسق",
-  "ق", "ن"
+  "يس", "ص", "حم", "حم عسق", "ق", "ن"
 ];
-
-// ======================================================
-// 28 HUROOF-E-ABJAD
-// ======================================================
 
 const ABJAD = [
   "ا", "ب", "ج", "د", "ه", "و", "ز",
@@ -52,10 +44,6 @@ const ABJAD = [
   "س", "ع", "ف", "ص", "ق", "ر", "ش",
   "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"
 ];
-
-// ======================================================
-// PLANETARY GLYPHS
-// ======================================================
 
 const PLANETS = [
   { symbol: "☉", name: "الشمس", hue: 44 },
@@ -67,500 +55,324 @@ const PLANETS = [
   { symbol: "♄", name: "زحل", hue: 230 }
 ];
 
-// ======================================================
-// TYPES
-// ======================================================
+// Artistic fictional labels, not authenticated traditional names.
+const SYMBOLIC_MUWAKKIL_LABELS = ABJAD.map(
+  letter => `أثير ${letter}`
+);
 
-type SmokeParticle = {
-  age: number;
-  life: number;
-  size: number;
-  drift: number;
-  seed: number;
-  hue: number;
-  progress: number;
-};
+const random = (min: number, max: number) =>
+  Math.random() * (max - min) + min;
 
-type GlyphParticle = {
-  progress: number;
-  speed: number;
-  text: string;
+const pick = <T,>(arr: T[]): T =>
+  arr[Math.floor(Math.random() * arr.length)];
+
+type ParticleType =
+  | "smoke"
+  | "asma"
+  | "muqattaat"
+  | "abjad"
+  | "planet"
+  | "symbolic";
+
+class SmokeParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   size: number;
   alpha: number;
+  life: number;
+  maxLife: number;
   hue: number;
-  wobble: number;
-};
+  wave: number;
+  rotation: number;
+  rotationSpeed: number;
+  text: string;
+  type: ParticleType;
 
-// ======================================================
-// COMPONENT
-// ======================================================
+  constructor(
+    width: number,
+    height: number,
+    type: ParticleType
+  ) {
+    this.type = type;
 
-export function PaintedSmoke() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    // RESTORED ORIGINAL EMISSION POSITION
+    this.x = width * 0.76 + random(-4, 4);
+    this.y = height * 0.64 + random(-5, 5);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    this.wave = random(0, Math.PI * 2);
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    this.vx = random(-0.35, 0.35);
+    this.vy = random(-1.2, -0.45);
 
-    let width = 0;
-    let height = 0;
-    let animationFrame = 0;
-    let lastTime = 0;
-    let elapsed = 0;
-    let glyphTimer = 0;
-    let dataIndex = 0;
-    let disposed = false;
+    this.life = 0;
+    this.maxLife = random(180, 360);
 
-    const smoke: SmokeParticle[] = [];
-    const glyphs: GlyphParticle[] = [];
+    this.alpha = random(0.15, 0.42);
+    this.size = random(12, 28);
 
-    const random = (min: number, max: number) =>
-      min + Math.random() * (max - min);
+    this.rotation = random(0, Math.PI * 2);
+    this.rotationSpeed = random(-0.008, 0.008);
 
-    // --------------------------------------------------
-    // RESIZE CANVAS
-    // --------------------------------------------------
+    this.hue = pick([275, 275, 188, 188, 44]);
 
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.text = "";
 
-      width = Math.max(1, rect.width);
-      height = Math.max(1, rect.height);
+    switch (type) {
+      case "asma":
+        this.text = pick(ASMA);
+        this.size = random(17, 27);
+        this.alpha = random(0.55, 0.85);
+        this.maxLife = random(240, 400);
+        break;
 
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
+      case "muqattaat":
+        this.text = pick(MUQATTAAT);
+        this.size = random(22, 34);
+        this.hue = 44;
+        this.alpha = 0.8;
+        break;
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
+      case "abjad":
+        this.text = pick(ABJAD);
+        this.size = random(19, 29);
+        this.hue = 188;
+        this.alpha = 0.75;
+        break;
 
-    // --------------------------------------------------
-    // ORIGINAL SMOKE SOURCE POSITION
-    // 76% WIDTH / 64% HEIGHT
-    // --------------------------------------------------
+      case "planet": {
+        const planet = pick(PLANETS);
+        this.text = planet.symbol;
+        this.hue = planet.hue;
+        this.size = random(25, 37);
+        this.alpha = 0.8;
+        break;
+      }
 
-    const source = () => ({
-      x: width * 0.76,
-      y: height * 0.64
-    });
+      case "symbolic":
+        this.text = pick(SYMBOLIC_MUWAKKIL_LABELS);
+        this.size = random(13, 20);
+        this.hue = 275;
+        this.alpha = 0.65;
+        break;
 
-    // --------------------------------------------------
-    // S-SHAPED SMOKE PATH
-    // --------------------------------------------------
+      default:
+        this.size = random(14, 42);
+        this.alpha = random(0.08, 0.25);
+    }
+  }
 
-    const getSmokePath = (progress: number) => {
-      const p = Math.max(0, Math.min(1, progress));
+  update() {
+    this.life++;
 
-      const startX = width * 0.76;
-      const startY = height * 0.64;
+    const progress = this.life / this.maxLife;
 
-      const x =
-        startX -
-        p * width * 0.12 +
-        Math.sin(p * Math.PI * 2.4) * width * 0.105;
+    this.x += this.vx +
+      Math.sin(this.life * 0.018 + this.wave) * 0.48;
 
-      const y = startY - p * height * 0.57;
+    this.y += this.vy;
 
-      return { x, y };
-    };
+    this.vx +=
+      Math.sin(this.life * 0.025 + this.wave) * 0.006;
 
-    // --------------------------------------------------
-    // CREATE SMOKE PARTICLES
-    // --------------------------------------------------
+    this.vy -= 0.001;
 
-    const spawnSmoke = () => {
-      smoke.push({
-        age: 0,
-        life: random(2.8, 5.2),
-        size: random(8, 19),
-        drift: random(-0.7, 0.7),
-        seed: random(0, Math.PI * 2),
-        hue: random(185, 285),
-        progress: random(0, 0.035)
-      });
-    };
+    this.rotation += this.rotationSpeed;
 
-    // --------------------------------------------------
-    // CREATE SYMBOL PARTICLES
-    // --------------------------------------------------
+    if (this.type === "smoke") {
+      this.size += 0.045;
+      this.alpha *= 0.998;
+    }
 
-    const allSymbols = [
-      ...ASMA,
-      ...MUQATTAAT,
-      ...ABJAD,
-      ...PLANETS.map((planet) => planet.symbol)
-    ];
+    if (this.type !== "smoke" && progress > 0.72) {
+      this.alpha -= 0.009;
+    }
 
-    const spawnGlyph = () => {
-      const text = allSymbols[dataIndex % allSymbols.length];
-      dataIndex++;
+    if (progress > 0.85) {
+      this.alpha -= 0.003;
+    }
 
-      glyphs.push({
-        progress: random(0.02, 0.15),
-        speed: random(0.045, 0.085),
-        text,
-        size: random(12, 20),
-        alpha: random(0.3, 0.65),
-        hue: random(185, 285),
-        wobble: random(0, Math.PI * 2)
-      });
-    };
+    this.alpha = Math.max(0, this.alpha);
+  }
 
-    // --------------------------------------------------
-    // DRAW SMOKE PARTICLES
-    // --------------------------------------------------
+  draw(ctx: CanvasRenderingContext2D) {
+    if (this.alpha <= 0) return;
 
-    const drawSmokeParticle = (particle: SmokeParticle) => {
-      const lifeProgress = particle.age / particle.life;
+    ctx.save();
+    ctx.translate(this.x, this.y);
 
-      const fadeIn = Math.min(1, lifeProgress * 5);
-      const fadeOut = Math.min(1, (1 - lifeProgress) * 3);
-
-      const alpha = Math.max(0, fadeIn * fadeOut * 0.12);
-
-      if (alpha <= 0) return;
-
-      const path = getSmokePath(lifeProgress);
-
-      const wave =
-        Math.sin(particle.seed + elapsed * 1.4) * 8;
-
-      const driftX =
-        particle.drift * particle.age * 8 + wave;
-
-      const driftY = -particle.age * 5;
-
-      const x = path.x + driftX;
-      const y = path.y + driftY;
-
-      const size = particle.size + lifeProgress * 15;
-
+    if (this.type === "smoke") {
       const gradient = ctx.createRadialGradient(
-        x, y, 0,
-        x, y, size
+        0, 0, 0,
+        0, 0, this.size
       );
 
       gradient.addColorStop(
         0,
-        `hsla(${particle.hue}, 65%, 85%, ${alpha})`
+        `hsla(${this.hue}, 75%, 82%, ${this.alpha * 0.32})`
       );
 
       gradient.addColorStop(
         0.35,
-        `hsla(${particle.hue}, 60%, 72%, ${alpha * 0.55})`
+        `hsla(${this.hue}, 65%, 67%, ${this.alpha * 0.19})`
       );
 
       gradient.addColorStop(
-        1,
-        `hsla(${particle.hue}, 55%, 65%, 0)`
+        0.7,
+        `hsla(${this.hue}, 55%, 55%, ${this.alpha * 0.07})`
       );
 
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+      ctx.rotate(this.rotation);
+      ctx.scale(1.15, 0.72);
+
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.arc(0, 0, this.size, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
-    };
 
-    // --------------------------------------------------
-    // DRAW CONTINUOUS SMOKE RIBBON
-    // --------------------------------------------------
+    } else {
+      ctx.globalCompositeOperation = "lighter";
 
-    const drawSmokeRibbon = () => {
-      const origin = source();
+      const color =
+        `hsla(${this.hue}, 100%, 78%, ${this.alpha})`;
 
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      ctx.font =
+        `bold ${this.size}px "Amiri", "Noto Naskh Arabic", "Times New Roman", serif`;
 
-      // Multiple soft smoke layers
-      for (let layer = 0; layer < 4; layer++) {
-        ctx.beginPath();
-
-        const offset = (layer - 1.5) * 7;
-
-        for (let i = 0; i <= 90; i++) {
-          const p = i / 90;
-          const point = getSmokePath(p);
-
-          const wave =
-            Math.sin(p * 17 + elapsed * 1.1 + layer) *
-            (4 + p * 8);
-
-          const x = point.x + offset + wave;
-          const y = point.y;
-
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-
-        const gradient = ctx.createLinearGradient(
-          origin.x,
-          origin.y,
-          width * 0.6,
-          height * 0.05
-        );
-
-        gradient.addColorStop(
-          0,
-          `rgba(220, 205, 255, ${0.055 - layer * 0.008})`
-        );
-
-        gradient.addColorStop(
-          0.5,
-          `rgba(170, 190, 255, ${0.035 - layer * 0.004})`
-        );
-
-        gradient.addColorStop(
-          1,
-          "rgba(180, 220, 255, 0)"
-        );
-
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 15 + layer * 12;
-        ctx.stroke();
-      }
-
-      // Luminous center line
-      ctx.beginPath();
-
-      for (let i = 0; i <= 90; i++) {
-        const p = i / 90;
-        const point = getSmokePath(p);
-
-        const wave =
-          Math.sin(p * 16 + elapsed * 1.3) * 5;
-
-        const x = point.x + wave;
-        const y = point.y;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-
-      ctx.strokeStyle = "rgba(210, 220, 255, 0.10)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.restore();
-    };
-
-    // --------------------------------------------------
-    // INCENSE SOURCE GLOW
-    // --------------------------------------------------
-
-    const drawSourceGlow = () => {
-      const origin = source();
-
-      const pulse =
-        1 + Math.sin(elapsed * 2.2) * 0.12;
-
-      const radius = 19 * pulse;
-
-      const gradient = ctx.createRadialGradient(
-        origin.x,
-        origin.y,
-        0,
-        origin.x,
-        origin.y,
-        radius
-      );
-
-      gradient.addColorStop(
-        0,
-        "rgba(255, 225, 175, 0.30)"
-      );
-
-      gradient.addColorStop(
-        0.25,
-        "rgba(210, 190, 255, 0.13)"
-      );
-
-      gradient.addColorStop(
-        1,
-        "rgba(180, 190, 255, 0)"
-      );
-
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(origin.x, origin.y, radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    };
-
-    // --------------------------------------------------
-    // DRAW FLOATING ARABIC AND PLANETARY SYMBOLS
-    // --------------------------------------------------
-
-    const drawGlyph = (glyph: GlyphParticle) => {
-      const point = getSmokePath(glyph.progress);
-
-      const wobbleX =
-        Math.sin(glyph.wobble + elapsed * 1.7) * 12;
-
-      const wobbleY =
-        Math.cos(glyph.wobble + elapsed) * 5;
-
-      const x = point.x + wobbleX;
-      const y = point.y + wobbleY;
-
-      const fadeIn = Math.min(1, glyph.progress * 5);
-      const fadeOut = Math.min(1, (1 - glyph.progress) * 4);
-
-      const alpha = glyph.alpha * fadeIn * fadeOut;
-
-      if (alpha <= 0) return;
-
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
       ctx.shadowColor =
-        `hsla(${glyph.hue}, 90%, 80%, ${alpha})`;
+        `hsla(${this.hue}, 100%, 65%, ${this.alpha})`;
 
-      ctx.shadowBlur = 13;
+      ctx.shadowBlur = 18;
 
-      ctx.font =
-        `${glyph.size}px "Amiri", "Noto Naskh Arabic", serif`;
+      ctx.fillStyle = color;
+      ctx.fillText(this.text, 0, 0);
+    }
 
-      ctx.fillStyle =
-        `hsla(${glyph.hue}, 75%, 88%, ${alpha})`;
+    ctx.restore();
+  }
+}
 
-      ctx.fillText(glyph.text, x, y);
-      ctx.restore();
+export function PaintedSmoke() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !canvas.parentElement) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId = 0;
+    let particles: SmokeParticle[] = [];
+
+    let width = 0;
+    let height = 450;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const MAX_PARTICLES = 750;
+
+    const resizeCanvas = () => {
+      if (!canvas.parentElement) return;
+
+      width = canvas.parentElement.clientWidth;
+      height = canvas.parentElement.clientHeight || 450;
+
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    // --------------------------------------------------
-    // ANIMATION LOOP
-    // --------------------------------------------------
+    resizeCanvas();
 
-    const animate = (time: number) => {
-      if (disposed) return;
+    window.addEventListener("resize", resizeCanvas);
 
-      const delta = lastTime
-        ? Math.min((time - lastTime) / 1000, 0.04)
-        : 0.016;
+    const spawnSmoke = () => {
+      if (particles.length < MAX_PARTICLES) {
+        for (let i = 0; i < 3; i++) {
+          particles.push(
+            new SmokeParticle(width, height, "smoke")
+          );
+        }
+      }
+    };
 
-      lastTime = time;
-      elapsed += delta;
+    const spawnSymbol = () => {
+      if (particles.length >= MAX_PARTICLES) return;
 
+      const r = Math.random();
+
+      let type: ParticleType;
+
+      if (r < 0.38) {
+        type = "asma";
+      } else if (r < 0.53) {
+        type = "abjad";
+      } else if (r < 0.67) {
+        type = "muqattaat";
+      } else if (r < 0.82) {
+        type = "planet";
+      } else {
+        type = "symbolic";
+      }
+
+      particles.push(
+        new SmokeParticle(width, height, type)
+      );
+    };
+
+    const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Continuous smoke emission
-      for (let i = 0; i < 3; i++) {
-        spawnSmoke();
+      spawnSmoke();
+
+      if (Math.random() < 0.12) {
+        spawnSymbol();
       }
 
-      // New symbols enter gradually
-      glyphTimer += delta;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
 
-      if (glyphTimer > 0.72) {
-        glyphTimer = 0;
-        spawnGlyph();
-      }
+        particle.update();
+        particle.draw(ctx);
 
-      // Draw the ribbon
-      drawSmokeRibbon();
-
-      // Update smoke particles
-      for (let i = smoke.length - 1; i >= 0; i--) {
-        const particle = smoke[i];
-
-        particle.age += delta;
-
-        if (particle.age >= particle.life) {
-          smoke.splice(i, 1);
-          continue;
+        if (
+          particle.alpha <= 0.01 ||
+          particle.life >= particle.maxLife ||
+          particle.y < -80 ||
+          particle.x < -100 ||
+          particle.x > width + 100
+        ) {
+          particles.splice(i, 1);
         }
-
-        drawSmokeParticle(particle);
       }
 
-      // Update floating glyphs
-      for (let i = glyphs.length - 1; i >= 0; i--) {
-        const glyph = glyphs[i];
-
-        glyph.progress += glyph.speed * delta;
-
-        if (glyph.progress >= 1) {
-          glyphs.splice(i, 1);
-          continue;
-        }
-
-        drawGlyph(glyph);
-      }
-
-      // Source glow
-      drawSourceGlow();
-
-      animationFrame =
-        window.requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(render);
     };
 
-    // --------------------------------------------------
-    // INITIALIZE
-    // --------------------------------------------------
-
-    resize();
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(resize)
-        : null;
-
-    resizeObserver?.observe(canvas);
-
-    window.addEventListener("resize", resize);
-
-    animationFrame =
-      window.requestAnimationFrame(animate);
-
-    // --------------------------------------------------
-    // CLEANUP
-    // --------------------------------------------------
+    render();
 
     return () => {
-      disposed = true;
-
-      window.cancelAnimationFrame(animationFrame);
-
-      resizeObserver?.disconnect();
-
-      window.removeEventListener("resize", resize);
-
-      smoke.length = 0;
-      glyphs.length = 0;
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", resizeCanvas);
+      particles = [];
     };
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      style={{
-        display: "block",
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none"
-      }}
-    />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full mix-blend-screen opacity-95"
+      />
+    </div>
   );
 }
-
-// Support both named and default imports.
-export default PaintedSmoke;
