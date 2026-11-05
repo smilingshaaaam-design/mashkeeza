@@ -14,8 +14,31 @@ export function PaintedSmoke() {
     let animationFrameId: number;
     let particles: PremiumCinematicParticle[] = [];
 
-    // Elegant, authentic calligraphic and clean talismanic shapes (No messy layout symbols)
-    const SPELLS = ['الله', 'نور', 'حق', '۞', '✦', '✧', '◈', '☼', '☽'];
+    // 1. MUKAMMAL 99 ASMA-E-ALLAH ARRAY
+    const ASMA_E_HUSNA = [
+      'الله', 'الرَّحْمٰن', 'الرَّحِیم', 'الْمَلِک', 'الْقُدُّوس', 'السَّلَام', 'الْمُؤْمِن', 'الْمُهَیْمِن', 'الْعَزِیز', 'الْجَبَّار', 'الْمُتَکَبِّر',
+      'الْخَالِق', 'الْبَارِئ', 'الْمُصَوِّر', 'الْغَفَّار', 'الْقَهَّار', 'الْوَهَّاب', 'الرَّزَّاق', 'الْفَتَّاح', 'الْعَلِیم', 'الْقَابِض', 'الْبَاسِط',
+      'الْخَافِض', 'الرَّافِع', 'الْمُعِزّ', 'الْمُذِلّ', 'السَّمِیع', 'الْبَصِیر', 'الْحَکَم', 'الْعَدْل', 'اللَّطِیف', 'الْخَبِیر', 'الْحَلِیم',
+      'الْعَظِیم', 'الْغَفُور', 'الشَّکُور', 'الْعَلِیّ', 'الْکَبِیر', 'الْحَفِیظ', 'الْمُقِیت', 'الْحَسِیب', 'الْجَلِیل', 'الْکَرِیم', 'الرَّقِیب',
+      'الْمُجِیب', 'الْوَاسِع', 'الْحَکِیم', 'الْوَدُود', 'الْمَجِید', 'الْبَاعِث', 'الشَّهِید', 'الْحَقّ', 'الْوَکِیل', 'الْقَوِیّ', 'الْمَتِین',
+      'الْوَلِیّ', 'الْحَمِید', 'الْمُحْصِی', 'الْمُعِید', 'الْمُبْدِئ', 'الْمُعِید', 'الْمُحْیی', 'الْمُمِیت', 'الْحَیّ', 'الْقَیُّوم', 'الْوَاجِد', 'الْمَاجِد',
+      'الْوَاحِد', 'الْأَحَد', 'الصَّمَد', 'الْقَادِر', 'الْمُقْتَدِر', 'الْمُقَدِّم', 'الْمُؤَخِّر', 'الْأَوَّل', 'الْآخِر', 'الظَّاهِر', 'الْبَاطِن',
+      'الْوَالی', 'الْمُتَعَالِی', 'الْبَرّ', 'التَّوَّاب', 'الْمُنْتَقِم', 'العَفُوّ', 'الرَّؤُوف', 'مَالِکُ الْمُلْک', 'ذُو الْجَلَالِ وَالْإِکْرَام', 'الْمُقْسِط',
+      'الْجَامِع', 'الْغَنِیّ', 'الْمُغْنِی', 'الْمَانِع', 'الضَّارّ', 'النَّافِع', 'النُّور', 'الْهَادِی', 'الْبَدِیع', 'الْبَاقِی', 'الْوَارِث', 'الرَّشِید', 'الصَّبُور'
+    ];
+
+    // 2. MUKAMMAL 12 HUROOF-E-MUQATTA'AT ARRAY
+    const MUQATTAAT = ['الم', 'المر', 'الر', 'طسم', 'طہ', 'یس', 'ص', 'حم', 'عسق', 'کہیعص', 'ق', 'ن'];
+
+    // 3. MUKAMMAL 28 MOWAKKEEN NAMES ARRAY
+    const MOWAKKEEN_28 = [
+      'اسرافیل', 'جبرائیل', 'میکائیل', 'عزرائیل', 'ملوائیل', 'شمخائیل', 'صرفیائیل', 'تنکفیل', 'جیائیل', 'حزقیائیل', 'دردائیل', 
+      'رفمائیل', 'طاطائیل', 'لوخائیل', 'ہمواکیل', 'سرھمواکیل', 'عینائیل', 'کفیائیل', 'لوائیل', 'عطائیل', 'نوخائیل', 'روحائیل',
+      'لوطائیل', 'صباغائیل', 'عطوفائیل', 'ھمروائیل', 'عزرائیل', 'غلغائیل'
+    ];
+
+    // 4. MUKAMMAL 28 HUROOF-E-ABJAD ARRAY
+    const ABJAD_28 = ['ا', 'ب', 'ج', 'د', 'ه', 'و', 'ز', 'ح', 'ط', 'ی', 'ک', 'ل', 'م', 'ن', 'س', 'ع', 'ف', 'ص', 'ق', 'ر', 'ش', 'ت', 'ث', 'خ', 'ذ', 'ض', 'ظ', 'غ'];
 
     const resizeCanvas = () => {
       if (canvas && canvas.parentElement) {
@@ -26,26 +49,41 @@ export function PaintedSmoke() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Ultra-clean vector lines for authentic talismans
-    const drawCleanTalisman = (context: CanvasRenderingContext2D, type: number, size: number) => {
+    // 🪐 5. VECTOR GENERATOR FOR 7 PLANETS TALISMATIC SEALS
+    const drawPlanetTalisman = (context: CanvasRenderingContext2D, planetId: number, size: number) => {
       context.beginPath();
       context.lineWidth = 1.3;
-      if (type === 0) {
-        // Linear alignment grid seal
-        context.arc(0, 0, size * 0.65, 0, Math.PI * 2);
-        context.moveTo(-size * 0.65, 0); context.lineTo(size * 0.65, 0);
-      } else if (type === 1) {
-        // Pure symmetrical constellation focus node
-        for (let i = 0; i < 4; i++) {
-          context.moveTo(-size * 0.7, 0); context.lineTo(size * 0.7, 0);
-          context.rotate(Math.PI / 4);
-        }
-      } else {
-        // Concentric geometric balance ring
+      if (planetId === 0) { // Shams (Sun)
         context.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+        context.moveTo(-size * 0.6, 0); context.lineTo(size * 0.6, 0);
+        context.moveTo(0, -size * 0.6); context.lineTo(0, size * 0.6);
         context.stroke();
-        context.beginPath();
-        context.arc(0, 0, size * 0.2, 0, Math.PI * 2);
+        context.beginPath(); context.arc(0, 0, size * 0.15, 0, Math.PI * 2); context.fill();
+      } else if (planetId === 1) { // Qamar (Moon)
+        context.arc(0, 0, size * 0.55, 0.5, Math.PI * 1.5);
+        context.stroke();
+        context.beginPath(); context.arc(size * 0.2, 0, size * 0.45, 0, Math.PI * 2);
+      } else if (planetId === 2) { // Merrikh (Mars)
+        context.moveTo(0, -size * 0.7); context.lineTo(size * 0.6, size * 0.4); context.lineTo(-size * 0.6, size * 0.4); context.closePath();
+        context.stroke();
+        context.beginPath(); context.arc(0, -size * 0.7, 3, 0, Math.PI * 2); context.fill();
+      } else if (planetId === 3) { // Utarid (Mercury)
+        context.arc(0, 0, size * 0.6, 0, Math.PI * 2); context.stroke();
+        context.beginPath(); context.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+        context.moveTo(-size * 0.3, -size * 0.3); context.lineTo(size * 0.3, size * 0.3);
+      } else if (planetId === 4) { // Mushtari (Jupiter)
+        context.rect(-size * 0.5, -size * 0.5, size, size);
+        context.moveTo(-size * 0.5, 0); context.lineTo(size * 0.5, 0);
+        context.moveTo(0, -size * 0.5); context.lineTo(0, size * 0.5);
+      } else if (planetId === 5) { // Zuhra (Venus)
+        for (let i = 0; i < 2; i++) {
+          context.moveTo(0, -size * 0.65); context.lineTo(size * 0.55, size * 0.35); context.lineTo(-size * 0.55, size * 0.35); context.closePath();
+          context.rotate(Math.PI);
+        }
+      } else { // Zuhal (Saturn)
+        context.arc(0, 0, size * 0.6, 0, Math.PI * 2);
+        context.moveTo(-size * 0.7, -size * 0.2); context.lineTo(size * 0.7, -size * 0.2);
+        context.moveTo(0, -size * 0.6); context.lineTo(0, size * 0.6);
       }
       context.stroke();
     };
@@ -60,52 +98,57 @@ export function PaintedSmoke() {
       maxLife: number;
       life: number;
       hue: number;
-      type: 'gaseous' | 'runic' | 'sigil';
-      char: string;
-      sigilId: number;
+      renderType: 'smoke' | 'asma' | 'muqattaat' | 'abjad' | 'mowakkal' | 'talisman';
+      textStr: string;
+      planetId: number;
       waveOffset: number;
 
       constructor(canvasWidth: number, canvasHeight: number) {
-        // Exact nozzle target lock
         this.x = canvasWidth * 0.76;
         this.y = canvasHeight * 0.64;
-        
-        this.char = '';
-        this.sigilId = 0;
+        this.textStr = '';
+        this.planetId = 0;
         this.waveOffset = Math.random() * Math.PI * 2;
 
         const rand = Math.random();
-        if (rand < 0.20) {
-          this.type = 'runic';
-          this.char = SPELLS[Math.floor(Math.random() * SPELLS.length)];
-          this.size = Math.random() * 4 + 13;
-        } else if (rand < 0.40) {
-          this.type = 'sigil';
-          this.sigilId = Math.floor(Math.random() * 3);
-          this.size = Math.random() * 3 + 11;
+        if (rand < 0.10) {
+          this.renderType = 'asma';
+          this.textStr = ASMA_E_HUSNA[Math.floor(Math.random() * ASMA_E_HUSNA.length)];
+          this.size = Math.random() * 3 + 14;
+        } else if (rand < 0.18) {
+          this.renderType = 'muqattaat';
+          this.textStr = MUQATTAAT[Math.floor(Math.random() * MUQATTAAT.length)];
+          this.size = Math.random() * 4 + 15;
+        } else if (rand < 0.28) {
+          this.renderType = 'abjad';
+          this.textStr = ABJAD_28[Math.floor(Math.random() * ABJAD_28.length)];
+          this.size = Math.random() * 3 + 13;
+        } else if (rand < 0.38) {
+          this.renderType = 'mowakkal';
+          this.textStr = MOWAKKEEN_28[Math.floor(Math.random() * MOWAKKEEN_28.length)];
+          this.size = Math.random() * 3 + 12;
+        } else if (rand < 0.48) {
+          this.renderType = 'talisman';
+          this.planetId = Math.floor(Math.random() * 7);
+          this.size = Math.random() * 4 + 11;
         } else {
-          this.type = 'gaseous';
-          // 💨 Incense stick effect: Initial size is kept small to make a tight long string
-          this.size = Math.random() * 12 + 8; 
+          this.renderType = 'smoke';
+          this.size = Math.random() * 15 + 10;
         }
 
-        // Fast horizontal drift to pull the smoke into a long line across the screen
-        this.vx = -(Math.random() * 2.2 + 1.6); 
-        this.vy = -(Math.random() * 0.2 + 0.05);
-        this.alpha = Math.random() * 0.6 + 0.4;
-        
-        // ⏳ LONGER LIFETIME: Particles stay alive much longer to reach the far left of the screen
-        this.maxLife = Math.random() * 240 + 180; 
+        this.vx = -(Math.random() * 2.3 + 1.7);
+        this.vy = -(Math.random() * 0.18 + 0.04);
+        this.alpha = Math.random() * 0.65 + 0.45;
+        this.maxLife = Math.random() * 260 + 200;
         this.life = 0;
         
-        // Color mix engine: 50% Deep Fantasy Purple (275), 35% Mystic Cyan (188), 15% Soft Gold (44)
         const colorRand = Math.random();
         if (colorRand < 0.50) {
-          this.hue = 275; 
+          this.hue = 275;
         } else if (colorRand < 0.85) {
-          this.hue = 188; 
+          this.hue = 188;
         } else {
-          this.hue = 44;  
+          this.hue = 44;
         }
       }
 
@@ -114,23 +157,19 @@ export function PaintedSmoke() {
         this.y += this.vy;
         this.life++;
 
-        // Tight ribbon-like sine wave mapping to simulate a beautiful waving incense trail
-        this.vy += Math.sin(this.life * 0.04 + this.waveOffset) * 0.035;
-
+        this.vy += Math.sin(this.life * 0.042 + this.waveOffset) * 0.038;
         const progress = this.life / this.maxLife;
 
-        // ✨ SMOOTH TEHLEEL TRANSFORMATION
-        if (this.type !== 'gaseous' && progress > 0.45) {
-          this.type = 'gaseous';
-          this.size = Math.random() * 1.5 + 1.1; // Morph down cleanly into dot star sparks
-          this.vx *= 0.95; 
-        } else if (this.type === 'gaseous' && this.size >= 4) {
-          // Slow geometric expansion so the line doesn't blow up too fast into big clouds
-          if (progress <= 0.6) this.size += 0.08; 
+        if (this.renderType !== 'smoke' && progress > 0.45) {
+          this.renderType = 'smoke';
+          this.size = Math.random() * 1.5 + 1.1;
+          this.vx *= 0.94;
+        } else if (this.renderType === 'smoke' && this.size >= 4) {
+          if (progress <= 0.6) this.size += 0.14;
         }
 
         if (progress > 0.75) {
-          this.alpha -= 0.008;
+          this.alpha -= 0.007;
         }
       }
 
@@ -139,80 +178,31 @@ export function PaintedSmoke() {
         renderCtx.save();
         renderCtx.globalCompositeOperation = 'lighter';
 
-        if (this.type === 'runic') {
+        if (this.renderType === 'asma' || this.renderType === 'muqattaat' || this.renderType === 'abjad' || this.renderType === 'mowakkal') {
           renderCtx.translate(this.x, this.y);
+          const isAsma = this.renderType === 'asma';
           renderCtx.font = `bold ${this.size}px "Times New Roman", Amiri, serif`;
-          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
-          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 0.8)`;
-          renderCtx.shadowBlur = 12;
+          renderCtx.fillStyle = isAsma ? `hsla(44, 100%, 82%, ${this.alpha})` : `hsla(${this.hue}, 100%, 82%, ${this.alpha})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 0.85)`;
+          renderCtx.shadowBlur = isAsma ? 16 : 12;
           renderCtx.textAlign = 'center';
           renderCtx.textBaseline = 'middle';
-          renderCtx.fillText(this.char, 0, 0);
-        } else if (this.type === 'sigil') {
+          renderCtx.fillText(this.textStr, 0, 0);
+        } else if (this.renderType === 'talisman') {
           renderCtx.translate(this.x, this.y);
           renderCtx.strokeStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
-          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.2})`;
-          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 0.8)`;
-          renderCtx.shadowBlur = 14;
-          drawCleanTalisman(renderCtx, this.sigilId, this.size);
+          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.22})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 0.85)`;
+          renderCtx.shadowBlur = 15;
+          drawPlanetTalisman(renderCtx, this.planetId, this.size);
         } else {
           const isStarDot = this.size < 4;
           const radius = isStarDot ? this.size * 1.4 : this.size;
           const gradient = renderCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
-          
           if (isStarDot) {
-            const starBrightness = 78 + Math.sin(this.life * 0.5) * 22;
+            const starBrightness = 80 + Math.sin(this.life * 0.5) * 20;
             renderCtx.shadowBlur = 8;
             renderCtx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${this.alpha})`;
             gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${starBrightness}%, ${this.alpha})`);
             gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
           } else {
-            // Tight and focused glowing trail colors
-            gradient.addColorStop(0, `hsla(${this.hue}, 95%, 58%, ${this.alpha * 0.40})`);
-            gradient.addColorStop(0.5, `hsla(${this.hue}, 85%, 45%, ${this.alpha * 0.12})`);
-            gradient.addColorStop(1, `hsla(${this.hue}, 50%, 30%, 0)`);
-          }
-
-          renderCtx.fillStyle = gradient;
-          renderCtx.beginPath();
-          renderCtx.arc(this.x, this.y, radius, 0, Math.PI * 2);
-          renderCtx.fill();
-        }
-
-        renderCtx.restore();
-      }
-    }
-
-    const render = () => {
-      if (!canvas || !ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Higher max count to allow the long ribbon trail to populate fully without breaking
-      if (particles.length < 650 && Math.random() < 0.85) {
-        particles.push(new PremiumCinematicParticle(canvas.width, canvas.height));
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
-        particles[i].draw(ctx);
-        if (particles[i].alpha <= 0 || particles[i].x < 10 || particles[i].y < 10) {
-          particles.splice(i, 1);
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-    render();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, []);
-
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
-    </div>
-  );
-}
