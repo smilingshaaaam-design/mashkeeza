@@ -3,9 +3,9 @@
 
 import React, { useEffect, useRef } from "react";
 
-// ------------------------------------------------------
-// DATA
-// ------------------------------------------------------
+// ======================================================
+// ASMA UL HUSNA
+// ======================================================
 
 const ASMA = [
   "الله", "الرحمن", "الرحيم", "الملك", "القدوس",
@@ -24,11 +24,16 @@ const ASMA = [
   "الماجد", "الواحد", "الصمد", "القادر", "المقتدر",
   "المقدم", "المؤخر", "الأول", "الآخر", "الظاهر",
   "الباطن", "الوالي", "المتعالي", "البر", "التواب",
-  "المنتقم", "العفو", "الرؤوف", "مالك الملك", "ذو الجلال والإكرام",
-  "المقسط", "الجامع", "الغني", "المغني", "المانع",
-  "الضار", "النافع", "النور", "الهادي", "البديع",
-  "الباقي", "الوارث", "الرشيد", "الصبور"
+  "المنتقم", "العفو", "الرؤوف", "مالك الملك",
+  "ذو الجلال والإكرام", "المقسط", "الجامع", "الغني",
+  "المغني", "المانع", "الضار", "النافع", "النور",
+  "الهادي", "البديع", "الباقي", "الوارث", "الرشيد",
+  "الصبور"
 ];
+
+// ======================================================
+// HUROOF-E-MUQATTAAT
+// ======================================================
 
 const MUQATTAAT = [
   "الم", "المص", "الر", "المر",
@@ -37,12 +42,20 @@ const MUQATTAAT = [
   "ق", "ن"
 ];
 
+// ======================================================
+// 28 HUROOF-E-ABJAD
+// ======================================================
+
 const ABJAD = [
   "ا", "ب", "ج", "د", "ه", "و", "ز",
   "ح", "ط", "ي", "ك", "ل", "م", "ن",
   "س", "ع", "ف", "ص", "ق", "ر", "ش",
   "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"
 ];
+
+// ======================================================
+// PLANETARY GLYPHS
+// ======================================================
 
 const PLANETS = [
   { symbol: "☉", name: "الشمس", hue: 44 },
@@ -54,19 +67,18 @@ const PLANETS = [
   { symbol: "♄", name: "زحل", hue: 230 }
 ];
 
-// ------------------------------------------------------
+// ======================================================
 // TYPES
-// ------------------------------------------------------
+// ======================================================
 
 type SmokeParticle = {
-  x: number;
-  y: number;
   age: number;
   life: number;
   size: number;
   drift: number;
   seed: number;
   hue: number;
+  progress: number;
 };
 
 type GlyphParticle = {
@@ -79,11 +91,11 @@ type GlyphParticle = {
   wobble: number;
 };
 
-// ------------------------------------------------------
+// ======================================================
 // COMPONENT
-// ------------------------------------------------------
+// ======================================================
 
-export default function PaintedSmoke() {
+export function PaintedSmoke() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -108,6 +120,10 @@ export default function PaintedSmoke() {
     const random = (min: number, max: number) =>
       min + Math.random() * (max - min);
 
+    // --------------------------------------------------
+    // RESIZE CANVAS
+    // --------------------------------------------------
+
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -121,18 +137,23 @@ export default function PaintedSmoke() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    // Original smoke source position:
-    // 76% from left, 64% from top.
+    // --------------------------------------------------
+    // ORIGINAL SMOKE SOURCE POSITION
+    // 76% WIDTH / 64% HEIGHT
+    // --------------------------------------------------
+
     const source = () => ({
       x: width * 0.76,
       y: height * 0.64
     });
 
-    // S-shaped rising smoke path.
-    // The smoke starts at the original source position
-    // and gradually curls as it rises.
+    // --------------------------------------------------
+    // S-SHAPED SMOKE PATH
+    // --------------------------------------------------
+
     const getSmokePath = (progress: number) => {
       const p = Math.max(0, Math.min(1, progress));
+
       const startX = width * 0.76;
       const startY = height * 0.64;
 
@@ -146,34 +167,39 @@ export default function PaintedSmoke() {
       return { x, y };
     };
 
-    const spawnSmoke = () => {
-      const origin = source();
+    // --------------------------------------------------
+    // CREATE SMOKE PARTICLES
+    // --------------------------------------------------
 
+    const spawnSmoke = () => {
       smoke.push({
-        x: origin.x + random(-3, 3),
-        y: origin.y + random(-2, 2),
         age: 0,
         life: random(2.8, 5.2),
         size: random(8, 19),
         drift: random(-0.7, 0.7),
         seed: random(0, Math.PI * 2),
-        hue: random(185, 285)
+        hue: random(185, 285),
+        progress: random(0, 0.035)
       });
     };
 
-    const spawnGlyph = () => {
-      const allSymbols = [
-        ...ASMA,
-        ...MUQATTAAT,
-        ...ABJAD,
-        ...PLANETS.map((planet) => planet.symbol)
-      ];
+    // --------------------------------------------------
+    // CREATE SYMBOL PARTICLES
+    // --------------------------------------------------
 
+    const allSymbols = [
+      ...ASMA,
+      ...MUQATTAAT,
+      ...ABJAD,
+      ...PLANETS.map((planet) => planet.symbol)
+    ];
+
+    const spawnGlyph = () => {
       const text = allSymbols[dataIndex % allSymbols.length];
       dataIndex++;
 
       glyphs.push({
-        progress: random(0.02, 0.18),
+        progress: random(0.02, 0.15),
         speed: random(0.045, 0.085),
         text,
         size: random(12, 20),
@@ -184,13 +210,15 @@ export default function PaintedSmoke() {
     };
 
     // --------------------------------------------------
-    // DRAW SMOKE PARTICLE
+    // DRAW SMOKE PARTICLES
     // --------------------------------------------------
 
     const drawSmokeParticle = (particle: SmokeParticle) => {
       const lifeProgress = particle.age / particle.life;
+
       const fadeIn = Math.min(1, lifeProgress * 5);
       const fadeOut = Math.min(1, (1 - lifeProgress) * 3);
+
       const alpha = Math.max(0, fadeIn * fadeOut * 0.12);
 
       if (alpha <= 0) return;
@@ -208,26 +236,23 @@ export default function PaintedSmoke() {
       const x = path.x + driftX;
       const y = path.y + driftY;
 
-      const size =
-        particle.size + lifeProgress * 15;
+      const size = particle.size + lifeProgress * 15;
 
       const gradient = ctx.createRadialGradient(
-        x,
-        y,
-        0,
-        x,
-        y,
-        size
+        x, y, 0,
+        x, y, size
       );
 
       gradient.addColorStop(
         0,
         `hsla(${particle.hue}, 65%, 85%, ${alpha})`
       );
+
       gradient.addColorStop(
         0.35,
         `hsla(${particle.hue}, 60%, 72%, ${alpha * 0.55})`
       );
+
       gradient.addColorStop(
         1,
         `hsla(${particle.hue}, 55%, 65%, 0)`
@@ -243,7 +268,7 @@ export default function PaintedSmoke() {
     };
 
     // --------------------------------------------------
-    // DRAW SOFT SMOKE RIBBON
+    // DRAW CONTINUOUS SMOKE RIBBON
     // --------------------------------------------------
 
     const drawSmokeRibbon = () => {
@@ -254,7 +279,7 @@ export default function PaintedSmoke() {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      // Main soft smoke trail
+      // Multiple soft smoke layers
       for (let layer = 0; layer < 4; layer++) {
         ctx.beginPath();
 
@@ -289,10 +314,12 @@ export default function PaintedSmoke() {
           0,
           `rgba(220, 205, 255, ${0.055 - layer * 0.008})`
         );
+
         gradient.addColorStop(
           0.5,
           `rgba(170, 190, 255, ${0.035 - layer * 0.004})`
         );
+
         gradient.addColorStop(
           1,
           "rgba(180, 220, 255, 0)"
@@ -303,7 +330,7 @@ export default function PaintedSmoke() {
         ctx.stroke();
       }
 
-      // Thin luminous center line
+      // Luminous center line
       ctx.beginPath();
 
       for (let i = 0; i <= 90; i++) {
@@ -331,7 +358,7 @@ export default function PaintedSmoke() {
     };
 
     // --------------------------------------------------
-    // DRAW INCENSE SOURCE GLOW
+    // INCENSE SOURCE GLOW
     // --------------------------------------------------
 
     const drawSourceGlow = () => {
@@ -351,9 +378,20 @@ export default function PaintedSmoke() {
         radius
       );
 
-      gradient.addColorStop(0, "rgba(255, 225, 175, 0.30)");
-      gradient.addColorStop(0.25, "rgba(210, 190, 255, 0.13)");
-      gradient.addColorStop(1, "rgba(180, 190, 255, 0)");
+      gradient.addColorStop(
+        0,
+        "rgba(255, 225, 175, 0.30)"
+      );
+
+      gradient.addColorStop(
+        0.25,
+        "rgba(210, 190, 255, 0.13)"
+      );
+
+      gradient.addColorStop(
+        1,
+        "rgba(180, 190, 255, 0)"
+      );
 
       ctx.save();
       ctx.globalCompositeOperation = "screen";
@@ -365,7 +403,7 @@ export default function PaintedSmoke() {
     };
 
     // --------------------------------------------------
-    // DRAW FLOATING ARABIC / SYMBOL GLYPHS
+    // DRAW FLOATING ARABIC AND PLANETARY SYMBOLS
     // --------------------------------------------------
 
     const drawGlyph = (glyph: GlyphParticle) => {
@@ -382,6 +420,7 @@ export default function PaintedSmoke() {
 
       const fadeIn = Math.min(1, glyph.progress * 5);
       const fadeOut = Math.min(1, (1 - glyph.progress) * 4);
+
       const alpha = glyph.alpha * fadeIn * fadeOut;
 
       if (alpha <= 0) return;
@@ -391,11 +430,16 @@ export default function PaintedSmoke() {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      ctx.shadowColor = `hsla(${glyph.hue}, 90%, 80%, ${alpha})`;
+      ctx.shadowColor =
+        `hsla(${glyph.hue}, 90%, 80%, ${alpha})`;
+
       ctx.shadowBlur = 13;
 
-      ctx.font = `${glyph.size}px "Amiri", "Noto Naskh Arabic", serif`;
-      ctx.fillStyle = `hsla(${glyph.hue}, 75%, 88%, ${alpha})`;
+      ctx.font =
+        `${glyph.size}px "Amiri", "Noto Naskh Arabic", serif`;
+
+      ctx.fillStyle =
+        `hsla(${glyph.hue}, 75%, 88%, ${alpha})`;
 
       ctx.fillText(glyph.text, x, y);
       ctx.restore();
@@ -418,13 +462,11 @@ export default function PaintedSmoke() {
       ctx.clearRect(0, 0, width, height);
 
       // Continuous smoke emission
-      const emissionCount = 3;
-
-      for (let i = 0; i < emissionCount; i++) {
+      for (let i = 0; i < 3; i++) {
         spawnSmoke();
       }
 
-      // Slowly introduce symbolic particles
+      // New symbols enter gradually
       glyphTimer += delta;
 
       if (glyphTimer > 0.72) {
@@ -432,10 +474,10 @@ export default function PaintedSmoke() {
         spawnGlyph();
       }
 
-      // Draw the continuous smoke ribbon first
+      // Draw the ribbon
       drawSmokeRibbon();
 
-      // Update and draw smoke particles
+      // Update smoke particles
       for (let i = smoke.length - 1; i >= 0; i--) {
         const particle = smoke[i];
 
@@ -449,7 +491,7 @@ export default function PaintedSmoke() {
         drawSmokeParticle(particle);
       }
 
-      // Update and draw floating glyphs
+      // Update floating glyphs
       for (let i = glyphs.length - 1; i >= 0; i--) {
         const glyph = glyphs[i];
 
@@ -463,9 +505,11 @@ export default function PaintedSmoke() {
         drawGlyph(glyph);
       }
 
+      // Source glow
       drawSourceGlow();
 
-      animationFrame = window.requestAnimationFrame(animate);
+      animationFrame =
+        window.requestAnimationFrame(animate);
     };
 
     // --------------------------------------------------
@@ -483,13 +527,22 @@ export default function PaintedSmoke() {
 
     window.addEventListener("resize", resize);
 
-    animationFrame = window.requestAnimationFrame(animate);
+    animationFrame =
+      window.requestAnimationFrame(animate);
+
+    // --------------------------------------------------
+    // CLEANUP
+    // --------------------------------------------------
 
     return () => {
       disposed = true;
+
       window.cancelAnimationFrame(animationFrame);
+
       resizeObserver?.disconnect();
+
       window.removeEventListener("resize", resize);
+
       smoke.length = 0;
       glyphs.length = 0;
     };
@@ -508,3 +561,6 @@ export default function PaintedSmoke() {
     />
   );
 }
+
+// Support both named and default imports.
+export default PaintedSmoke;
