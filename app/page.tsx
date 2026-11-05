@@ -79,7 +79,7 @@ export default function HomePage() {
       <main>
         <section aria-label="روحانی منظر" className="relative -mt-2">
           <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[16/8]">
-            <div className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size]">
+            <div className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size] w-full max-w-[1584px]">
               <Image
                 src="/images/desert-scene.png"
                 alt="صحرا میں روشن قدیم کتابیں، جادوئی چراغ اور سنہری روشنی کا دریا"
@@ -91,43 +91,28 @@ export default function HomePage() {
               <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[38%]" />
               <Mashk />
 
-              {/* 🪔 FIXED PREMIUM CINEMATIC SMOKE & SPARKS (No Style-JSX / Pure Tailwind Layout) */}
-              <div className="absolute bottom-[28%] right-[11%] w-44 h-80 pointer-events-none mix-blend-screen z-20">
-                {/* Core Ambient Light on Lamp Mouth */}
-                <div className="absolute bottom-0 right-10 w-14 h-14 bg-purple-500/40 blur-xl rounded-full animate-pulse" />
-                <div className="absolute bottom-1 right-12 w-6 h-6 bg-amber-400/50 blur-md rounded-full animate-ping [animation-duration:1400ms]" />
+              {/* 🪔 EXACT RESPONSIVE COORD MATCH FOR STATIC SMOKE ANIMATION */}
+              <div className="absolute bottom-[33%] right-[13.5%] md:right-[14%] w-[25cqw] h-[35cqw] max-w-[320px] max-h-[420px] pointer-events-none mix-blend-screen z-20 overflow-visible">
+                
+                {/* Micro-glow directly at the nozzle tip */}
+                <div className="absolute bottom-2 right-[42%] w-8 h-8 bg-purple-500/60 blur-md rounded-full animate-pulse" />
+                <div className="absolute bottom-3 right-[44%] w-4 h-4 bg-amber-300/50 blur-sm rounded-full animate-ping [animation-duration:1s]" />
 
-                {/* Volumetric Smoke Trail 1 (Tailwind Inline Animation classes) */}
+                {/* Overlapping Shimmering Smoke Strings that mask the static JPEG smoke */}
                 <div 
-                  className="absolute bottom-4 right-8 w-28 h-56 bg-gradient-to-t from-purple-600/25 via-pink-500/10 to-transparent blur-2xl rounded-full opacity-0"
-                  style={{
-                    animation: 'cinematicSmoke1 8s infinite ease-in-out'
-                  }}
+                  className="absolute bottom-6 left-0 w-full h-[85%] bg-gradient-to-t from-purple-600/30 via-pink-500/10 to-transparent blur-xl rounded-full opacity-0"
+                  style={{ animation: 'cinematicSmoke1 7s infinite ease-in-out' }}
                 />
                 
-                {/* Volumetric Smoke Trail 2 */}
                 <div 
-                  className="absolute bottom-8 right-4 w-24 h-64 bg-gradient-to-tr from-indigo-500/20 via-purple-600/5 to-transparent blur-3xl rounded-full opacity-0"
-                  style={{
-                    animation: 'cinematicSmoke2 11s infinite ease-in-out 1.8s'
-                  }}
+                  className="absolute bottom-8 left-[10%] w-[90%] h-[90%] bg-gradient-to-tr from-indigo-500/25 via-purple-500/5 to-transparent blur-2xl rounded-full opacity-0"
+                  style={{ animation: 'cinematicSmoke2 10s infinite ease-in-out 1.5s' }}
                 />
 
-                {/* Magic Sparkle 1 */}
-                <div 
-                  className="absolute bottom-6 right-12 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0"
-                  style={{ animation: 'luxurySparkle 5s infinite linear' }}
-                />
-                {/* Magic Sparkle 2 */}
-                <div 
-                  className="absolute bottom-12 right-6 w-2 h-2 bg-amber-200 rounded-full opacity-0"
-                  style={{ animation: 'luxurySparkle 5s infinite linear 0.7s' }}
-                />
-                {/* Magic Sparkle 3 */}
-                <div 
-                  className="absolute bottom-20 right-14 w-1 h-1 bg-white rounded-full opacity-0"
-                  style={{ animation: 'luxurySparkle 5s infinite linear 1.5s' }}
-                />
+                {/* Rising Magical Sparks */}
+                <div className="absolute bottom-10 left-[45%] w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'luxurySparkle 4s infinite linear' }} />
+                <div className="absolute bottom-20 left-[35%] w-2 h-2 bg-purple-300 rounded-full opacity-0" style={{ animation: 'luxurySparkle 5s infinite linear 0.8s' }} />
+                <div className="absolute bottom-16 left-[55%] w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'luxurySparkle 4.5s infinite linear 1.8s' }} />
               </div>
 
             </div>
@@ -136,24 +121,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Global Web Animations Engine injected safely inside standard CSS string layer */}
+        {/* CSS Engine safely embedded for production deployment */}
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes cinematicSmoke1 {
-            0% { transform: translateY(40px) scale(0.7) rotate(0deg); opacity: 0; filter: blur(8px); }
-            20% { opacity: 0.6; }
-            50% { transform: translateY(-110px) scale(1.5) translateX(-25px) rotate(-12deg); opacity: 0.4; filter: blur(14px); }
-            100% { transform: translateY(-260px) scale(2.3) translateX(-60px) rotate(-25deg); opacity: 0; filter: blur(24px); }
+            0% { transform: translateY(30px) scale(0.8) rotate(0deg); opacity: 0; filter: blur(6px); }
+            15% { opacity: 0.7; }
+            50% { transform: translateY(-90px) scale(1.3) translateX(-35px) rotate(-15deg); opacity: 0.4; filter: blur(12px); }
+            100% { transform: translateY(-220px) scale(1.9) translateX(-70px) rotate(-35deg); opacity: 0; filter: blur(20px); }
           }
           @keyframes cinematicSmoke2 {
-            0% { transform: translateY(50px) scale(0.5) rotate(0deg); opacity: 0; filter: blur(12px); }
-            25% { opacity: 0.5; }
-            70% { transform: translateY(-140px) scale(1.7) translateX(20px) rotate(15deg); opacity: 0.3; filter: blur(18px); }
-            100% { transform: translateY(-310px) scale(2.5) translateX(45px) rotate(35deg); opacity: 0; filter: blur(30px); }
+            0% { transform: translateY(40px) scale(0.6) rotate(0deg); opacity: 0; filter: blur(10px); }
+            20% { opacity: 0.6; }
+            65% { transform: translateY(-120px) scale(1.5) translateX(25px) rotate(20deg); opacity: 0.3; filter: blur(16px); }
+            100% { transform: translateY(-270px) scale(2.1) translateX(55px) rotate(45deg); opacity: 0; filter: blur(26px); }
           }
           @keyframes luxurySparkle {
-            0% { transform: translateY(20px) translateX(0) scale(0.3); opacity: 0; }
-            50% { opacity: 1; transform: translateY(-90px) translateX(-20px) scale(1.4); }
-            100% { transform: translateY(-210px) translateX(-45px) scale(0); opacity: 0; }
+            0% { transform: translateY(10px) translateX(0) scale(0.4); opacity: 0; }
+            40% { opacity: 1; transform: translateY(-70px) translateX(-15px) scale(1.2); }
+            100% { transform: translateY(-180px) translateX(-35px) scale(0); opacity: 0; }
           }
         `}} />
 
