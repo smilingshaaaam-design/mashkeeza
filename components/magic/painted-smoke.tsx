@@ -2,92 +2,72 @@
 
 import React from 'react';
 
-// Image ke hisab se exact coordinates jahan smoke hai
-const BOX = { left: 68.5, top: 21, width: 24, height: 50 };
-
-const crop = {
-  width: `${(100 / BOX.width) * 100}%`,
-  height: `${(100 / BOX.height) * 100}%`,
-  left: `${-(BOX.left / BOX.width) * 100}%`,
-  top: `${-(BOX.top / BOX.height) * 100}%`,
-};
-
-function SmokeLayer({ filter, className }: { filter: string; className: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`absolute overflow-hidden ${className}`}
-      style={{
-        left: `${BOX.left}%`,
-        top: `${BOX.top}%`,
-        width: `${BOX.width}%`,
-        height: `${BOX.height}%`,
-        filter: `url(#${filter})`,
-      }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/images/desert-scene.png"
-        alt=""
-        draggable={false}
-        className="absolute max-w-none select-none"
-        style={crop}
-      />
-    </div>
-  );
-}
-
 export function PaintedSmoke() {
   return (
-    <div className="pointer-events-none absolute inset-0">
-      <svg aria-hidden="true" className="absolute h-0 w-0">
-        <defs>
-          {/* Flow Filter - Base movement ko smooth karne ke liye */}
-          <filter id="smoke-flow" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="3" seed="2" result="noise">
-              <animate
-                attributeName="baseFrequency"
-                dur="20s"
-                values="0.01 0.02; 0.015 0.025; 0.01 0.02"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="R" yChannelSelector="G" scale="15">
-              <animate attributeName="scale" dur="10s" values="15; 25; 15" repeatCount="indefinite" />
-            </feDisplacementMap>
-          </filter>
-
-          {/* Curl Filter - Hawa ke swirls aur detail ke liye */}
-          <filter id="smoke-curl" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="turbulence" baseFrequency="0.02 0.03" numOctaves="2" seed="5" result="noise">
-              <animate
-                attributeName="baseFrequency"
-                dur="15s"
-                values="0.02 0.03; 0.025 0.04; 0.02 0.03"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" xChannelSelector="G" yChannelSelector="B" scale="25">
-              <animate attributeName="scale" dur="8s" values="20; 35; 20" repeatCount="indefinite" />
-            </feDisplacementMap>
-            <feGaussianBlur stdDeviation="1.5" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* Ye dono layers mil kar ek bahut rich, glowing aur moving smoke banayengi */}
-      <SmokeLayer filter="smoke-flow" className="mix-blend-screen opacity-90" />
-      <SmokeLayer filter="smoke-curl" className="mix-blend-screen opacity-70" />
-
-      {/* Lamp Spout Glow - Image mein lamp ke muh ke paas ki chamak */}
-      <div
-        aria-hidden="true"
-        className="lamp-spout-glow absolute rounded-full"
-        style={{ 
-          left: '79.5%', top: '68%', width: '3%', height: '6%', 
-          boxShadow: '0 0 25px 10px rgba(255, 200, 100, 0.4)' 
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
+      
+      {/* 💨 LAYER 1: BASE MAGIC GLOW OVERLAY */}
+      {/* Yeh layer background ke static smoke ke upar ek smooth glowing atmosphere banayegi */}
+      <div 
+        className="absolute bottom-[24%] right-[8%] w-[38%] h-[50%] mix-blend-screen opacity-80 blur-md pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at bottom right, rgba(147, 51, 234, 0.4) 0%, rgba(236, 72, 153, 0.15) 40%, transparent 70%)',
+          animation: 'premiumAuraPulse 5s infinite ease-in-out'
         }}
       />
+
+      {/* 💨 LAYER 2: VOLUMETRIC SMOKE STREAM A (Left Curve Fluid Movement) */}
+      <div 
+        className="absolute bottom-[28%] right-[12%] w-[25%] h-[45%] mix-blend-screen opacity-0 blur-xl rounded-full"
+        style={{
+          background: 'linear-gradient(0deg, rgba(168, 85, 247, 0.5) 0%, rgba(99, 102, 241, 0.2) 60%, transparent 100%)',
+          animation: 'videoFluidSmoke1 8s infinite ease-in-out',
+          transformOrigin: 'bottom right'
+        }}
+      />
+
+      {/* 💨 LAYER 3: VOLUMETRIC SMOKE STREAM B (Cross Wave Pattern) */}
+      <div 
+        className="absolute bottom-[30%] right-[10%] w-[20%] h-[40%] mix-blend-screen opacity-0 blur-2xl rounded-full"
+        style={{
+          background: 'linear-gradient(0deg, rgba(236, 72, 153, 0.4) 0%, rgba(147, 51, 234, 0.1) 50%, transparent 100%)',
+          animation: 'videoFluidSmoke2 11s infinite ease-in-out 1.5s',
+          transformOrigin: 'bottom right'
+        }}
+      />
+
+      {/* ✨ LAYER 4: CINEMATIC SPARKS (Chirag se nikalne wale barik sitare) */}
+      <div className="absolute bottom-[32%] right-[15%] w-24 h-48">
+        <div className="absolute bottom-2 left-1/2 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 4s infinite linear' }} />
+        <div className="absolute bottom-10 left-1/4 w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 5s infinite linear 0.8s' }} />
+        <div className="absolute bottom-6 left-[65%] w-1.5 h-1.5 bg-purple-300 rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 4.5s infinite linear 1.8s' }} />
+      </div>
+
+      {/* Pure CSS Engine - Cloudflare standard compilation target */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes premiumAuraPulse {
+          0%, 100% { opacity: 0.6; filter: blur(10px); }
+          50% { opacity: 0.85; filter: blur(16px); }
+        }
+        @keyframes videoFluidSmoke1 {
+          0% { transform: translateY(30px) scale(0.6) rotate(0deg); opacity: 0; }
+          20% { opacity: 0.75; }
+          50% { transform: translateY(-70px) scale(1.3) translateX(-30px) rotate(-15deg); opacity: 0.45; }
+          100% { transform: translateY(-190px) scale(1.8) translateX(-70px) rotate(-35deg); opacity: 0; }
+        }
+        @keyframes videoFluidSmoke2 {
+          0% { transform: translateY(40px) scale(0.5) rotate(0deg); opacity: 0; }
+          25% { opacity: 0.65; }
+          60% { transform: translateY(-90px) scale(1.4) translateX(20px) rotate(15deg); opacity: 0.35; }
+          100% { transform: translateY(-220px) scale(2.0) translateX(45px) rotate(35deg); opacity: 0; }
+        }
+        @keyframes sparkleRiseUp {
+          0% { transform: translateY(15px) translateX(0) scale(0.3); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translateY(-150px) translateX(-50px) scale(0); opacity: 0; }
+        }
+      `}} />
+
     </div>
   );
 }
