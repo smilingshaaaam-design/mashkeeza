@@ -1,75 +1,199 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export function PaintedSmoke() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let particles: any[] = [];
+
+    // Roohani Jafri Calligraphy & Talismatic Glyphs Target Text Nodes
+    const SPELLS = ['الله', 'ح', 'ط', 'ی', 'ق', 'ش', 'د', 'ج', 'ا', '۞', '✦', '✧', '☽'];
+
+    const resizeCanvas = () => {
+      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
+      canvas.height = canvas.parentElement?.clientHeight || 450;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Vector drawing for structural ancient talismat نقوش
+    const drawTalismanNode = (ctx: CanvasRenderingContext2D, type: number, size: number) => {
+      ctx.beginPath();
+      ctx.lineWidth = 1.2;
+      if (type === 0) {
+        ctx.arc(0, 0, size * 0.7, 0, Math.PI * 2);
+        ctx.moveTo(-size * 0.5, 0); ctx.lineTo(size * 0.5, 0);
+        ctx.moveTo(0, -size * 0.5); ctx.lineTo(0, size * 0.5);
+      } else if (type === 1) {
+        for (let i = 0; i < 3; i++) {
+          ctx.moveTo(-size * 0.7, 0); ctx.lineTo(size * 0.7, 0);
+          ctx.beginPath(); ctx.arc(size * 0.7, 0, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.rotate(Math.PI / 3);
+        }
+      } else {
+        ctx.moveTo(-size * 0.5, -size * 0.3); ctx.lineTo(size * 0.5, -size * 0.3);
+        ctx.lineTo(0, size * 0.5); ctx.closePath();
+      }
+      ctx.stroke();
+    };
+
+    class PremiumCinematicParticle {
+      x: number;
+      y: number;
+      size: number;
+      vx: number;
+      vy: number;
+      alpha: number;
+      maxLife: number;
+      life: number;
+      hue: number;
+      type: 'gaseous' | 'runic' | 'sigil';
+      char: string;
+      sigilId: number;
+      spin: number;
+      angle: number;
+
+      constructor() {
+        // Locked tightly onto the preview lamp's physical nozzle position
+        this.x = canvas.width * 0.76;
+        this.y = canvas.height * 0.64;
+        
+        const rand = Math.random();
+        if (rand < 0.22) {
+          this.type = 'runic';
+          this.char = SPELLS[Math.floor(Math.random() * SPELLS.length)];
+          this.size = Math.random() * 5 + 14;
+        } else if (rand < 0.42) {
+          this.type = 'sigil';
+          this.sigilId = Math.floor(Math.random() * 3);
+          this.size = Math.random() * 4 + 11;
+        } else {
+          this.type = 'gaseous';
+          this.size = Math.random() * 28 + 18;
+        }
+
+        // Exact right-to-left horizontal fluid drift velocity matching the image curves
+        this.vx = -(Math.random() * 1.6 + 1.1);
+        this.vy = -(Math.random() * 0.45 + 0.1);
+        this.alpha = Math.random() * 0.55 + 0.35;
+        this.maxLife = Math.random() * 150 + 110;
+        this.life = 0;
+        
+        // Exact color mesh nodes match: Cyan-Blue (188) and Wizard Mystic Gold (44)
+        this.hue = Math.random() < 0.55 ? 188 : 44;
+        this.spin = (Math.random() - 0.5) * 0.05;
+        this.angle = Math.random() * Math.PI;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life++;
+
+        // Natural wavy oscillation dynamics (Organic wave physics)
+        this.vy += Math.sin(this.life * 0.025) * 0.04;
+        this.vx += Math.cos(this.life * 0.015) * 0.01;
+
+        const progress = this.life / this.maxLife;
+
+        // ✨ TEHLEEL SYSTEM: Glyphs morph into crisp twinkling starry dots at 50% marker
+        if (this.type !== 'gaseous' && progress > 0.50) {
+          this.type = 'gaseous';
+          this.size = Math.random() * 1.5 + 1.2; 
+          this.vx *= 0.92; // Horizontally lock velocities to twinkle seamlessly
+        } else if (this.type === 'gaseous' && this.size >= 4) {
+          if (progress <= 0.50) this.size += 0.25; // Continuous gas plume volumetric scaling
+        }
+
+        if (progress > 0.70) {
+          this.alpha -= 0.009;
+        }
+      }
+
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx!.save();
+        ctx!.globalCompositeOperation = 'lighter';
+
+        if (this.type === 'runic') {
+          ctx!.translate(this.x, this.y);
+          ctx!.rotate(this.angle);
+          ctx!.font = `bold ${this.size}px "Times New Roman", Amiri, serif`;
+          ctx!.fillStyle = `hsla(${this.hue}, 100%, 78%, ${this.alpha * 0.95})`;
+          ctx!.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.8)`;
+          ctx!.shadowBlur = 12;
+          ctx!.textAlign = 'center';
+          ctx!.textBaseline = 'middle';
+          ctx!.fillText(this.char, 0, 0);
+        } else if (this.type === 'sigil') {
+          ctx!.translate(this.x, this.y);
+          ctx!.rotate(this.angle);
+          ctx!.strokeStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
+          ctx!.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.25})`;
+          ctx!.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.85)`;
+          ctx!.shadowBlur = 14;
+          drawTalismanNode(ctx!, this.sigilId, this.size);
+        } else {
+          const isStarDot = this.size < 4;
+          const radius = isStarDot ? this.size * 1.3 : this.size;
+          const gradient = ctx!.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
+          
+          if (isStarDot) {
+            const starBrightness = 75 + Math.sin(this.life * 0.5) * 25; // Continuous twinkle sequence
+            gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${starBrightness}%, ${this.alpha})`);
+            gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+          } else {
+            gradient.addColorStop(0, `hsla(${this.hue}, 90%, 58%, ${this.alpha * 0.30})`);
+            gradient.addColorStop(0.4, `hsla(${this.hue}, 80%, 48%, ${this.alpha * 0.08})`);
+            gradient.addColorStop(1, `hsla(${this.hue}, 50%, 35%, 0)`);
+          }
+
+          ctx!.fillStyle = gradient;
+          ctx!.beginPath();
+          ctx!.arc(this.x, this.y, radius, 0, Math.PI * 2);
+          ctx!.fill();
+        }
+
+        ctx!.restore();
+      }
+    }
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (particles.length < 380 && Math.random() < 0.55) {
+        particles.push(new PremiumCinematicParticle());
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].alpha <= 0 || particles[i].x < 15 || particles[i].y < 15) {
+          particles.splice(i, 1);
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
-      
-      {/* 🔮 LAYER 1: VIBRANT AURA GLOW OVERLAY */}
-      {/* Yeh layer image ke static purple smoke ke pure area par halki chamak peda karegi */}
-      <div 
-        className="absolute bottom-[35%] right-[6%] w-[25%] h-[40%] mix-blend-screen opacity-70 blur-xl pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.45) 0%, rgba(236, 72, 153, 0.15) 50%, transparent 80%)',
-          animation: 'smokeAtmospherePulse 6s infinite ease-in-out'
-        }}
-      />
-
-      {/* 💨 LAYER 2: PREMIUM SMOOTH VIDEO SMOKE FLOW (Exact Curve Target) */}
-      {/* Yeh image ke static dhuwan ke upar video jaisa floating movement effect overlay karega */}
-      <div 
-        className="absolute bottom-[38%] right-[8%] w-[18%] h-[38%] mix-blend-screen opacity-0 blur-2xl rounded-full"
-        style={{
-          background: 'linear-gradient(0deg, rgba(147, 51, 234, 0.5) 0%, rgba(219, 39, 119, 0.2) 60%, transparent 100%)',
-          animation: 'trueFluidFlow1 8s infinite ease-in-out',
-          transformOrigin: 'bottom right'
-        }}
-      />
-
-      {/* 💨 LAYER 3: CROSS CONTOUR STREAM (For depth) */}
-      <div 
-        className="absolute bottom-[40%] right-[12%] w-[15%] h-[35%] mix-blend-screen opacity-0 blur-3xl rounded-full"
-        style={{
-          background: 'linear-gradient(0deg, rgba(192, 132, 252, 0.4) 0%, rgba(79, 70, 229, 0.1) 50%, transparent 100%)',
-          animation: 'trueFluidFlow2 11s infinite ease-in-out 2s',
-          transformOrigin: 'bottom right'
-        }}
-      />
-
-      {/* ✨ LAYER 4: MAGICAL GOLDEN & PURPLE SPARKS */}
-      {/* Chirag ke munh se nikal kar dhuwan ke sath upar ki taraf tairte hue sitare */}
-      <div className="absolute bottom-[36%] right-[11%] w-20 h-64">
-        <div className="absolute bottom-2 left-1/2 w-1.5 h-1.5 bg-amber-300 rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 4s infinite linear' }} />
-        <div className="absolute bottom-14 left-1/4 w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 5s infinite linear 0.9s' }} />
-        <div className="absolute bottom-8 left-[70%] w-1.5 h-1.5 bg-fuchsia-300 rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 4.5s infinite linear 1.8s' }} />
-      </div>
-
-      {/* High-End Cinematic Web Animations Engine */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes smokeAtmospherePulse {
-          0%, 100% { opacity: 0.5; transform: scale(0.98); filter: blur(14px); }
-          50% { opacity: 0.8; transform: scale(1.02); filter: blur(20px); }
-        }
-        @keyframes trueFluidFlow1 {
-          0% { transform: translateY(40px) scale(0.7) rotate(0deg); opacity: 0; }
-          20% { opacity: 0.7; }
-          50% { transform: translateY(-80px) scale(1.4) translateX(-40px) rotate(-18deg); opacity: 0.4; }
-          100% { transform: translateY(-210px) scale(2.0) translateX(-90px) rotate(-35deg); opacity: 0; }
-        }
-        @keyframes trueFluidFlow2 {
-          0% { transform: translateY(50px) scale(0.6) rotate(0deg); opacity: 0; }
-          25% { opacity: 0.6; }
-          65% { transform: translateY(-110px) scale(1.5) translateX(30px) rotate(15deg); opacity: 0.3; }
-          100% { transform: translateY(-240px) scale(2.2) translateX(60px) rotate(40deg); opacity: 0; }
-        }
-        @keyframes sparkleFloatingRise {
-          0% { transform: translateY(20px) translateX(0) scale(0.3); opacity: 0; filter: drop-shadow(0 0 2px rgba(253,224,71,0.6)); }
-          30% { opacity: 1; }
-          100% { transform: translateY(-170px) translateX(-60px) scale(0); opacity: 0; }
-        }
-      `}} />
-
+      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
 }
