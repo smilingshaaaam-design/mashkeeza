@@ -163,8 +163,8 @@ class Particle {
 }
 
 export function MagicalSmoke({
-  originX = 0.85,
-  originY = 0.95,
+  originX = 0.76,
+  originY = 0.64,
   glyphs = DEFAULT_GLYPHS,
   drift = 1,
 }: Props) {
