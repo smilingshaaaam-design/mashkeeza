@@ -12,37 +12,39 @@ export function PaintedSmoke() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let particles: any[] = [];
+    let particles: PremiumCinematicParticle[] = [];
 
     // Roohani Jafri Calligraphy & Talismatic Glyphs Target Text Nodes
     const SPELLS = ['الله', 'ح', 'ط', 'ی', 'ق', 'ش', 'د', 'ج', 'ا', '۞', '✦', '✧', '☽'];
 
     const resizeCanvas = () => {
-      canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
-      canvas.height = canvas.parentElement?.clientHeight || 450;
+      if (canvas && canvas.parentElement) {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight || 450;
+      }
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
     // Vector drawing for structural ancient talismat نقوش
-    const drawTalismanNode = (ctx: CanvasRenderingContext2D, type: number, size: number) => {
-      ctx.beginPath();
-      ctx.lineWidth = 1.2;
+    const drawTalismanNode = (context: CanvasRenderingContext2D, type: number, size: number) => {
+      context.beginPath();
+      context.lineWidth = 1.2;
       if (type === 0) {
-        ctx.arc(0, 0, size * 0.7, 0, Math.PI * 2);
-        ctx.moveTo(-size * 0.5, 0); ctx.lineTo(size * 0.5, 0);
-        ctx.moveTo(0, -size * 0.5); ctx.lineTo(0, size * 0.5);
+        context.arc(0, 0, size * 0.7, 0, Math.PI * 2);
+        context.moveTo(-size * 0.5, 0); context.lineTo(size * 0.5, 0);
+        context.moveTo(0, -size * 0.4); context.lineTo(0, size * 0.4);
       } else if (type === 1) {
         for (let i = 0; i < 3; i++) {
-          ctx.moveTo(-size * 0.7, 0); ctx.lineTo(size * 0.7, 0);
-          ctx.beginPath(); ctx.arc(size * 0.7, 0, 2, 0, Math.PI * 2); ctx.fill();
-          ctx.rotate(Math.PI / 3);
+          context.moveTo(-size * 0.7, 0); context.lineTo(size * 0.7, 0);
+          context.beginPath(); context.arc(size * 0.7, 0, 2, 0, Math.PI * 2); context.fill();
+          context.rotate(Math.PI / 3);
         }
       } else {
-        ctx.moveTo(-size * 0.5, -size * 0.3); ctx.lineTo(size * 0.5, -size * 0.3);
-        ctx.lineTo(0, size * 0.5); ctx.closePath();
+        context.moveTo(-size * 0.5, -size * 0.3); context.lineTo(size * 0.5, -size * 0.3);
+        context.lineTo(0, size * 0.5); context.closePath();
       }
-      ctx.stroke();
+      context.stroke();
     };
 
     class PremiumCinematicParticle {
@@ -61,11 +63,14 @@ export function PaintedSmoke() {
       spin: number;
       angle: number;
 
-      constructor() {
+      constructor(canvasWidth: number, canvasHeight: number) {
         // Locked tightly onto the preview lamp's physical nozzle position
-        this.x = canvas.width * 0.76;
-        this.y = canvas.height * 0.64;
+        this.x = canvasWidth * 0.76;
+        this.y = canvasHeight * 0.64;
         
+        this.char = '';
+        this.sigilId = 0;
+
         const rand = Math.random();
         if (rand < 0.22) {
           this.type = 'runic';
@@ -118,33 +123,33 @@ export function PaintedSmoke() {
         }
       }
 
-      draw() {
+      draw(renderCtx: CanvasRenderingContext2D) {
         if (this.alpha <= 0) return;
-        ctx!.save();
-        ctx!.globalCompositeOperation = 'lighter';
+        renderCtx.save();
+        renderCtx.globalCompositeOperation = 'lighter';
 
         if (this.type === 'runic') {
-          ctx!.translate(this.x, this.y);
-          ctx!.rotate(this.angle);
-          ctx!.font = `bold ${this.size}px "Times New Roman", Amiri, serif`;
-          ctx!.fillStyle = `hsla(${this.hue}, 100%, 78%, ${this.alpha * 0.95})`;
-          ctx!.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.8)`;
-          ctx!.shadowBlur = 12;
-          ctx!.textAlign = 'center';
-          ctx!.textBaseline = 'middle';
-          ctx!.fillText(this.char, 0, 0);
+          renderCtx.translate(this.x, this.y);
+          renderCtx.rotate(this.angle);
+          renderCtx.font = `bold ${this.size}px "Times New Roman", Amiri, serif`;
+          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 78%, ${this.alpha * 0.95})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.8)`;
+          renderCtx.shadowBlur = 12;
+          renderCtx.textAlign = 'center';
+          renderCtx.textBaseline = 'middle';
+          renderCtx.fillText(this.char, 0, 0);
         } else if (this.type === 'sigil') {
-          ctx!.translate(this.x, this.y);
-          ctx!.rotate(this.angle);
-          ctx!.strokeStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
-          ctx!.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.25})`;
-          ctx!.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.85)`;
-          ctx!.shadowBlur = 14;
-          drawTalismanNode(ctx!, this.sigilId, this.size);
+          renderCtx.translate(this.x, this.y);
+          renderCtx.rotate(this.angle);
+          renderCtx.strokeStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
+          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.25})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.85)`;
+          renderCtx.shadowBlur = 14;
+          drawTalismanNode(renderCtx, this.sigilId, this.size);
         } else {
           const isStarDot = this.size < 4;
           const radius = isStarDot ? this.size * 1.3 : this.size;
-          const gradient = ctx!.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
+          const gradient = renderCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
           
           if (isStarDot) {
             const starBrightness = 75 + Math.sin(this.life * 0.5) * 25; // Continuous twinkle sequence
@@ -156,26 +161,27 @@ export function PaintedSmoke() {
             gradient.addColorStop(1, `hsla(${this.hue}, 50%, 35%, 0)`);
           }
 
-          ctx!.fillStyle = gradient;
-          ctx!.beginPath();
-          ctx!.arc(this.x, this.y, radius, 0, Math.PI * 2);
-          ctx!.fill();
+          renderCtx.fillStyle = gradient;
+          renderCtx.beginPath();
+          renderCtx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+          renderCtx.fill();
         }
 
-        ctx!.restore();
+        renderCtx.restore();
       }
     }
 
     const render = () => {
+      if (!canvas || !ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (particles.length < 380 && Math.random() < 0.55) {
-        particles.push(new PremiumCinematicParticle());
+        particles.push(new PremiumCinematicParticle(canvas.width, canvas.height));
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
-        particles[i].draw();
+        particles[i].draw(ctx);
         if (particles[i].alpha <= 0 || particles[i].x < 15 || particles[i].y < 15) {
           particles.splice(i, 1);
         }
