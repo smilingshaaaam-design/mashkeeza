@@ -292,25 +292,19 @@ summary,
 }
 
 /* Painted lamp smoke brought to life */
-.painted-smoke {
-  -webkit-mask-image:
-    radial-gradient(ellipse 18% 30% at 74% 92%, transparent 45%, #000 100%),
-    radial-gradient(ellipse 58% 54% at 46% 48%, #000 55%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    radial-gradient(ellipse 18% 30% at 74% 92%, transparent 45%, #000 100%),
-    radial-gradient(ellipse 58% 54% at 46% 48%, #000 55%, transparent 100%);
-  mask-composite: intersect;
-  transform-origin: 31% 88%;
-  will-change: transform;
+/* Origin sits on the lamp spout so the smoke stays attached to it while drifting */
+.painted-smoke-drift,
+.painted-smoke-shimmer {
+  transform-origin: 26.4% 93.5%;
+  will-change: transform, opacity;
 }
 
-.painted-smoke-base { animation: smoke-sway 11s ease-in-out infinite; }
+.painted-smoke-drift { animation: smoke-sway 9s ease-in-out infinite; }
 
-.painted-smoke-glow {
-  opacity: 0.45;
+.painted-smoke-shimmer {
+  opacity: 0;
   animation:
-    smoke-sway-alt 8s ease-in-out infinite,
+    smoke-sway-alt 7s ease-in-out infinite,
     smoke-breathe 5s ease-in-out infinite;
 }
 
@@ -321,19 +315,20 @@ summary,
 }
 
 @keyframes smoke-sway {
-  0%, 100% { transform: rotate(0deg) scale(1, 1) translateY(0); }
-  30% { transform: rotate(-1.4deg) scale(1.02, 1.04) translateY(-0.6%); }
-  65% { transform: rotate(1.1deg) scale(0.99, 1.02) translateY(-1%); }
+  0%, 100% { transform: rotate(0deg) skewX(0deg) scale(1, 1); }
+  25% { transform: rotate(-1.6deg) skewX(1.2deg) scale(1.01, 1.035); }
+  50% { transform: rotate(-0.4deg) skewX(-0.8deg) scale(1, 1.05); }
+  75% { transform: rotate(1.3deg) skewX(-1.4deg) scale(0.995, 1.025); }
 }
 
 @keyframes smoke-sway-alt {
-  0%, 100% { transform: rotate(0.8deg) scale(1.01, 1.03) translateY(-0.5%); }
-  50% { transform: rotate(-1.6deg) scale(1.03, 1.07) translateY(-2%); }
+  0%, 100% { transform: rotate(0.9deg) skewX(-1deg) scale(1.01, 1.04); }
+  50% { transform: rotate(-1.8deg) skewX(1.5deg) scale(1.02, 1.07); }
 }
 
 @keyframes smoke-breathe {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.35; }
 }
 
 @keyframes spout-pulse {
@@ -342,7 +337,7 @@ summary,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .painted-smoke-base,
-  .painted-smoke-glow,
+  .painted-smoke-drift,
+  .painted-smoke-shimmer,
   .lamp-spout-glow { animation: none; }
 }

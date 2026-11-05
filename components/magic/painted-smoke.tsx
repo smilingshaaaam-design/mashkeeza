@@ -1,46 +1,44 @@
 // Box is aligned so the smoke in lamp-smoke.mp4 starts exactly at the painted lamp's spout.
 const VIDEO_BOX = { left: 69.19, top: 34.23, width: 31.31, height: 36.9 }
 
-// Region of desert-scene.png that contains the painted purple smoke.
-const PAINTED_BOX = { left: 68.5, top: 21, width: 24, height: 50 }
+// Pixel region (1100,160 → 1460,470) of desert-scene.png holding the painted smoke.
+// lamp-smoke-plate.png is that region with the smoke removed (sand and lamp untouched),
+// lamp-smoke-painted.png is the smoke alone, so only the smoke moves.
+const PAINTED_BOX = { left: 69.444, top: 23.81, width: 22.727, height: 46.131 }
 
-const paintedLayerStyle = {
-  backgroundImage: 'url(/images/desert-scene.png)',
-  backgroundSize: `${(100 / PAINTED_BOX.width) * 100}% ${(100 / PAINTED_BOX.height) * 100}%`,
-  backgroundPosition: `${(PAINTED_BOX.left / (100 - PAINTED_BOX.width)) * 100}% ${(PAINTED_BOX.top / (100 - PAINTED_BOX.height)) * 100}%`,
-}
+const boxStyle = (box: typeof PAINTED_BOX) => ({
+  left: `${box.left}%`,
+  top: `${box.top}%`,
+  width: `${box.width}%`,
+  height: `${box.height}%`,
+})
 
 export function PaintedSmoke() {
   return (
     <>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute z-10"
-        style={{
-          left: `${PAINTED_BOX.left}%`,
-          top: `${PAINTED_BOX.top}%`,
-          width: `${PAINTED_BOX.width}%`,
-          height: `${PAINTED_BOX.height}%`,
-        }}
-      >
-        <div className="painted-smoke painted-smoke-base absolute inset-0" style={paintedLayerStyle} />
-        <div
-          className="painted-smoke painted-smoke-glow absolute inset-0 mix-blend-screen"
-          style={paintedLayerStyle}
+      <div aria-hidden="true" className="pointer-events-none absolute z-10" style={boxStyle(PAINTED_BOX)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/lamp-smoke-plate.png" alt="" className="absolute inset-0 h-full w-full" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/lamp-smoke-painted.png"
+          alt=""
+          className="painted-smoke-drift absolute inset-0 h-full w-full"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/lamp-smoke-painted.png"
+          alt=""
+          className="painted-smoke-shimmer absolute inset-0 h-full w-full mix-blend-screen"
         />
       </div>
 
       <div
         aria-hidden="true"
         className="pointer-events-none absolute z-10 mix-blend-screen"
-        style={{
-          left: `${VIDEO_BOX.left}%`,
-          top: `${VIDEO_BOX.top}%`,
-          width: `${VIDEO_BOX.width}%`,
-          height: `${VIDEO_BOX.height}%`,
-        }}
+        style={boxStyle(VIDEO_BOX)}
       >
-        <video autoPlay loop muted playsInline className="h-full w-full object-fill">
+        <video autoPlay loop muted playsInline preload="auto" className="h-full w-full object-fill">
           <source src="/lamp-smoke.mp4" type="video/mp4" />
         </video>
       </div>
