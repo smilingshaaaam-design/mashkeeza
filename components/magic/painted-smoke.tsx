@@ -6,65 +6,67 @@ export function PaintedSmoke() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
       
-      {/* 💨 LAYER 1: BASE MAGIC GLOW OVERLAY */}
-      {/* Yeh layer background ke static smoke ke upar ek smooth glowing atmosphere banayegi */}
+      {/* 🔮 LAYER 1: VIBRANT AURA GLOW OVERLAY */}
+      {/* Yeh layer image ke static purple smoke ke pure area par halki chamak peda karegi */}
       <div 
-        className="absolute bottom-[24%] right-[8%] w-[38%] h-[50%] mix-blend-screen opacity-80 blur-md pointer-events-none"
+        className="absolute bottom-[35%] right-[6%] w-[25%] h-[40%] mix-blend-screen opacity-70 blur-xl pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at bottom right, rgba(147, 51, 234, 0.4) 0%, rgba(236, 72, 153, 0.15) 40%, transparent 70%)',
-          animation: 'premiumAuraPulse 5s infinite ease-in-out'
+          background: 'radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.45) 0%, rgba(236, 72, 153, 0.15) 50%, transparent 80%)',
+          animation: 'smokeAtmospherePulse 6s infinite ease-in-out'
         }}
       />
 
-      {/* 💨 LAYER 2: VOLUMETRIC SMOKE STREAM A (Left Curve Fluid Movement) */}
+      {/* 💨 LAYER 2: PREMIUM SMOOTH VIDEO SMOKE FLOW (Exact Curve Target) */}
+      {/* Yeh image ke static dhuwan ke upar video jaisa floating movement effect overlay karega */}
       <div 
-        className="absolute bottom-[28%] right-[12%] w-[25%] h-[45%] mix-blend-screen opacity-0 blur-xl rounded-full"
+        className="absolute bottom-[38%] right-[8%] w-[18%] h-[38%] mix-blend-screen opacity-0 blur-2xl rounded-full"
         style={{
-          background: 'linear-gradient(0deg, rgba(168, 85, 247, 0.5) 0%, rgba(99, 102, 241, 0.2) 60%, transparent 100%)',
-          animation: 'videoFluidSmoke1 8s infinite ease-in-out',
+          background: 'linear-gradient(0deg, rgba(147, 51, 234, 0.5) 0%, rgba(219, 39, 119, 0.2) 60%, transparent 100%)',
+          animation: 'trueFluidFlow1 8s infinite ease-in-out',
           transformOrigin: 'bottom right'
         }}
       />
 
-      {/* 💨 LAYER 3: VOLUMETRIC SMOKE STREAM B (Cross Wave Pattern) */}
+      {/* 💨 LAYER 3: CROSS CONTOUR STREAM (For depth) */}
       <div 
-        className="absolute bottom-[30%] right-[10%] w-[20%] h-[40%] mix-blend-screen opacity-0 blur-2xl rounded-full"
+        className="absolute bottom-[40%] right-[12%] w-[15%] h-[35%] mix-blend-screen opacity-0 blur-3xl rounded-full"
         style={{
-          background: 'linear-gradient(0deg, rgba(236, 72, 153, 0.4) 0%, rgba(147, 51, 234, 0.1) 50%, transparent 100%)',
-          animation: 'videoFluidSmoke2 11s infinite ease-in-out 1.5s',
+          background: 'linear-gradient(0deg, rgba(192, 132, 252, 0.4) 0%, rgba(79, 70, 229, 0.1) 50%, transparent 100%)',
+          animation: 'trueFluidFlow2 11s infinite ease-in-out 2s',
           transformOrigin: 'bottom right'
         }}
       />
 
-      {/* ✨ LAYER 4: CINEMATIC SPARKS (Chirag se nikalne wale barik sitare) */}
-      <div className="absolute bottom-[32%] right-[15%] w-24 h-48">
-        <div className="absolute bottom-2 left-1/2 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 4s infinite linear' }} />
-        <div className="absolute bottom-10 left-1/4 w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 5s infinite linear 0.8s' }} />
-        <div className="absolute bottom-6 left-[65%] w-1.5 h-1.5 bg-purple-300 rounded-full opacity-0" style={{ animation: 'sparkleRiseUp 4.5s infinite linear 1.8s' }} />
+      {/* ✨ LAYER 4: MAGICAL GOLDEN & PURPLE SPARKS */}
+      {/* Chirag ke munh se nikal kar dhuwan ke sath upar ki taraf tairte hue sitare */}
+      <div className="absolute bottom-[36%] right-[11%] w-20 h-64">
+        <div className="absolute bottom-2 left-1/2 w-1.5 h-1.5 bg-amber-300 rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 4s infinite linear' }} />
+        <div className="absolute bottom-14 left-1/4 w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 5s infinite linear 0.9s' }} />
+        <div className="absolute bottom-8 left-[70%] w-1.5 h-1.5 bg-fuchsia-300 rounded-full opacity-0" style={{ animation: 'sparkleFloatingRise 4.5s infinite linear 1.8s' }} />
       </div>
 
-      {/* Pure CSS Engine - Cloudflare standard compilation target */}
+      {/* High-End Cinematic Web Animations Engine */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes premiumAuraPulse {
-          0%, 100% { opacity: 0.6; filter: blur(10px); }
-          50% { opacity: 0.85; filter: blur(16px); }
+        @keyframes smokeAtmospherePulse {
+          0%, 100% { opacity: 0.5; transform: scale(0.98); filter: blur(14px); }
+          50% { opacity: 0.8; transform: scale(1.02); filter: blur(20px); }
         }
-        @keyframes videoFluidSmoke1 {
-          0% { transform: translateY(30px) scale(0.6) rotate(0deg); opacity: 0; }
-          20% { opacity: 0.75; }
-          50% { transform: translateY(-70px) scale(1.3) translateX(-30px) rotate(-15deg); opacity: 0.45; }
-          100% { transform: translateY(-190px) scale(1.8) translateX(-70px) rotate(-35deg); opacity: 0; }
+        @keyframes trueFluidFlow1 {
+          0% { transform: translateY(40px) scale(0.7) rotate(0deg); opacity: 0; }
+          20% { opacity: 0.7; }
+          50% { transform: translateY(-80px) scale(1.4) translateX(-40px) rotate(-18deg); opacity: 0.4; }
+          100% { transform: translateY(-210px) scale(2.0) translateX(-90px) rotate(-35deg); opacity: 0; }
         }
-        @keyframes videoFluidSmoke2 {
-          0% { transform: translateY(40px) scale(0.5) rotate(0deg); opacity: 0; }
-          25% { opacity: 0.65; }
-          60% { transform: translateY(-90px) scale(1.4) translateX(20px) rotate(15deg); opacity: 0.35; }
-          100% { transform: translateY(-220px) scale(2.0) translateX(45px) rotate(35deg); opacity: 0; }
+        @keyframes trueFluidFlow2 {
+          0% { transform: translateY(50px) scale(0.6) rotate(0deg); opacity: 0; }
+          25% { opacity: 0.6; }
+          65% { transform: translateY(-110px) scale(1.5) translateX(30px) rotate(15deg); opacity: 0.3; }
+          100% { transform: translateY(-240px) scale(2.2) translateX(60px) rotate(40deg); opacity: 0; }
         }
-        @keyframes sparkleRiseUp {
-          0% { transform: translateY(15px) translateX(0) scale(0.3); opacity: 0; }
+        @keyframes sparkleFloatingRise {
+          0% { transform: translateY(20px) translateX(0) scale(0.3); opacity: 0; filter: drop-shadow(0 0 2px rgba(253,224,71,0.6)); }
           30% { opacity: 1; }
-          100% { transform: translateY(-150px) translateX(-50px) scale(0); opacity: 0; }
+          100% { transform: translateY(-170px) translateX(-60px) scale(0); opacity: 0; }
         }
       `}} />
 
