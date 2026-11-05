@@ -54,7 +54,6 @@ const PLANETS = [
   { symbol: "♄", name: "زحل", hue: 230 }
 ];
 
-// Artistic fictional labels, not authenticated traditional names.
 const SYMBOLIC_MUWAKKIL_LABELS = ABJAD.map(
   letter => `أثير ${letter}`
 );
@@ -72,7 +71,7 @@ type ParticleType =
   | "abjad"
   | "planet"
   | "symbolic"
-  | "sparkle"; // Added magic sparkles
+  | "sparkle";
 
 class SmokeParticle {
   x: number;
@@ -97,9 +96,9 @@ class SmokeParticle {
   ) {
     this.type = type;
 
-    // RESTORED ORIGINAL EMISSION POSITION
-    this.x = width * 0.76 + random(-4, 4);
-    this.y = height * 0.64 + random(-5, 5);
+    // Emission position - Made tighter for incense stick effect
+    this.x = width * 0.76 + random(-2, 2);
+    this.y = height * 0.64 + random(-2, 2);
 
     this.wave = random(0, Math.PI * 2);
     this.life = 0;
@@ -107,7 +106,6 @@ class SmokeParticle {
     this.rotationSpeed = random(-0.008, 0.008);
     this.text = "";
 
-    // Added Deep Blue (220, 230) and rich Purple (275, 285) & Gold (44) for fantasy feel
     this.hue = pick([275, 285, 220, 230, 188, 44]);
 
     switch (type) {
@@ -115,9 +113,9 @@ class SmokeParticle {
         this.text = pick(ASMA);
         this.size = random(17, 27);
         this.alpha = random(0.55, 0.85);
-        this.maxLife = random(240, 400);
-        this.vx = random(-0.35, 0.35);
-        this.vy = random(-1.2, -0.45);
+        this.maxLife = random(150, 250);
+        this.vx = random(-0.15, 0.15);
+        this.vy = random(-2.5, -1.5);
         break;
 
       case "muqattaat":
@@ -125,9 +123,9 @@ class SmokeParticle {
         this.size = random(22, 34);
         this.hue = 44;
         this.alpha = 0.8;
-        this.maxLife = random(180, 360);
-        this.vx = random(-0.35, 0.35);
-        this.vy = random(-1.2, -0.45);
+        this.maxLife = random(150, 250);
+        this.vx = random(-0.15, 0.15);
+        this.vy = random(-2.5, -1.5);
         break;
 
       case "abjad":
@@ -135,9 +133,9 @@ class SmokeParticle {
         this.size = random(19, 29);
         this.hue = 188;
         this.alpha = 0.75;
-        this.maxLife = random(180, 360);
-        this.vx = random(-0.35, 0.35);
-        this.vy = random(-1.2, -0.45);
+        this.maxLife = random(150, 250);
+        this.vx = random(-0.15, 0.15);
+        this.vy = random(-2.5, -1.5);
         break;
 
       case "planet": {
@@ -146,9 +144,9 @@ class SmokeParticle {
         this.hue = planet.hue;
         this.size = random(25, 37);
         this.alpha = 0.8;
-        this.maxLife = random(180, 360);
-        this.vx = random(-0.35, 0.35);
-        this.vy = random(-1.2, -0.45);
+        this.maxLife = random(150, 250);
+        this.vx = random(-0.15, 0.15);
+        this.vy = random(-2.5, -1.5);
         break;
       }
 
@@ -157,57 +155,55 @@ class SmokeParticle {
         this.size = random(13, 20);
         this.hue = 275;
         this.alpha = 0.65;
-        this.maxLife = random(180, 360);
-        this.vx = random(-0.35, 0.35);
-        this.vy = random(-1.2, -0.45);
+        this.maxLife = random(150, 250);
+        this.vx = random(-0.15, 0.15);
+        this.vy = random(-2.5, -1.5);
         break;
 
       case "sparkle":
         this.size = random(1.5, 3.5);
-        this.alpha = random(0.6, 1);
-        this.maxLife = random(200, 450);
-        this.hue = pick([44, 188, 275]); // Gold, Cyan, or Purple sparkles
-        this.vx = random(-0.7, 0.7);
-        this.vy = random(-1.5, -0.5);
+        this.alpha = random(0.8, 1);
+        this.maxLife = random(150, 300);
+        this.hue = pick([44, 188, 275]);
+        this.vx = random(-0.2, 0.2);
+        this.vy = random(-3.5, -1.5); // Faster upward movement
         break;
 
       default: // smoke
-        this.size = random(16, 45); // slightly bigger initial size
-        this.alpha = random(0.1, 0.35); // stronger opacity for visibility
-        this.maxLife = random(300, 750); // Much longer life (Incense stick effect)
-        this.vx = random(-0.5, 0.5);
-        this.vy = random(-1.6, -0.6); // moves up slightly faster initially
+        this.size = random(10, 20); // Smaller initial size to prevent spread
+        this.alpha = random(0.15, 0.4); 
+        this.maxLife = random(150, 350); 
+        this.vx = random(-0.1, 0.1); // Reduced horizontal movement (straight up)
+        this.vy = random(-3.5, -1.8); // Much faster vertical speed
     }
   }
 
   update() {
     this.life++;
-
     const progress = this.life / this.maxLife;
     
-    // Smoke spreads wider as it goes up, imitating incense smoke filling a room
-    const sway = this.type === "smoke" ? (0.48 + this.life * 0.0025) : 0.48;
+    // Narrow sway for incense stick style (no increasing spread)
+    const sway = 0.25; 
 
-    this.x += this.vx + Math.sin(this.life * 0.015 + this.wave) * sway;
+    // Faster animation wave
+    this.x += this.vx + Math.sin(this.life * 0.05 + this.wave) * sway;
     this.y += this.vy;
 
-    this.vx += Math.sin(this.life * 0.025 + this.wave) * 0.006;
-    this.vy -= 0.001;
+    // Reduced horizontal drift
+    this.vx += Math.sin(this.life * 0.04 + this.wave) * 0.002;
+    this.vy -= 0.002;
 
     this.rotation += this.rotationSpeed;
 
     if (this.type === "smoke") {
-      this.size += 0.06; // Expands slowly as it dilutes
-      this.alpha *= 0.997; // Fades out very smoothly
+      this.size += 0.015; // Extremely slow expansion to keep it narrow
+      this.alpha *= 0.992; // Smooth fade out
     } else if (this.type === "sparkle") {
-      // Twinkling star effect
-      this.alpha = (0.4 + Math.sin(this.life * 0.1) * 0.6) * (1 - progress);
+      // Faster twinkling effect
+      this.alpha = (0.2 + Math.abs(Math.sin(this.life * 0.25)) * 0.8) * (1 - progress);
     } else {
-      if (progress > 0.72) {
-        this.alpha -= 0.009;
-      }
-      if (progress > 0.85) {
-        this.alpha -= 0.003;
+      if (progress > 0.6) {
+        this.alpha -= 0.015;
       }
     }
 
@@ -226,10 +222,9 @@ class SmokeParticle {
         0, 0, this.size
       );
 
-      // Enhanced richer magical colors for the Arabian Nights vibe
-      gradient.addColorStop(0, `hsla(${this.hue}, 85%, 75%, ${this.alpha * 0.4})`);
-      gradient.addColorStop(0.35, `hsla(${this.hue}, 75%, 65%, ${this.alpha * 0.25})`);
-      gradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${this.alpha * 0.08})`);
+      gradient.addColorStop(0, `hsla(${this.hue}, 85%, 75%, ${this.alpha * 0.5})`);
+      gradient.addColorStop(0.35, `hsla(${this.hue}, 75%, 65%, ${this.alpha * 0.3})`);
+      gradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${this.alpha * 0.1})`);
       gradient.addColorStop(1, "rgba(0,0,0,0)");
 
       ctx.rotate(this.rotation);
@@ -243,7 +238,7 @@ class SmokeParticle {
     } else if (this.type === "sparkle") {
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 12;
       ctx.shadowColor = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`;
       
       ctx.beginPath();
@@ -286,8 +281,7 @@ export function PaintedSmoke() {
     let height = 450;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    // Increased Max Particles slightly to accommodate the extra sparkles and longer smoke
-    const MAX_PARTICLES = 950;
+    const MAX_PARTICLES = 900;
 
     const resizeCanvas = () => {
       if (!canvas.parentElement) return;
@@ -304,18 +298,16 @@ export function PaintedSmoke() {
     };
 
     resizeCanvas();
-
     window.addEventListener("resize", resizeCanvas);
 
     const spawnSmoke = () => {
       if (particles.length < MAX_PARTICLES) {
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
           particles.push(
             new SmokeParticle(width, height, "smoke")
           );
         }
-        // Spawn magic sparkles drifting with the smoke
-        if (Math.random() < 0.5) {
+        if (Math.random() < 0.6) {
           particles.push(
             new SmokeParticle(width, height, "sparkle")
           );
@@ -327,24 +319,15 @@ export function PaintedSmoke() {
       if (particles.length >= MAX_PARTICLES) return;
 
       const r = Math.random();
-
       let type: ParticleType;
 
-      if (r < 0.38) {
-        type = "asma";
-      } else if (r < 0.53) {
-        type = "abjad";
-      } else if (r < 0.67) {
-        type = "muqattaat";
-      } else if (r < 0.82) {
-        type = "planet";
-      } else {
-        type = "symbolic";
-      }
+      if (r < 0.38) type = "asma";
+      else if (r < 0.53) type = "abjad";
+      else if (r < 0.67) type = "muqattaat";
+      else if (r < 0.82) type = "planet";
+      else type = "symbolic";
 
-      particles.push(
-        new SmokeParticle(width, height, type)
-      );
+      particles.push(new SmokeParticle(width, height, type));
     };
 
     const render = () => {
@@ -352,7 +335,8 @@ export function PaintedSmoke() {
 
       spawnSmoke();
 
-      if (Math.random() < 0.12) {
+      // Increased probability to match the faster speed
+      if (Math.random() < 0.2) {
         spawnSymbol();
       }
 
