@@ -1,8 +1,10 @@
+"use client";
+
 import React, { useEffect, useRef } from 'react';
 
 const BOX = { left: 68.5, top: 21, width: 24, height: 50 };
 
-// 1. VERTEX SHADER: Defines a flat 2D canvas screen
+// 1. VERTEX SHADER
 const vertexShaderSource = `
   attribute vec2 a_position;
   void main() {
@@ -10,7 +12,7 @@ const vertexShaderSource = `
   }
 `;
 
-// 2. FRAGMENT SHADER (GLSL): The Elite Fluid Math (FBM + Domain Warping)
+// 2. FRAGMENT SHADER (Advanced Fluid Math)
 const fragmentShaderSource = `
   precision highp float;
   uniform vec2 u_resolution;
@@ -30,7 +32,7 @@ const fragmentShaderSource = `
                mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
   }
 
-  // Fractal Brownian Motion (FBM) - Creates the complex smoke texture
+  // Fractal Brownian Motion (FBM)
   float fbm(vec2 p) {
     float f = 0.0;
     float amp = 0.5;
@@ -45,10 +47,9 @@ const fragmentShaderSource = `
   }
 
   void main() {
-    // Normalize coordinates (0.0 to 1.0)
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
 
-    // DOMAIN WARPING: Distorts the space to make smoke swirl and curl organically
+    // DOMAIN WARPING: Distorts space for organic smoke swirls
     vec2 q = vec2(0.0);
     q.x = fbm(uv + vec2(0.0, u_time * 0.05));
     q.y = fbm(uv + vec2(1.0, u_time * 0.05));
@@ -59,29 +60,27 @@ const fragmentShaderSource = `
 
     float f = fbm(uv + r);
 
-    // PLUME SHAPING: Controls where the smoke exists
-    // Spout is roughly at x = 0.2 (20% from left of the box)
+    // PLUME SHAPING
     float centerDist = abs(uv.x - 0.25 - (uv.y * 0.1) - sin(u_time * 0.8 + uv.y * 6.0) * 0.03);
-    float width = 0.1 + (uv.y * 0.5); // Plume spreads out as it goes up
+    float width = 0.1 + (uv.y * 0.5); 
     
-    // Masks to fade smoke at edges and create the plume shape
     float plumeMask = smoothstep(width, 0.0, centerDist);
     float verticalMask = smoothstep(0.0, 0.15, uv.y) * smoothstep(1.0, 0.3, uv.y);
     float finalMask = plumeMask * verticalMask;
 
     // COLOR GRADING: Desert warm tones
-    vec3 colorA = vec3(0.98, 0.94, 0.88); // Bright core
-    vec3 colorB = vec3(0.85, 0.78, 0.72); // Outer shadow
+    vec3 colorA = vec3(0.98, 0.94, 0.88); 
+    vec3 colorB = vec3(0.85, 0.78, 0.72); 
     vec3 finalColor = mix(colorB, colorA, f * 1.5);
 
-    // Calculate final transparency
+    // Alpha/Transparency calculation
     float alpha = f * finalMask * 2.0;
 
     gl_FragColor = vec4(finalColor, min(alpha, 1.0));
   }
 `;
 
-export function SupremeWebGLSmoke() {
+export function PaintedSmoke() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -93,7 +92,6 @@ export function SupremeWebGLSmoke() {
       return;
     }
 
-    // Helper: Compile Shaders
     const createShader = (type: number, source: string) => {
       const shader = gl.createShader(type)!;
       gl.shaderSource(shader, source);
@@ -108,14 +106,12 @@ export function SupremeWebGLSmoke() {
     const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-    // Create WebGL Program
     const program = gl.createProgram()!;
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
     gl.useProgram(program);
 
-    // Set up full-screen quad (2 triangles)
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -127,11 +123,9 @@ export function SupremeWebGLSmoke() {
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-    // Get Uniform Locations
     const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
     const timeLocation = gl.getUniformLocation(program, 'u_time');
 
-    // Handle Resize
     const resizeCanvas = () => {
       canvas.width = canvas.offsetWidth * window.devicePixelRatio;
       canvas.height = canvas.offsetHeight * window.devicePixelRatio;
@@ -141,13 +135,11 @@ export function SupremeWebGLSmoke() {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Render Loop
     let animationId: number;
     const render = (time: number) => {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
-      // Pass time to GPU (scaled down for smooth speed)
       gl.uniform1f(timeLocation, time * 0.001);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
