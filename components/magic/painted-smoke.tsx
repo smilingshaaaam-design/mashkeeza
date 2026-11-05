@@ -35,8 +35,7 @@ const ASMA = [
 const MUQATTAAT = [
   "الم", "المص", "الر", "المر",
   "كهيعص", "طه", "طسم", "طس",
-  "يس", "ص", "حم", "حم عسق",
-  "ق", "ن"
+  "يس", "ص", "حم", "حم عسق", "ق", "ن"
 ];
 
 const ABJAD = [
@@ -56,7 +55,7 @@ const PLANETS = [
   { symbol: "♄", name: "زحل", hue: 230 }
 ];
 
-// Artistic fictional labels, not historical or authenticated names.
+// Artistic fictional labels, not authenticated traditional names.
 const SYMBOLIC_MUWAKKIL_LABELS = ABJAD.map(
   letter => `أثير ${letter}`
 );
@@ -98,9 +97,9 @@ class SmokeParticle {
   ) {
     this.type = type;
 
-    // Fixed incense emitter
+    // RESTORED ORIGINAL EMISSION POSITION
     this.x = width * 0.76 + random(-4, 4);
-    this.y = height * 0.84 + random(-5, 5);
+    this.y = height * 0.64 + random(-5, 5);
 
     this.wave = random(0, Math.PI * 2);
 
@@ -169,13 +168,11 @@ class SmokeParticle {
 
     const progress = this.life / this.maxLife;
 
-    // Natural upward incense movement
     this.x += this.vx +
       Math.sin(this.life * 0.018 + this.wave) * 0.48;
 
     this.y += this.vy;
 
-    // Organic smoke turbulence
     this.vx +=
       Math.sin(this.life * 0.025 + this.wave) * 0.006;
 
@@ -183,18 +180,15 @@ class SmokeParticle {
 
     this.rotation += this.rotationSpeed;
 
-    // Smoke gradually expands as it rises
     if (this.type === "smoke") {
       this.size += 0.045;
       this.alpha *= 0.998;
     }
 
-    // Symbols dissolve into tiny luminous particles
     if (this.type !== "smoke" && progress > 0.72) {
       this.alpha -= 0.009;
     }
 
-    // Natural fading
     if (progress > 0.85) {
       this.alpha -= 0.003;
     }
@@ -209,7 +203,6 @@ class SmokeParticle {
     ctx.translate(this.x, this.y);
 
     if (this.type === "smoke") {
-      // Multi-layer volumetric incense smoke
       const gradient = ctx.createRadialGradient(
         0, 0, 0,
         0, 0, this.size
@@ -241,7 +234,6 @@ class SmokeParticle {
       ctx.fill();
 
     } else {
-      // Arabic typography and planetary glyphs
       ctx.globalCompositeOperation = "lighter";
 
       const color =
@@ -303,10 +295,8 @@ export function PaintedSmoke() {
 
     window.addEventListener("resize", resizeCanvas);
 
-    // Continuous incense smoke emission
     const spawnSmoke = () => {
       if (particles.length < MAX_PARTICLES) {
-        // Multiple overlapping puffs produce continuous smoke
         for (let i = 0; i < 3; i++) {
           particles.push(
             new SmokeParticle(width, height, "smoke")
@@ -315,7 +305,6 @@ export function PaintedSmoke() {
       }
     };
 
-    // Random spiritual typography
     const spawnSymbol = () => {
       if (particles.length >= MAX_PARTICLES) return;
 
@@ -343,15 +332,12 @@ export function PaintedSmoke() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Persistent incense plume
       spawnSmoke();
 
-      // Controlled symbol frequency
       if (Math.random() < 0.12) {
         spawnSymbol();
       }
 
-      // Update and draw particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const particle = particles[i];
 
