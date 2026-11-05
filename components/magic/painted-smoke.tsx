@@ -84,6 +84,7 @@ class SmokeParticle {
   maxLife: number;
   hue: number;
   wave: number;
+  waveSpeed: number;
   rotation: number;
   rotationSpeed: number;
   text: string;
@@ -96,14 +97,15 @@ class SmokeParticle {
   ) {
     this.type = type;
 
-    // Emission position - Made tighter for incense stick effect
-    this.x = width * 0.76 + random(-2, 2);
-    this.y = height * 0.64 + random(-2, 2);
+    // Emission Point
+    this.x = width * 0.76 + random(-8, 8);
+    this.y = height * 0.64 + random(-5, 5);
 
     this.wave = random(0, Math.PI * 2);
+    this.waveSpeed = random(0.01, 0.025); // Controls how fast it twists
     this.life = 0;
     this.rotation = random(0, Math.PI * 2);
-    this.rotationSpeed = random(-0.008, 0.008);
+    this.rotationSpeed = random(-0.015, 0.015);
     this.text = "";
 
     this.hue = pick([275, 285, 220, 230, 188, 44]);
@@ -113,9 +115,9 @@ class SmokeParticle {
         this.text = pick(ASMA);
         this.size = random(17, 27);
         this.alpha = random(0.55, 0.85);
-        this.maxLife = random(150, 250);
-        this.vx = random(-0.15, 0.15);
-        this.vy = random(-2.5, -1.5);
+        this.maxLife = random(200, 350);
+        this.vx = random(-0.3, 0.3);
+        this.vy = random(-1.5, -0.8);
         break;
 
       case "muqattaat":
@@ -123,9 +125,9 @@ class SmokeParticle {
         this.size = random(22, 34);
         this.hue = 44;
         this.alpha = 0.8;
-        this.maxLife = random(150, 250);
-        this.vx = random(-0.15, 0.15);
-        this.vy = random(-2.5, -1.5);
+        this.maxLife = random(200, 350);
+        this.vx = random(-0.3, 0.3);
+        this.vy = random(-1.5, -0.8);
         break;
 
       case "abjad":
@@ -133,9 +135,9 @@ class SmokeParticle {
         this.size = random(19, 29);
         this.hue = 188;
         this.alpha = 0.75;
-        this.maxLife = random(150, 250);
-        this.vx = random(-0.15, 0.15);
-        this.vy = random(-2.5, -1.5);
+        this.maxLife = random(200, 350);
+        this.vx = random(-0.3, 0.3);
+        this.vy = random(-1.5, -0.8);
         break;
 
       case "planet": {
@@ -144,9 +146,9 @@ class SmokeParticle {
         this.hue = planet.hue;
         this.size = random(25, 37);
         this.alpha = 0.8;
-        this.maxLife = random(150, 250);
-        this.vx = random(-0.15, 0.15);
-        this.vy = random(-2.5, -1.5);
+        this.maxLife = random(200, 350);
+        this.vx = random(-0.3, 0.3);
+        this.vy = random(-1.5, -0.8);
         break;
       }
 
@@ -155,53 +157,59 @@ class SmokeParticle {
         this.size = random(13, 20);
         this.hue = 275;
         this.alpha = 0.65;
-        this.maxLife = random(150, 250);
-        this.vx = random(-0.15, 0.15);
-        this.vy = random(-2.5, -1.5);
+        this.maxLife = random(200, 350);
+        this.vx = random(-0.3, 0.3);
+        this.vy = random(-1.5, -0.8);
         break;
 
       case "sparkle":
-        this.size = random(1.5, 3.5);
+        this.size = random(1.5, 4);
         this.alpha = random(0.8, 1);
-        this.maxLife = random(150, 300);
+        this.maxLife = random(250, 450);
         this.hue = pick([44, 188, 275]);
-        this.vx = random(-0.2, 0.2);
-        this.vy = random(-3.5, -1.5); // Faster upward movement
+        this.vx = random(-0.5, 0.5);
+        this.vy = random(-2.0, -1.0);
         break;
 
-      default: // smoke
-        this.size = random(10, 20); // Smaller initial size to prevent spread
-        this.alpha = random(0.15, 0.4); 
-        this.maxLife = random(150, 350); 
-        this.vx = random(-0.1, 0.1); // Reduced horizontal movement (straight up)
-        this.vy = random(-3.5, -1.8); // Much faster vertical speed
+      default: // Thick, twisting smoke
+        this.size = random(25, 55); // Much bigger to look like dense smoke
+        this.alpha = random(0.3, 0.6); // Highly visible
+        this.maxLife = random(400, 700); // Lasts long to fill the page
+        this.vx = random(-0.6, 0.6); // Allows it to spread sideways
+        this.vy = random(-1.4, -0.6); // Moves upward slowly and gracefully
     }
   }
 
   update() {
     this.life++;
     const progress = this.life / this.maxLife;
-    
-    // Narrow sway for incense stick style (no increasing spread)
-    const sway = 0.25; 
-
-    // Faster animation wave
-    this.x += this.vx + Math.sin(this.life * 0.05 + this.wave) * sway;
-    this.y += this.vy;
-
-    // Reduced horizontal drift
-    this.vx += Math.sin(this.life * 0.04 + this.wave) * 0.002;
-    this.vy -= 0.002;
-
     this.rotation += this.rotationSpeed;
 
+    // The magical twisting motion ("Bal khata hua")
+    // Sine wave creates a meandering S-curve across the page
+    const twist = Math.sin(this.life * this.waveSpeed + this.wave);
+    
     if (this.type === "smoke") {
-      this.size += 0.015; // Extremely slow expansion to keep it narrow
-      this.alpha *= 0.992; // Smooth fade out
+      // Large sweeps for smoke
+      this.x += this.vx + twist * 2.5; 
+      this.y += this.vy;
+      
+      this.size += 0.12; // Expands gradually
+      this.alpha *= 0.996; // Very slow fade so it remains visible long enough to twist
+
     } else if (this.type === "sparkle") {
-      // Faster twinkling effect
-      this.alpha = (0.2 + Math.abs(Math.sin(this.life * 0.25)) * 0.8) * (1 - progress);
+      // Sparkles follow the twist but a bit tighter
+      this.x += this.vx + twist * 1.5;
+      this.y += this.vy;
+      
+      // Twinkling effect
+      this.alpha = (0.2 + Math.abs(Math.sin(this.life * 0.15)) * 0.8) * (1 - progress);
+
     } else {
+      // Symbols gently float up with a mild sway
+      this.x += this.vx + twist * 0.8;
+      this.y += this.vy;
+      
       if (progress > 0.6) {
         this.alpha -= 0.015;
       }
@@ -222,13 +230,14 @@ class SmokeParticle {
         0, 0, this.size
       );
 
-      gradient.addColorStop(0, `hsla(${this.hue}, 85%, 75%, ${this.alpha * 0.5})`);
-      gradient.addColorStop(0.35, `hsla(${this.hue}, 75%, 65%, ${this.alpha * 0.3})`);
-      gradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${this.alpha * 0.1})`);
+      // Thicker, richer colors for highly visible magic smoke
+      gradient.addColorStop(0, `hsla(${this.hue}, 85%, 75%, ${this.alpha * 0.6})`);
+      gradient.addColorStop(0.4, `hsla(${this.hue}, 75%, 65%, ${this.alpha * 0.35})`);
+      gradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${this.alpha * 0.15})`);
       gradient.addColorStop(1, "rgba(0,0,0,0)");
 
       ctx.rotate(this.rotation);
-      ctx.scale(1.15, 0.72);
+      ctx.scale(1.2, 0.8); // Oval shape makes it look more cloud-like
 
       ctx.fillStyle = gradient;
       ctx.beginPath();
@@ -238,7 +247,7 @@ class SmokeParticle {
     } else if (this.type === "sparkle") {
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 15;
       ctx.shadowColor = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`;
       
       ctx.beginPath();
@@ -281,7 +290,7 @@ export function PaintedSmoke() {
     let height = 450;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const MAX_PARTICLES = 900;
+    const MAX_PARTICLES = 1200; // Increased max particles for denser smoke
 
     const resizeCanvas = () => {
       if (!canvas.parentElement) return;
@@ -302,12 +311,14 @@ export function PaintedSmoke() {
 
     const spawnSmoke = () => {
       if (particles.length < MAX_PARTICLES) {
-        for (let i = 0; i < 2; i++) {
+        // Spawn more smoke particles per frame to create a continuous thick stream
+        for (let i = 0; i < 4; i++) {
           particles.push(
             new SmokeParticle(width, height, "smoke")
           );
         }
-        if (Math.random() < 0.6) {
+        // Spawn sparkles
+        if (Math.random() < 0.7) {
           particles.push(
             new SmokeParticle(width, height, "sparkle")
           );
@@ -335,8 +346,7 @@ export function PaintedSmoke() {
 
       spawnSmoke();
 
-      // Increased probability to match the faster speed
-      if (Math.random() < 0.2) {
+      if (Math.random() < 0.15) {
         spawnSymbol();
       }
 
@@ -349,9 +359,9 @@ export function PaintedSmoke() {
         if (
           particle.alpha <= 0.01 ||
           particle.life >= particle.maxLife ||
-          particle.y < -80 ||
-          particle.x < -100 ||
-          particle.x > width + 100
+          particle.y < -150 || // Allow it to go higher before deleting
+          particle.x < -150 ||
+          particle.x > width + 150
         ) {
           particles.splice(i, 1);
         }
@@ -373,7 +383,7 @@ export function PaintedSmoke() {
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
       <canvas
         ref={canvasRef}
-        className="w-full h-full mix-blend-screen opacity-95"
+        className="w-full h-full mix-blend-screen opacity-100"
       />
     </div>
   );
