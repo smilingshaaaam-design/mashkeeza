@@ -13,6 +13,7 @@ export function PaintedSmoke() {
 
     let animationFrameId: number;
     let particles: PremiumCinematicParticle[] = [];
+    let globalTick = 0; // Ye smoke ko continuous ribbon wave banayega
 
     // Pure Talismatic & Calligraphic Spell Nodes
     const SPELLS = ['الله', 'ح', 'ط', 'ی', 'ق', 'ش', 'د', 'ج', 'ا', '۞', '✦', '✧', '☽', '🔮', '✨'];
@@ -26,10 +27,10 @@ export function PaintedSmoke() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Vector geometry for fantasy talismat نقوش
+    // Vector geometry for fantasy talismat
     const drawTalismanNode = (context: CanvasRenderingContext2D, type: number, size: number) => {
       context.beginPath();
-      context.lineWidth = 1.5; // Thicker lines for more visibility
+      context.lineWidth = 1.5; 
       if (type === 0) {
         context.arc(0, 0, size * 0.75, 0, Math.PI * 2);
         context.moveTo(-size * 0.55, 0); context.lineTo(size * 0.55, 0);
@@ -62,115 +63,118 @@ export function PaintedSmoke() {
       sigilId: number;
       spin: number;
       angle: number;
+      streamPhase: number; // Ribbon-like synchronized movement ke liye
+      baseVy: number;
 
       constructor(canvasWidth: number, canvasHeight: number) {
-        // Precise lock on the lamp nozzle focal path
-        this.x = canvasWidth * 0.76;
-        this.y = canvasHeight * 0.64;
+        // Naye lamp ki position lagbhag 72% right aur 52% top par hai
+        this.x = canvasWidth * 0.72;
+        this.y = canvasHeight * 0.52;
         
         this.char = '';
         this.sigilId = 0;
+        this.streamPhase = globalTick * 0.015; // Ek sath paida hone wale particles ek jaisi wave banayenge
 
         const rand = Math.random();
-        if (rand < 0.25) {
+        if (rand < 0.15) {
           this.type = 'runic';
           this.char = SPELLS[Math.floor(Math.random() * SPELLS.length)];
-          this.size = Math.random() * 6 + 15;
-        } else if (rand < 0.48) {
+          this.size = Math.random() * 6 + 18;
+        } else if (rand < 0.30) {
           this.type = 'sigil';
           this.sigilId = Math.floor(Math.random() * 3);
-          this.size = Math.random() * 5 + 13;
+          this.size = Math.random() * 5 + 15;
         } else {
           this.type = 'gaseous';
-          this.size = Math.random() * 32 + 22; // Bigger sizes for volumetric feel
+          // Gaseous clouds ko bada rakha gaya hai volumetric smoke ke liye
+          this.size = Math.random() * 45 + 30; 
         }
 
-        // Horizontal fantasy fluid vectors
-        this.vx = -(Math.random() * 1.5 + 0.9);
-        this.vy = -(Math.random() * 0.45 + 0.1);
-        this.alpha = Math.random() * 0.6 + 0.4; // Brighter opacity
-        this.maxLife = Math.random() * 170 + 120;
+        // Left ki taraf strong cinematic flow
+        this.vx = -(Math.random() * 1.8 + 1.2); 
+        this.baseVy = (Math.random() - 0.5) * 0.8;
+        this.vy = this.baseVy;
+        
+        this.alpha = this.type === 'gaseous' ? Math.random() * 0.15 + 0.05 : Math.random() * 0.7 + 0.3; 
+        this.maxLife = Math.random() * 250 + 150;
         this.life = 0;
         
-        // 🔮 COLOR PALETTE ENGINE: 45% Purple-Violet (275), 35% Cyan (188), 20% Wizard Gold (44)
+        // 🔮 EXACT IMAGE COLOR ENGINE: 60% Cyan/Teal (185), 40% Cosmic Gold (45)
         const colorRand = Math.random();
-        if (colorRand < 0.45) {
-          this.hue = 275; // Magical Fantasy Purple / Neon Violet
-        } else if (colorRand < 0.80) {
-          this.hue = 188; // Mystic Cyan Blue
+        if (colorRand < 0.60) {
+          this.hue = Math.floor(Math.random() * 15) + 180; // Mystic Cyan Blue
         } else {
-          this.hue = 44;  // Cosmic Talisman Gold
+          this.hue = Math.floor(Math.random() * 15) + 35;  // Cosmic Talisman Gold
         }
 
-        this.spin = (Math.random() - 0.5) * 0.06;
+        this.spin = (Math.random() - 0.5) * 0.04;
         this.angle = Math.random() * Math.PI;
       }
 
       update() {
         this.x += this.vx;
-        this.y += this.vy;
+        
+        // Synced Sine Wave: isse particles bikhrenge nahi, balki ribbons (lehron) mein chalenge
+        const wave = Math.sin(this.life * 0.015 + this.streamPhase) * 1.2;
+        this.y += this.baseVy + wave;
+        
         this.life++;
-
-        // High fidelity wavy organic oscillation
-        this.vy += Math.sin(this.life * 0.022) * 0.045;
-        this.vx += Math.cos(this.life * 0.012) * 0.012;
-
         const progress = this.life / this.maxLife;
 
         // ✨ MAGICAL TEHLEEL TRANSFORMATION
-        if (this.type !== 'gaseous' && progress > 0.48) {
+        if (this.type !== 'gaseous' && progress > 0.55) {
           this.type = 'gaseous';
-          this.size = Math.random() * 1.8 + 1.4; // Morphs down smoothly into sharp vector dot star
-          this.vx *= 0.91; // Slow down drift velocities to create a shimmery twinkle effect
-        } else if (this.type === 'gaseous' && this.size >= 4) {
-          if (progress <= 0.48) this.size += 0.32; // Thick volumetric expansion loop
+          this.size = Math.random() * 1.8 + 1.4; // Star dots mein badalna
+          this.vx *= 0.95;
+        } else if (this.type === 'gaseous') {
+          if (this.size >= 4 && progress <= 0.6) {
+            this.size += 0.25; // Smoke ka dhire-dhire phailna
+          }
         }
 
-        if (progress > 0.68) {
-          this.alpha -= 0.012;
+        if (progress > 0.65) {
+          this.alpha -= (this.type === 'gaseous' && this.size > 4) ? 0.003 : 0.015;
         }
       }
 
       draw(renderCtx: CanvasRenderingContext2D) {
         if (this.alpha <= 0) return;
         renderCtx.save();
-        renderCtx.globalCompositeOperation = 'lighter';
+        renderCtx.globalCompositeOperation = 'screen'; // Lighter/Screen for glowing magic
 
         if (this.type === 'runic') {
           renderCtx.translate(this.x, this.y);
           renderCtx.rotate(this.angle);
           renderCtx.font = `bold ${this.size}px "Times New Roman", Amiri, serif`;
-          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 78%, ${this.alpha * 0.95})`;
-          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 0.85)`;
-          renderCtx.shadowBlur = 16; // Vibrant outer glow
+          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 85%, ${this.alpha})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 65%, 1)`;
+          renderCtx.shadowBlur = 20; 
           renderCtx.textAlign = 'center';
           renderCtx.textBaseline = 'middle';
           renderCtx.fillText(this.char, 0, 0);
         } else if (this.type === 'sigil') {
           renderCtx.translate(this.x, this.y);
           renderCtx.rotate(this.angle);
-          renderCtx.strokeStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
-          renderCtx.fillStyle = `hsla(${this.hue}, 100%, 75%, ${this.alpha * 0.28})`;
-          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 60%, 0.9)`;
-          renderCtx.shadowBlur = 18;
+          renderCtx.strokeStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
+          renderCtx.shadowColor = `hsla(${this.hue}, 100%, 60%, 1)`;
+          renderCtx.shadowBlur = 15;
           drawTalismanNode(renderCtx, this.sigilId, this.size);
         } else {
           const isStarDot = this.size < 4;
-          const radius = isStarDot ? this.size * 1.4 : this.size;
+          const radius = isStarDot ? this.size * 1.5 : this.size;
           const gradient = renderCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, radius);
           
           if (isStarDot) {
-            // High frequency organic rapid star twinkling sequence
-            const starBrightness = 78 + Math.sin(this.life * 0.55) * 22;
-            renderCtx.shadowBlur = 10;
-            renderCtx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${this.alpha})`;
+            const starBrightness = 80 + Math.sin(this.life * 0.6) * 20;
+            renderCtx.shadowBlur = 12;
+            renderCtx.shadowColor = `hsla(${this.hue}, 100%, 75%, ${this.alpha})`;
             gradient.addColorStop(0, `hsla(${this.hue}, 100%, ${starBrightness}%, ${this.alpha})`);
             gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
           } else {
-            // Gaseous volumetric clouds strings
-            gradient.addColorStop(0, `hsla(${this.hue}, 95%, 55%, ${this.alpha * 0.38})`);
-            gradient.addColorStop(0.4, `hsla(${this.hue}, 85%, 45%, ${this.alpha * 0.12})`);
-            gradient.addColorStop(1, `hsla(${this.hue}, 50%, 30%, 0)`);
+            // Intense volumetric gas gradient matching the image
+            gradient.addColorStop(0, `hsla(${this.hue}, 90%, 65%, ${this.alpha})`);
+            gradient.addColorStop(0.3, `hsla(${this.hue}, 80%, 50%, ${this.alpha * 0.4})`);
+            gradient.addColorStop(1, `hsla(${this.hue}, 50%, 20%, 0)`);
           }
 
           renderCtx.fillStyle = gradient;
@@ -186,16 +190,18 @@ export function PaintedSmoke() {
     const render = () => {
       if (!canvas || !ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      globalTick++;
 
-      // Higher generation threshold for dense fluid look (0.75 frequency)
-      if (particles.length < 550 && Math.random() < 0.75) {
+      // Spawning density badha di gayi hai taaki smoke "ribbons" gaps ke bina thick lagein
+      if (particles.length < 800) {
         particles.push(new PremiumCinematicParticle(canvas.width, canvas.height));
+        particles.push(new PremiumCinematicParticle(canvas.width, canvas.height)); // Double spawn for dense flow
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
         particles[i].update();
         particles[i].draw(ctx);
-        if (particles[i].alpha <= 0 || particles[i].x < 15 || particles[i].y < 15) {
+        if (particles[i].alpha <= 0 || particles[i].x < -50) {
           particles.splice(i, 1);
         }
       }
@@ -212,7 +218,7 @@ export function PaintedSmoke() {
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
+      <canvas ref={canvasRef} className="w-full h-full opacity-90" />
     </div>
   );
 }
