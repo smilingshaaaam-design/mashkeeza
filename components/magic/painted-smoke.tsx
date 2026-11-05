@@ -2,132 +2,163 @@ import React, { useEffect, useRef } from 'react';
 
 const BOX = { left: 68.5, top: 21, width: 24, height: 50 };
 
-type Particle = {
-  x: number;
-  y: number;
-  vx: number; // Velocity X
-  vy: number; // Velocity Y
-  size: number;
-  life: number;
-  maxLife: number;
-  angle: number;
-  spin: number;
-};
+// 1. VERTEX SHADER: Defines a flat 2D canvas screen
+const vertexShaderSource = `
+  attribute vec2 a_position;
+  void main() {
+    gl_Position = vec4(a_position, 0.0, 1.0);
+  }
+`;
 
-export function ElitePaintedSmoke() {
+// 2. FRAGMENT SHADER (GLSL): The Elite Fluid Math (FBM + Domain Warping)
+const fragmentShaderSource = `
+  precision highp float;
+  uniform vec2 u_resolution;
+  uniform float u_time;
+
+  // Pseudo-random hash function
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+  }
+
+  // Smooth Value Noise
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+               mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+  }
+
+  // Fractal Brownian Motion (FBM) - Creates the complex smoke texture
+  float fbm(vec2 p) {
+    float f = 0.0;
+    float amp = 0.5;
+    for(int i = 0; i < 6; i++) {
+      f += amp * noise(p);
+      p *= 2.02; 
+      p.y -= u_time * 0.3; // Smoke rises upward
+      p.x += sin(u_time * 0.15) * 0.1; // Gentle wind sway
+      amp *= 0.5;
+    }
+    return f;
+  }
+
+  void main() {
+    // Normalize coordinates (0.0 to 1.0)
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+
+    // DOMAIN WARPING: Distorts the space to make smoke swirl and curl organically
+    vec2 q = vec2(0.0);
+    q.x = fbm(uv + vec2(0.0, u_time * 0.05));
+    q.y = fbm(uv + vec2(1.0, u_time * 0.05));
+
+    vec2 r = vec2(0.0);
+    r.x = fbm(uv + 1.0 * q + vec2(1.7, 9.2) + 0.15 * u_time);
+    r.y = fbm(uv + 1.0 * q + vec2(8.3, 2.8) + 0.126 * u_time);
+
+    float f = fbm(uv + r);
+
+    // PLUME SHAPING: Controls where the smoke exists
+    // Spout is roughly at x = 0.2 (20% from left of the box)
+    float centerDist = abs(uv.x - 0.25 - (uv.y * 0.1) - sin(u_time * 0.8 + uv.y * 6.0) * 0.03);
+    float width = 0.1 + (uv.y * 0.5); // Plume spreads out as it goes up
+    
+    // Masks to fade smoke at edges and create the plume shape
+    float plumeMask = smoothstep(width, 0.0, centerDist);
+    float verticalMask = smoothstep(0.0, 0.15, uv.y) * smoothstep(1.0, 0.3, uv.y);
+    float finalMask = plumeMask * verticalMask;
+
+    // COLOR GRADING: Desert warm tones
+    vec3 colorA = vec3(0.98, 0.94, 0.88); // Bright core
+    vec3 colorB = vec3(0.85, 0.78, 0.72); // Outer shadow
+    vec3 finalColor = mix(colorB, colorA, f * 1.5);
+
+    // Calculate final transparency
+    float alpha = f * finalMask * 2.0;
+
+    gl_FragColor = vec4(finalColor, min(alpha, 1.0));
+  }
+`;
+
+export function SupremeWebGLSmoke() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true });
-    if (!ctx) return;
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) {
+      console.error('WebGL not supported');
+      return;
+    }
 
-    let animationFrameId: number;
-    let particles: Particle[] = [];
-
-    // Resize handling
-    const updateSize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-
-    // 1. ELITE TRICK: Pre-render a realistic smoke puff texture on an offscreen canvas
-    // Ye performance ko boost karta hai aur real smoke gradient deta hai
-    const textureSize = 128;
-    const smokeTexture = document.createElement('canvas');
-    smokeTexture.width = textureSize;
-    smokeTexture.height = textureSize;
-    const tCtx = smokeTexture.getContext('2d')!;
-    const gradient = tCtx.createRadialGradient(
-      textureSize / 2, textureSize / 2, 0,
-      textureSize / 2, textureSize / 2, textureSize / 2
-    );
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)'); // Bright core
-    gradient.addColorStop(0.3, 'rgba(220, 225, 235, 0.2)'); // Mid tone
-    gradient.addColorStop(1, 'rgba(180, 190, 200, 0)'); // Faded edge
-    tCtx.fillStyle = gradient;
-    tCtx.fillRect(0, 0, textureSize, textureSize);
-
-    // Spawning logic (relative to the lamp's spout)
-    const getSpawnPos = () => ({
-      x: canvas.width * 0.19, // Adjusted for the BOX layout
-      y: canvas.height * 0.85,
-    });
-
-    const createParticle = () => {
-      const pos = getSpawnPos();
-      particles.push({
-        x: pos.x + (Math.random() * 15 - 7.5),
-        y: pos.y + (Math.random() * 10 - 5),
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: -(Math.random() * 1.2 + 0.8), // Moves UP
-        size: Math.random() * 20 + 30, // Starts small
-        life: 0,
-        maxLife: Math.random() * 150 + 150,
-        angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 0.02,
-      });
+    // Helper: Compile Shaders
+    const createShader = (type: number, source: string) => {
+      const shader = gl.createShader(type)!;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+      }
+      return shader;
     };
 
-    const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Elite Compositing for volumetric feel
-      ctx.globalCompositeOperation = 'screen'; 
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexShaderSource);
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-      // Spawn new particles continuously
-      if (Math.random() < 0.6) createParticle(); // Higher density
-      if (Math.random() < 0.2) createParticle(); 
+    // Create WebGL Program
+    const program = gl.createProgram()!;
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
 
-      particles.forEach((p, index) => {
-        p.life++;
+    // Set up full-screen quad (2 triangles)
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1,  1, -1, -1,  1,
+      -1,  1,  1, -1,  1,  1
+    ]), gl.STATIC_DRAW);
 
-        // Remove dead particles
-        if (p.life >= p.maxLife) {
-          particles.splice(index, 1);
-          return;
-        }
+    const positionLocation = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // 2. ELITE PHYSICS: Fluid turbulence and wind drag
-        const progress = p.life / p.maxLife;
-        p.vy *= 0.995; // Air resistance
-        p.x += p.vx + Math.sin(p.life * 0.02 + p.y * 0.01) * 0.6; // Organic wind drift
-        p.y += p.vy;
-        p.size += 0.4; // Smoke expands as it rises
-        p.angle += p.spin;
+    // Get Uniform Locations
+    const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+    const timeLocation = gl.getUniformLocation(program, 'u_time');
 
-        // Smooth Fade-in and Fade-out (Bell curve opacity)
-        let opacity = 1;
-        if (progress < 0.1) opacity = progress * 10; // Fast fade in
-        else opacity = 1 - Math.pow(progress, 2); // Slow, natural fade out
-        
-        ctx.globalAlpha = Math.max(0, opacity);
-
-        // Draw pre-rendered texture with rotation
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.drawImage(
-          smokeTexture,
-          -p.size / 2,
-          -p.size / 2,
-          p.size,
-          p.size
-        );
-        ctx.rotate(-p.angle);
-        ctx.translate(-p.x, -p.y);
-      });
-
-      animationFrameId = requestAnimationFrame(render);
+    // Handle Resize
+    const resizeCanvas = () => {
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
     };
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    render();
+    // Render Loop
+    let animationId: number;
+    const render = (time: number) => {
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // Pass time to GPU (scaled down for smooth speed)
+      gl.uniform1f(timeLocation, time * 0.001);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      animationId = requestAnimationFrame(render);
+    };
+    animationId = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('resize', updateSize);
-      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationId);
+      gl.deleteProgram(program);
     };
   }, []);
 
@@ -141,18 +172,15 @@ export function ElitePaintedSmoke() {
           top: `${BOX.top}%`,
           width: `${BOX.width}%`,
           height: `${BOX.height}%`,
-          // 3. ELITE CSS TRICK: Metaball fluid merging
-          // Ye blur aur contrast particles ko aapas mein completely blend kar dega
-          filter: 'blur(3px) contrast(1.1) brightness(1.2)',
         }}
       >
-        {/* Background Painted Image (Base) */}
+        {/* Base Painted Background */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/desert-scene.png"
           alt=""
           draggable={false}
-          className="absolute max-w-none select-none opacity-20 mix-blend-overlay"
+          className="absolute max-w-none select-none opacity-40 mix-blend-overlay"
           style={{
             width: `${(100 / BOX.width) * 100}%`,
             height: `${(100 / BOX.height) * 100}%`,
@@ -161,20 +189,22 @@ export function ElitePaintedSmoke() {
           }}
         />
 
-        {/* Dynamic Volumetric Canvas Smoke Layer */}
+        {/* Elite WebGL Shader Canvas */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 h-full w-full opacity-90"
+          className="absolute inset-0 h-full w-full"
+          style={{ mixBlendMode: 'screen' }} 
         />
       </div>
 
-      {/* Lamp Spout Glow */}
+      {/* Realistic Lamp Spout Glow */}
       <div
         aria-hidden="true"
         className="lamp-spout-glow absolute rounded-full"
         style={{ 
           left: '73.2%', top: '61%', width: '6%', height: '14%',
-          boxShadow: '0 0 15px 5px rgba(255, 230, 180, 0.4)' // Added realistic warm glow
+          background: 'radial-gradient(circle, rgba(255,240,200,0.8) 0%, rgba(255,200,100,0) 70%)',
+          boxShadow: '0 -5px 25px 10px rgba(255, 220, 150, 0.3)' 
         }}
       />
     </div>
