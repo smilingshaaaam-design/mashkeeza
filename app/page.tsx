@@ -91,28 +91,29 @@ export default function HomePage() {
               <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[38%]" />
               <Mashk />
 
-              {/* 🪔 EXACT RESPONSIVE COORD MATCH FOR STATIC SMOKE ANIMATION */}
-              <div className="absolute bottom-[33%] right-[13.5%] md:right-[14%] w-[25cqw] h-[35cqw] max-w-[320px] max-h-[420px] pointer-events-none mix-blend-screen z-20 overflow-visible">
+              {/* 🪔 SAME-TO-SAME FLUID VIDEO ANIMATION WRAPPER */}
+              <div className="absolute bottom-[30%] right-[11%] w-[30cqw] h-[45cqw] max-w-[400px] max-h-[550px] pointer-events-none mix-blend-screen z-20 overflow-visible">
                 
-                {/* Micro-glow directly at the nozzle tip */}
-                <div className="absolute bottom-2 right-[42%] w-8 h-8 bg-purple-500/60 blur-md rounded-full animate-pulse" />
-                <div className="absolute bottom-3 right-[44%] w-4 h-4 bg-amber-300/50 blur-sm rounded-full animate-ping [animation-duration:1s]" />
-
-                {/* Overlapping Shimmering Smoke Strings that mask the static JPEG smoke */}
+                {/* Core Magic Volumetric Smoke Strings */}
                 <div 
-                  className="absolute bottom-6 left-0 w-full h-[85%] bg-gradient-to-t from-purple-600/30 via-pink-500/10 to-transparent blur-xl rounded-full opacity-0"
-                  style={{ animation: 'cinematicSmoke1 7s infinite ease-in-out' }}
+                  className="absolute bottom-[10%] right-[30%] w-[120px] h-[300px] bg-gradient-to-t from-purple-600/40 via-pink-500/20 to-transparent blur-xl rounded-full opacity-0 origin-bottom"
+                  style={{ animation: 'fluidSmokeVideo1 6s infinite ease-in-out' }}
                 />
                 
                 <div 
-                  className="absolute bottom-8 left-[10%] w-[90%] h-[90%] bg-gradient-to-tr from-indigo-500/25 via-purple-500/5 to-transparent blur-2xl rounded-full opacity-0"
-                  style={{ animation: 'cinematicSmoke2 10s infinite ease-in-out 1.5s' }}
+                  className="absolute bottom-[12%] right-[25%] w-[150px] h-[350px] bg-gradient-to-tr from-indigo-500/30 via-purple-500/10 to-transparent blur-2xl rounded-full opacity-0 origin-bottom"
+                  style={{ animation: 'fluidSmokeVideo2 8s infinite ease-in-out 1s' }}
                 />
 
-                {/* Rising Magical Sparks */}
-                <div className="absolute bottom-10 left-[45%] w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'luxurySparkle 4s infinite linear' }} />
-                <div className="absolute bottom-20 left-[35%] w-2 h-2 bg-purple-300 rounded-full opacity-0" style={{ animation: 'luxurySparkle 5s infinite linear 0.8s' }} />
-                <div className="absolute bottom-16 left-[55%] w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'luxurySparkle 4.5s infinite linear 1.8s' }} />
+                <div 
+                  className="absolute bottom-[8%] right-[35%] w-[90px] h-[260px] bg-gradient-to-tl from-fuchsia-500/35 via-cyan-500/15 to-transparent blur-xl rounded-full opacity-0 origin-bottom"
+                  style={{ animation: 'fluidSmokeVideo3 5s infinite ease-in-out 2s' }}
+                />
+
+                {/* Ambient Nozzle Emitter Sparks */}
+                <div className="absolute bottom-[8%] right-[45%] w-2 h-2 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'videoSparkle 3.5s infinite linear' }} />
+                <div className="absolute bottom-[12%] right-[40%] w-1.5 h-1.5 bg-white rounded-full opacity-0" style={{ animation: 'videoSparkle 4.5s infinite linear 0.7s' }} />
+                <div className="absolute bottom-[15%] right-[50%] w-2 h-2 bg-purple-300 rounded-full opacity-0" style={{ animation: 'videoSparkle 4s infinite linear 1.5s' }} />
               </div>
 
             </div>
@@ -121,24 +122,30 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* CSS Engine safely embedded for production deployment */}
+        {/* Cinematic Video Fluid Animation Engine */}
         <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes cinematicSmoke1 {
-            0% { transform: translateY(30px) scale(0.8) rotate(0deg); opacity: 0; filter: blur(6px); }
-            15% { opacity: 0.7; }
-            50% { transform: translateY(-90px) scale(1.3) translateX(-35px) rotate(-15deg); opacity: 0.4; filter: blur(12px); }
-            100% { transform: translateY(-220px) scale(1.9) translateX(-70px) rotate(-35deg); opacity: 0; filter: blur(20px); }
+          @keyframes fluidSmokeVideo1 {
+            0% { transform: translateY(50px) scale(0.5) rotate(0deg); opacity: 0; filter: blur(6px); }
+            15% { opacity: 0.8; }
+            45% { transform: translateY(-120px) scale(1.4) translateX(-45px) rotate(-20deg); opacity: 0.5; filter: blur(14px); }
+            100% { transform: translateY(-280px) scale(2.2) translateX(-110px) rotate(-45deg); opacity: 0; filter: blur(28px); }
           }
-          @keyframes cinematicSmoke2 {
-            0% { transform: translateY(40px) scale(0.6) rotate(0deg); opacity: 0; filter: blur(10px); }
-            20% { opacity: 0.6; }
-            65% { transform: translateY(-120px) scale(1.5) translateX(25px) rotate(20deg); opacity: 0.3; filter: blur(16px); }
-            100% { transform: translateY(-270px) scale(2.1) translateX(55px) rotate(45deg); opacity: 0; filter: blur(26px); }
+          @keyframes fluidSmokeVideo2 {
+            0% { transform: translateY(60px) scale(0.4) rotate(0deg); opacity: 0; filter: blur(10px); }
+            20% { opacity: 0.7; }
+            55% { transform: translateY(-160px) scale(1.6) translateX(-20px) rotate(15deg); opacity: 0.4; filter: blur(20px); }
+            100% { transform: translateY(-360px) scale(2.5) translateX(-50px) rotate(35deg); opacity: 0; filter: blur(35px); }
           }
-          @keyframes luxurySparkle {
-            0% { transform: translateY(10px) translateX(0) scale(0.4); opacity: 0; }
-            40% { opacity: 1; transform: translateY(-70px) translateX(-15px) scale(1.2); }
-            100% { transform: translateY(-180px) translateX(-35px) scale(0); opacity: 0; }
+          @keyframes fluidSmokeVideo3 {
+            0% { transform: translateY(40px) scale(0.6) rotate(0deg); opacity: 0; filter: blur(8px); }
+            10% { opacity: 0.75; }
+            50% { transform: translateY(-100px) scale(1.3) translateX(-60px) rotate(-10deg); opacity: 0.45; filter: blur(12px); }
+            100% { transform: translateY(-240px) scale(2.0) translateX(-140px) rotate(-25deg); opacity: 0; filter: blur(22px); }
+          }
+          @keyframes videoSparkle {
+            0% { transform: translateY(20px) translateX(0) scale(0.3); opacity: 0; }
+            30% { opacity: 1; }
+            100% { transform: translateY(-220px) translateX(-80px) scale(0); opacity: 0; }
           }
         `}} />
 
