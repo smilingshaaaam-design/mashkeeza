@@ -2,389 +2,256 @@
 
 import React, { useEffect, useRef } from "react";
 
-const ASMA = [
-  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ",
-  "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ",
-  "الْجَبَّارُ", "الْمُتَكَبِّرُ", "الْخَالِقُ", "الْبَارِئُ",
-  "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ",
-  "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
-  "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ",
-  "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَكَمُ",
-  "الْعَدْلُ", "اللَّطِيفُ", "الْخَبِيرُ", "الْحَلِيمُ",
-  "الْعَظِيمُ", "الْغَفُورُ", "الشَّكُورُ", "الْعَلِيُّ",
-  "الْكَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
-  "الْجَلِيلُ", "الْكَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ",
-  "الْوَاسِعُ", "الْحَكِيمُ", "الْوَدُودُ", "الْمَجِيدُ",
-  "الْبَاعِثُ", "الشَّهِيدُ", "الْحَقُّ", "الْوَكِيلُ",
-  "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ",
-  "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
-  "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ",
-  "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ",
-  "الْمُقْتَدِرُ", "الْمُقَدِّمُ", "الْمُؤَخِّرُ", "الْأَوَّلُ",
-  "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي",
-  "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّؤُوفُ", "مَالِكُ الْمُلْكِ",
-  "ذُو الْجَلَالِ وَالْإِكْرَامِ", "الْمُقْسِطُ",
-  "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ",
-  "الضَّارُّ", "النَّافِعُ", "النُّورُ", "الْهَادِي",
-  "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ",
-  "الصَّبُورُ"
+/**
+ * MagicalSmoke
+ * - Ek hi source point se upar uthta dhuan (incense-style) with soft swirl
+ * - Arabic glyphs (Asma, Muqatta'at, Abjad) + planet symbols smoke ke saath behte hain
+ * - Mouse/touch se smoke halka sa dhakelta hai (wind effect)
+ * - prefers-reduced-motion respect karta hai
+ *
+ * Props:
+ *  originX / originY : emission point (0-1, canvas ke relative)
+ *  glyphs            : apne text/symbols pass kar sakte ho
+ */
+
+const DEFAULT_GLYPHS = [
+  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ",
+  "النُّورُ", "الْهَادِي", "الْبَاقِي", "الْحَيُّ", "الْقَيُّومُ",
+  "الم", "يس", "طه", "حم", "ق", "ن",
+  "ا", "ب", "ج", "د", "ه", "و",
+  "☉", "☽", "☿", "♀", "♂", "♃", "♄",
 ];
 
-const MUQATTAAT = [
-  "الم", "المص", "الر", "المر",
-  "كهيعص", "طه", "طسم", "طس",
-  "يس", "ص", "حم", "حم عسق", "ق", "ن"
-];
+const PALETTE = [275, 285, 225, 188, 44]; // violet, indigo, cyan, gold
 
-const ABJAD = [
-  "ا", "ب", "ج", "د", "ه", "و", "ز",
-  "ح", "ط", "ي", "ك", "ل", "م", "ن",
-  "س", "ع", "ف", "ص", "ق", "ر", "ش",
-  "ت", "ث", "خ", "ذ", "ض", "ظ", "غ"
-];
+const rand = (a: number, b: number) => Math.random() * (b - a) + a;
+const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-const PLANETS = [
-  { symbol: "☉", name: "الشمس", hue: 44 },
-  { symbol: "☽", name: "القمر", hue: 205 },
-  { symbol: "☿", name: "عطارد", hue: 188 },
-  { symbol: "♀", name: "الزهرة", hue: 320 },
-  { symbol: "♂", name: "المريخ", hue: 0 },
-  { symbol: "♃", name: "المشتري", hue: 275 },
-  { symbol: "♄", name: "زحل", hue: 230 }
-];
+interface Props {
+  originX?: number;
+  originY?: number;
+  glyphs?: string[];
+  /** Left ki taraf kitna bahe: 0 = seedha upar, 1 = normal, 2 = bahut tez */
+  drift?: number;
+}
 
-const SYMBOLIC_MUWAKKIL_LABELS = ABJAD.map(
-  letter => `أثير ${letter}`
-);
+type Kind = "smoke" | "glyph" | "spark";
 
-const random = (min: number, max: number) =>
-  Math.random() * (max - min) + min;
-
-const pick = <T,>(arr: T[]): T =>
-  arr[Math.floor(Math.random() * arr.length)];
-
-type ParticleType =
-  | "smoke"
-  | "asma"
-  | "muqattaat"
-  | "abjad"
-  | "planet"
-  | "symbolic"
-  | "sparkle";
-
-class SmokeParticle {
+class Particle {
   x: number;
   y: number;
-  vx: number;
+  vx = 0;
   vy: number;
   size: number;
-  alpha: number;
-  life: number;
+  alpha = 0;
+  baseAlpha: number;
+  life = 0;
   maxLife: number;
   hue: number;
-  wave: number;
-  waveSpeed: number;
-  rotation: number;
-  rotationSpeed: number;
-  text: string;
-  type: ParticleType;
+  seed = rand(0, 1000);
+  rot = rand(0, Math.PI * 2);
+  rotSpeed = rand(-0.01, 0.01);
+  text = "";
 
-  constructor(
-    width: number,
-    height: number,
-    type: ParticleType
-  ) {
-    this.type = type;
+  constructor(public kind: Kind, ox: number, oy: number, glyphs: string[]) {
+    this.x = ox + rand(-3, 3);
+    this.y = oy + rand(-2, 2);
+    this.hue = pick(PALETTE);
+    this.maxLife = rand(180, 340);
 
-    // Emission Point
-    this.x = width * 0.76 + random(-8, 8);
-    this.y = height * 0.64 + random(-5, 5);
-
-    this.wave = random(0, Math.PI * 2);
-    this.waveSpeed = random(0.01, 0.025); // Controls how fast it twists
-    this.life = 0;
-    this.rotation = random(0, Math.PI * 2);
-    this.rotationSpeed = random(-0.015, 0.015);
-    this.text = "";
-
-    this.hue = pick([275, 285, 220, 230, 188, 44]);
-
-    switch (type) {
-      case "asma":
-        this.text = pick(ASMA);
-        this.size = random(17, 27);
-        this.alpha = random(0.55, 0.85);
-        this.maxLife = random(200, 350);
-        this.vx = random(-0.3, 0.3);
-        this.vy = random(-1.5, -0.8);
-        break;
-
-      case "muqattaat":
-        this.text = pick(MUQATTAAT);
-        this.size = random(22, 34);
-        this.hue = 44;
-        this.alpha = 0.8;
-        this.maxLife = random(200, 350);
-        this.vx = random(-0.3, 0.3);
-        this.vy = random(-1.5, -0.8);
-        break;
-
-      case "abjad":
-        this.text = pick(ABJAD);
-        this.size = random(19, 29);
-        this.hue = 188;
-        this.alpha = 0.75;
-        this.maxLife = random(200, 350);
-        this.vx = random(-0.3, 0.3);
-        this.vy = random(-1.5, -0.8);
-        break;
-
-      case "planet": {
-        const planet = pick(PLANETS);
-        this.text = planet.symbol;
-        this.hue = planet.hue;
-        this.size = random(25, 37);
-        this.alpha = 0.8;
-        this.maxLife = random(200, 350);
-        this.vx = random(-0.3, 0.3);
-        this.vy = random(-1.5, -0.8);
-        break;
-      }
-
-      case "symbolic":
-        this.text = pick(SYMBOLIC_MUWAKKIL_LABELS);
-        this.size = random(13, 20);
-        this.hue = 275;
-        this.alpha = 0.65;
-        this.maxLife = random(200, 350);
-        this.vx = random(-0.3, 0.3);
-        this.vy = random(-1.5, -0.8);
-        break;
-
-      case "sparkle":
-        this.size = random(1.5, 4);
-        this.alpha = random(0.8, 1);
-        this.maxLife = random(250, 450);
-        this.hue = pick([44, 188, 275]);
-        this.vx = random(-0.5, 0.5);
-        this.vy = random(-2.0, -1.0);
-        break;
-
-      default: // Thick, twisting smoke
-        this.size = random(25, 55); // Much bigger to look like dense smoke
-        this.alpha = random(0.3, 0.6); // Highly visible
-        this.maxLife = random(400, 700); // Lasts long to fill the page
-        this.vx = random(-0.6, 0.6); // Allows it to spread sideways
-        this.vy = random(-1.4, -0.6); // Moves upward slowly and gracefully
+    if (kind === "glyph") {
+      this.text = pick(glyphs);
+      this.size = rand(16, 30);
+      this.baseAlpha = rand(0.6, 0.9);
+      this.vy = rand(-1.9, -1.1);
+    } else if (kind === "spark") {
+      this.size = rand(1, 2.8);
+      this.baseAlpha = rand(0.7, 1);
+      this.vy = rand(-3, -1.2);
+      this.vx = rand(-0.25, 0.25);
+    } else {
+      this.size = rand(8, 16);
+      this.baseAlpha = rand(0.12, 0.3);
+      this.vy = rand(-2.6, -1.4);
     }
   }
 
-  update() {
+  update(t: number, wind: { x: number; y: number; px: number; py: number; power: number }, drift: number) {
     this.life++;
-    const progress = this.life / this.maxLife;
-    this.rotation += this.rotationSpeed;
+    const p = this.life / this.maxLife;
 
-    // The magical twisting motion ("Bal khata hua")
-    // Sine wave creates a meandering S-curve across the page
-    const twist = Math.sin(this.life * this.waveSpeed + this.wave);
-    
-    if (this.type === "smoke") {
-      // Large sweeps for smoke
-      this.x += this.vx + twist * 2.5; 
-      this.y += this.vy;
-      
-      this.size += 0.12; // Expands gradually
-      this.alpha *= 0.996; // Very slow fade so it remains visible long enough to twist
+    // swirl: height ke saath sway badhta hai, bilkul real dhuan jaisa
+    const sway = 0.4 + p * 1.4;
+    // bal khaata hua: height ke hisaab se wave, jo left ke saath combine hota hai
+    this.vx += Math.sin(t * 0.9 + this.seed + this.y * 0.02) * 0.02 * sway;
+    // left pull: shuru mein halka, upar jaate hue badhta hai (curve banta hai)
+    this.vx -= drift * (0.008 + p * 0.03);
+    this.vx *= 0.985;
 
-    } else if (this.type === "sparkle") {
-      // Sparkles follow the twist but a bit tighter
-      this.x += this.vx + twist * 1.5;
-      this.y += this.vy;
-      
-      // Twinkling effect
-      this.alpha = (0.2 + Math.abs(Math.sin(this.life * 0.15)) * 0.8) * (1 - progress);
-
-    } else {
-      // Symbols gently float up with a mild sway
-      this.x += this.vx + twist * 0.8;
-      this.y += this.vy;
-      
-      if (progress > 0.6) {
-        this.alpha -= 0.015;
+    // mouse wind
+    if (wind.power > 0.01) {
+      const dx = this.x - wind.px;
+      const dy = this.y - wind.py;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < 160 * 160) {
+        const f = (1 - Math.sqrt(d2) / 160) * wind.power;
+        this.vx += wind.x * f * 0.05;
+        this.vy += wind.y * f * 0.02;
       }
     }
 
-    this.alpha = Math.max(0, this.alpha);
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy *= 0.999;
+    this.rot += this.rotSpeed;
+
+    if (this.kind === "smoke") {
+      this.size += 0.12 + p * 0.1; // upar jaate hue phailta hai
+    }
+
+    // fade in -> hold -> fade out
+    const fadeIn = Math.min(1, this.life / 20);
+    const fadeOut = p > 0.55 ? 1 - (p - 0.55) / 0.45 : 1;
+    this.alpha = this.baseAlpha * fadeIn * Math.max(0, fadeOut);
+
+    if (this.kind === "spark") {
+      this.alpha *= 0.4 + Math.abs(Math.sin(this.life * 0.25)) * 0.6;
+    }
+  }
+
+  dead(w: number) {
+    return this.life >= this.maxLife || this.alpha < 0.005 && this.life > 30 || this.y < -80 || this.x < -100 || this.x > w + 100;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
     if (this.alpha <= 0) return;
-
     ctx.save();
     ctx.translate(this.x, this.y);
 
-    if (this.type === "smoke") {
-      const gradient = ctx.createRadialGradient(
-        0, 0, 0,
-        0, 0, this.size
-      );
-
-      // Thicker, richer colors for highly visible magic smoke
-      gradient.addColorStop(0, `hsla(${this.hue}, 85%, 75%, ${this.alpha * 0.6})`);
-      gradient.addColorStop(0.4, `hsla(${this.hue}, 75%, 65%, ${this.alpha * 0.35})`);
-      gradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${this.alpha * 0.15})`);
-      gradient.addColorStop(1, "rgba(0,0,0,0)");
-
-      ctx.rotate(this.rotation);
-      ctx.scale(1.2, 0.8); // Oval shape makes it look more cloud-like
-
-      ctx.fillStyle = gradient;
+    if (this.kind === "smoke") {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+      g.addColorStop(0, `hsla(${this.hue},80%,72%,${this.alpha * 0.55})`);
+      g.addColorStop(0.45, `hsla(${this.hue},70%,58%,${this.alpha * 0.25})`);
+      g.addColorStop(1, "hsla(0,0%,0%,0)");
+      ctx.rotate(this.rot);
+      ctx.scale(1.2, 0.75);
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(0, 0, this.size, 0, Math.PI * 2);
       ctx.fill();
-
-    } else if (this.type === "sparkle") {
+    } else if (this.kind === "spark") {
       ctx.globalCompositeOperation = "lighter";
-      ctx.fillStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = `hsla(${this.hue}, 100%, 60%, ${this.alpha})`;
-      
+      ctx.fillStyle = `hsla(${this.hue},100%,80%,${this.alpha})`;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = `hsla(${this.hue},100%,60%,${this.alpha})`;
       ctx.beginPath();
       ctx.arc(0, 0, this.size, 0, Math.PI * 2);
       ctx.fill();
-
     } else {
       ctx.globalCompositeOperation = "lighter";
-      const color = `hsla(${this.hue}, 100%, 78%, ${this.alpha})`;
-
-      ctx.font = `bold ${this.size}px "Amiri", "Noto Naskh Arabic", "Times New Roman", serif`;
+      ctx.rotate(Math.sin(this.rot) * 0.15); // halka sa jhulna, poora ghumna nahi
+      ctx.font = `bold ${this.size}px "Amiri","Noto Naskh Arabic","Times New Roman",serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-
-      ctx.shadowColor = `hsla(${this.hue}, 100%, 65%, ${this.alpha})`;
+      ctx.shadowColor = `hsla(${this.hue},100%,65%,${this.alpha})`;
       ctx.shadowBlur = 18;
-
-      ctx.fillStyle = color;
+      ctx.fillStyle = `hsla(${this.hue},100%,80%,${this.alpha})`;
       ctx.fillText(this.text, 0, 0);
     }
-
     ctx.restore();
   }
 }
 
-export function PaintedSmoke() {
+export function MagicalSmoke({
+  originX = 0.85,
+  originY = 0.95,
+  glyphs = DEFAULT_GLYPHS,
+  drift = 1,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !canvas.parentElement) return;
-
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animationFrameId = 0;
-    let particles: SmokeParticle[] = [];
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const MAX = reduced ? 150 : 800;
 
-    let width = 0;
-    let height = 450;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0;
+    let h = 0;
+    let raf = 0;
+    let particles: Particle[] = [];
+    let t = 0;
+    const wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
-    const MAX_PARTICLES = 1200; // Increased max particles for denser smoke
-
-    const resizeCanvas = () => {
-      if (!canvas.parentElement) return;
-
-      width = canvas.parentElement.clientWidth;
-      height = canvas.parentElement.clientHeight || 450;
-
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = parent.clientWidth;
+      h = parent.clientHeight || 450;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+    resize();
+    window.addEventListener("resize", resize);
 
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    const spawnSmoke = () => {
-      if (particles.length < MAX_PARTICLES) {
-        // Spawn more smoke particles per frame to create a continuous thick stream
-        for (let i = 0; i < 4; i++) {
-          particles.push(
-            new SmokeParticle(width, height, "smoke")
-          );
-        }
-        // Spawn sparkles
-        if (Math.random() < 0.7) {
-          particles.push(
-            new SmokeParticle(width, height, "sparkle")
-          );
-        }
-      }
+    const onMove = (clientX: number, clientY: number) => {
+      const r = canvas.getBoundingClientRect();
+      const x = clientX - r.left;
+      const y = clientY - r.top;
+      wind.x = x - wind.px;
+      wind.y = y - wind.py;
+      wind.px = x;
+      wind.py = y;
+      wind.power = Math.min(1, Math.hypot(wind.x, wind.y) / 25);
     };
+    const mm = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const tm = (e: TouchEvent) => onMove(e.touches[0].clientX, e.touches[0].clientY);
+    window.addEventListener("mousemove", mm);
+    window.addEventListener("touchmove", tm, { passive: true });
 
-    const spawnSymbol = () => {
-      if (particles.length >= MAX_PARTICLES) return;
+    const frame = () => {
+      t += 0.016;
+      const ox = w * originX;
+      const oy = h * originY;
 
-      const r = Math.random();
-      let type: ParticleType;
+      ctx.clearRect(0, 0, w, h);
 
-      if (r < 0.38) type = "asma";
-      else if (r < 0.53) type = "abjad";
-      else if (r < 0.67) type = "muqattaat";
-      else if (r < 0.82) type = "planet";
-      else type = "symbolic";
-
-      particles.push(new SmokeParticle(width, height, type));
-    };
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      spawnSmoke();
-
-      if (Math.random() < 0.15) {
-        spawnSymbol();
+      if (particles.length < MAX) {
+        for (let i = 0; i < 2; i++) particles.push(new Particle("smoke", ox, oy, glyphs));
+        if (Math.random() < 0.5) particles.push(new Particle("spark", ox, oy, glyphs));
+        if (Math.random() < 0.12) particles.push(new Particle("glyph", ox, oy, glyphs));
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
-        const particle = particles[i];
-
-        particle.update();
-        particle.draw(ctx);
-
-        if (
-          particle.alpha <= 0.01 ||
-          particle.life >= particle.maxLife ||
-          particle.y < -150 || // Allow it to go higher before deleting
-          particle.x < -150 ||
-          particle.x > width + 150
-        ) {
-          particles.splice(i, 1);
-        }
+        const p = particles[i];
+        p.update(t, wind, drift);
+        p.draw(ctx);
+        if (p.dead(w)) particles.splice(i, 1);
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      wind.power *= 0.92; // wind dheere dheere shaant hoti hai
+      raf = requestAnimationFrame(frame);
     };
-
-    render();
+    frame();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", mm);
+      window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, []);
+  }, [originX, originY, glyphs, drift]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full mix-blend-screen opacity-100"
-      />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
+      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen" />
     </div>
   );
 }
+
+export default MagicalSmoke;
