@@ -76,10 +76,24 @@ export default function HomePage() {
     <div className="min-h-screen overflow-x-hidden bg-night text-white">
       <SiteHeader />
 
+      {/* Invisible SVG Distortion Filter Matrix for Fluid Smoke Movement */}
+      <svg className="absolute w-0 h-0 invisible" xmlns="http://w3.org">
+        <defs>
+          <filter id="magical-fluid-smoke" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" result="noise">
+              <animate attributeName="baseFrequency" dur="15s" values="0.015 0.04; 0.015 0.07; 0.015 0.04" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="35" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
       <main>
         <section aria-label="روحانی منظر" className="relative -mt-2">
           <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[16/8]">
             <div className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size] w-full max-w-[1584px]">
+              
+              {/* 1. BASE BACKGROUND IMAGE (Pahaad aur baqi scene bilkul static rahega) */}
               <Image
                 src="/images/desert-scene.png"
                 alt="صحرا میں روشن قدیم کتابیں، جادوئی چراغ اور سنہری روشنی کا دریا"
@@ -91,29 +105,21 @@ export default function HomePage() {
               <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[38%]" />
               <Mashk />
 
-              {/* 🪔 SAME-TO-SAME FLUID VIDEO ANIMATION WRAPPER */}
-              <div className="absolute bottom-[30%] right-[11%] w-[30cqw] h-[45cqw] max-w-[400px] max-h-[550px] pointer-events-none mix-blend-screen z-20 overflow-visible">
-                
-                {/* Core Magic Volumetric Smoke Strings */}
-                <div 
-                  className="absolute bottom-[10%] right-[30%] w-[120px] h-[300px] bg-gradient-to-t from-purple-600/40 via-pink-500/20 to-transparent blur-xl rounded-full opacity-0 origin-bottom"
-                  style={{ animation: 'fluidSmokeVideo1 6s infinite ease-in-out' }}
-                />
-                
-                <div 
-                  className="absolute bottom-[12%] right-[25%] w-[150px] h-[350px] bg-gradient-to-tr from-indigo-500/30 via-purple-500/10 to-transparent blur-2xl rounded-full opacity-0 origin-bottom"
-                  style={{ animation: 'fluidSmokeVideo2 8s infinite ease-in-out 1s' }}
-                />
+              {/* 2. LIVE LIQUID MASK (Sirf image ke dhuwan wale hisse ko target karega) */}
+              <div 
+                className="absolute bottom-[24%] right-[5%] w-[42cqw] h-[55cqw] max-w-[550px] max-h-[650px] pointer-events-none z-10 bg-no-repeat bg-contain origin-bottom-right opacity-95"
+                style={{
+                  backgroundImage: "url('/images/desert-scene.png')",
+                  backgroundPosition: "91% 68%", // Exact focal point of purple smoke stream
+                  backgroundSize: "320%", // Image ko crop kiye bina sirf smoke zone par align kiya
+                  filter: "url(#magical-fluid-smoke)", // Direct dynamic ripple on original pixels
+                }}
+              />
 
-                <div 
-                  className="absolute bottom-[8%] right-[35%] w-[90px] h-[260px] bg-gradient-to-tl from-fuchsia-500/35 via-cyan-500/15 to-transparent blur-xl rounded-full opacity-0 origin-bottom"
-                  style={{ animation: 'fluidSmokeVideo3 5s infinite ease-in-out 2s' }}
-                />
-
-                {/* Ambient Nozzle Emitter Sparks */}
-                <div className="absolute bottom-[8%] right-[45%] w-2 h-2 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'videoSparkle 3.5s infinite linear' }} />
-                <div className="absolute bottom-[12%] right-[40%] w-1.5 h-1.5 bg-white rounded-full opacity-0" style={{ animation: 'videoSparkle 4.5s infinite linear 0.7s' }} />
-                <div className="absolute bottom-[15%] right-[50%] w-2 h-2 bg-purple-300 rounded-full opacity-0" style={{ animation: 'videoSparkle 4s infinite linear 1.5s' }} />
+              {/* 3. OPTIONAL: Golden Overlay particles to mix with the moving smoke */}
+              <div className="absolute bottom-[35%] right-[15%] w-32 h-64 pointer-events-none mix-blend-screen z-20">
+                <div className="absolute bottom-4 left-1/2 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-0" style={{ animation: 'subtleSparkle 4s infinite linear' }} />
+                <div className="absolute bottom-16 left-1/3 w-1 h-1 bg-white rounded-full opacity-0" style={{ animation: 'subtleSparkle 5s infinite linear 1s' }} />
               </div>
 
             </div>
@@ -122,30 +128,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Cinematic Video Fluid Animation Engine */}
         <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes fluidSmokeVideo1 {
-            0% { transform: translateY(50px) scale(0.5) rotate(0deg); opacity: 0; filter: blur(6px); }
-            15% { opacity: 0.8; }
-            45% { transform: translateY(-120px) scale(1.4) translateX(-45px) rotate(-20deg); opacity: 0.5; filter: blur(14px); }
-            100% { transform: translateY(-280px) scale(2.2) translateX(-110px) rotate(-45deg); opacity: 0; filter: blur(28px); }
-          }
-          @keyframes fluidSmokeVideo2 {
-            0% { transform: translateY(60px) scale(0.4) rotate(0deg); opacity: 0; filter: blur(10px); }
-            20% { opacity: 0.7; }
-            55% { transform: translateY(-160px) scale(1.6) translateX(-20px) rotate(15deg); opacity: 0.4; filter: blur(20px); }
-            100% { transform: translateY(-360px) scale(2.5) translateX(-50px) rotate(35deg); opacity: 0; filter: blur(35px); }
-          }
-          @keyframes fluidSmokeVideo3 {
-            0% { transform: translateY(40px) scale(0.6) rotate(0deg); opacity: 0; filter: blur(8px); }
-            10% { opacity: 0.75; }
-            50% { transform: translateY(-100px) scale(1.3) translateX(-60px) rotate(-10deg); opacity: 0.45; filter: blur(12px); }
-            100% { transform: translateY(-240px) scale(2.0) translateX(-140px) rotate(-25deg); opacity: 0; filter: blur(22px); }
-          }
-          @keyframes videoSparkle {
-            0% { transform: translateY(20px) translateX(0) scale(0.3); opacity: 0; }
-            30% { opacity: 1; }
-            100% { transform: translateY(-220px) translateX(-80px) scale(0); opacity: 0; }
+          @keyframes subtleSparkle {
+            0% { transform: translateY(30px) scale(0.3); opacity: 0; }
+            30% { opacity: 0.8; }
+            100% { transform: translateY(-120px) scale(0); opacity: 0; }
           }
         `}} />
 
