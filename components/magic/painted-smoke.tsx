@@ -254,4 +254,7 @@ export function MagicalSmoke({
   );
 }
 
+// Purane import ke liye alias: app/page.tsx mein { PaintedSmoke } chalta rahega
+export const PaintedSmoke = MagicalSmoke;
+
 export default MagicalSmoke;
