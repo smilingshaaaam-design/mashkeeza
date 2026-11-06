@@ -7,11 +7,10 @@ const DEFAULT_GLYPHS = [
   "النُّورُ", "الْهَادِي", "الْبَاقِي", "الْحَيُّ", "الْقَيُّومُ",
   "الم", "يس", "طه", "حم", "ق", "ن",
   "ا", "ب", "ج", "د", "ه", "و",
-  "☉", "☽", "☿", "♀", "♂", "♃", "♄"
+  "☉", "☽", "☿", "♀", "♂", "♃", "♄",
 ];
 
-const SMOKE_HUES =; 
-
+const SMOKE_HUES = [44, 40, 46, 275, 282, 268, 292, 215, 222, 205, 232];
 const TAU = Math.PI * 2;
 const rand = (a: number, b: number) => Math.random() * (b - a) + a;
 const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
@@ -25,64 +24,16 @@ interface Props {
   originY?: number;
   glyphs?: string[];
   direction?: "left" | "right";
-  spiral?: "down" | "under" | "over";
-  drift?: number;
   speed?: number;
-  debug?: boolean;
 }
 
-type Kind = "puff" | "wisp" | "glyph" | "spark";
-type Wind = { x: number; y: number; px: number; py: number; power: number };
-type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
+type Kind = "puff" | "wisp" | "glyph" | "spark" | "halo";
 
-const CTRL_OVER: [number, number][] = [[0,0], [-45,-35], [-80,-75], [-80,-125], [-45,-165], [5,-178], [55,-150], [75,-105], [100,-85], [160,-85], [220,-120], [280,-165], [350,-190], [420,-225], [460,-250]];
-const CTRL_UNDER: [number, number][] = [[0,0], [22,-40], [42,-88], [28,-135], [-20,-152], [-65,-122], [-62,-72], [-18,-58], [45,-68], [110,-95], [170,-112], [230,-147], [290,-177], [350,-202], [420,-232], [460,-250]];
-const CTRL_DOWN: [number, number][] = [[0,0], [-25,30], [-60,70], [-92,120], [-60,150], [-15,128], [-28,88], [-70,45], [-95,-10], [-80,-70], [-30,-108], [30,-122], [100,-118], [170,-130], [240,-155], [300,-185], [360,-210], [420,-235], [460,-250]];
-const N = 220;
-function buildPath(ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: [number, number][]): Path {
-  const pts = ctrl.map(([dx, dy]) => [ox + sgn * dx * k * reach, oy + dy * k]);
-  const P = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
-  const dense: number[][] = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
-    for (let s = 0; s < 20; s++) {
-      const t = s / 20, t2 = t * t, t3 = t2 * t;
-      const cr = (a: number, b: number, c: number, d: number) =>
-        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
-      dense.push([cr(p0[0], p1[0], p2[0], p3[0]), cr(p0[1], p1[1], p2[1], p3[1])]);
-    }
-  }
-  dense.push(pts[pts.length - 1]);
-
-  const len: number[] =;
-  for (let i = 1; i < dense.length; i++) {
-    len.push(len[i - 1] + Math.hypot(dense[i][0] - dense[i - 1][0], dense[i][1] - dense[i - 1][1]));
-  }
-  const total = len[len.length - 1];
-
-  const x = new Float32Array(N), y = new Float32Array(N);
-  let seg = 0;
-  for (let j = 0; j < N; j++) {
-    const target = (total * j) / (N - 1);
-    while (seg < len.length - 2 && len[seg + 1] < target) seg++;
-    const f = (target - len[seg]) / Math.max(1e-6, len[seg + 1] - len[seg]);
-    x[j] = dense[seg][0] + (dense[seg + 1][0] - dense[seg][0]) * f;
-    y[j] = dense[seg][1] + (dense[seg + 1][1] - dense[seg][1]) * f;
-  }
-  const nx = new Float32Array(N), ny = new Float32Array(N);
-  for (let j = 0; j < N; j++) {
-    const a = Math.max(0, j - 1), b = Math.min(N - 1, j + 1);
-    const tx = x[b] - x[a], ty = y[b] - y[a];
-    const l = Math.hypot(tx, ty) || 1;
-    nx[j] = -ty / l;
-    ny[j] = tx / l;
-  }
-  return { x, y, nx, ny };
-}
-
+// --- NOISE & TEXTURE GEN ---
 const makeCanvas = (w: number, h: number) => {
   const c = document.createElement("canvas");
-  c.width = w; c.height = h; return c;
+  c.width = w; c.height = h;
+  return c;
 };
 
 const hash = (x: number, y: number, s: number) => {
@@ -108,6 +59,20 @@ const fbm = (x: number, y: number, s: number) => {
   return v;
 };
 
+// CURL NOISE (Fluid Dynamics Simulation)
+// Ye divergence-free noise field banata hai jisse dhuan aapas mein fluid ki tarah ghoomta hai
+const getCurl = (x: number, y: number, t: number, seed: number) => {
+  const eps = 0.1;
+  const n1 = fbm(x, y + eps, seed + t);
+  const n2 = fbm(x, y - eps, seed + t);
+  const n3 = fbm(x + eps, y, seed + t);
+  const n4 = fbm(x - eps, y, seed + t);
+  return {
+    vx: (n1 - n2) / (2 * eps),
+    vy: -(n3 - n4) / (2 * eps)
+  };
+};
+
 const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
   h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -123,207 +88,260 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
   return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
 };
 
+// Caching Sprites for Performance
 const noiseSprites = new Map<string, HTMLCanvasElement>();
 const getNoiseSprite = (hue: number, variant: number) => {
   const key = `${hue}|${variant}`;
-  let c = noiseSprites.get(key); if (c) return c;
-  const S = 128; c = makeCanvas(S, S); const g = c.getContext("2d")!;
-  const img = g.createImageData(S, S); const seed = variant * 101 + hue;
+  if (noiseSprites.has(key)) return noiseSprites.get(key)!;
+  const S = 128;
+  const c = makeCanvas(S, S);
+  const g = c.getContext("2d")!;
+  const img = g.createImageData(S, S);
+  const seed = variant * 101 + hue;
   for (let py = 0; py < S; py++) {
     for (let px = 0; px < S; px++) {
       const fx = px / S, fy = py / S;
       const r = Math.hypot(fx * 2 - 1, fy * 2 - 1);
-      const fall = 1 - smooth(0.1, 0.9, r);
+      const fall = 1 - smooth(0.15, 1, r);
       const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
       const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
-      const a = Math.min(1, Math.max(0, (n - 0.25) * 2.5)) * fall;
-      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 15, 95, 55 + 25 * n);
+      const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
+      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 34, 88, 50 + 30 * n);
       const i = (py * S + px) * 4;
       img.data[i] = R; img.data[i + 1] = G; img.data[i + 2] = B; img.data[i + 3] = a * 255;
     }
   }
-  g.putImageData(img, 0, 0); noiseSprites.set(key, c); return c;
+  g.putImageData(img, 0, 0);
+  noiseSprites.set(key, c);
+  return c;
 };
 
-const softSprites = new Map<string, HTMLCanvasElement>();
 const getSoftSprite = (hue: number, light: number) => {
-  const key = `${hue}|${light}`;
-  let c = softSprites.get(key); if (c) return c;
-  const S = 144; c = makeCanvas(S, S); const g = c.getContext("2d")!;
-  const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  gr.addColorStop(0, `hsla(${hue},100%,${light}%,0.95)`);
-  gr.addColorStop(0.3, `hsla(${hue},95%,${light - 10}%,0.50)`);
-  gr.addColorStop(0.6, `hsla(${hue},90%,${light - 20}%,0.20)`);
+  const S = 96; const c = makeCanvas(S, S); const g = c.getContext("2d")!;
+  const gr = g.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
+  gr.addColorStop(0, `hsla(${hue},95%,${light}%,0.95)`);
+  gr.addColorStop(0.35, `hsla(${hue},90%,${light - 14}%,0.40)`);
   gr.addColorStop(1, `hsla(${hue},80%,50%,0)`);
-  g.fillStyle = gr; g.fillRect(0, 0, S, S); softSprites.set(key, c); return c;
+  g.fillStyle = gr; g.fillRect(0, 0, S, S); return c;
 };
 
-const sparkSprites = new Map<number, HTMLCanvasElement>();
-const getSparkSprite = (hue: number) => {
-  let c = sparkSprites.get(hue); if (c) return c;
-  const S = 48; c = makeCanvas(S, S); const g = c.getContext("2d")!;
-  const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  gr.addColorStop(0, `hsla(${hue},100%,98%,1)`);
-  gr.addColorStop(0.25, `hsla(${hue},100%,85%,0.9)`);
-  gr.addColorStop(1, `hsla(${hue},100%,60%,0)`);
-  g.fillStyle = gr; g.fillRect(0, 0, S, S); sparkSprites.set(hue, c); return c;
-};
-
-const glyphSprites = new Map<string, HTMLCanvasElement>();
 const getGlyphSprite = (text: string, hue: number, size: number) => {
-  const px = Math.round(size); const key = `${text}|${hue}|${px}`;
-  let c = glyphSprites.get(key); if (c) return c;
-  const SC = 2; const pad = 24;
-  const font = `bold ${px * SC}px "Amiri","Noto Naskh Arabic","Times New Roman",serif`;
-  const probe = makeCanvas(1, 1).getContext("2d")!; probe.font = font;
-  const tw = Math.ceil(probe.measureText(text).width);
-  c = makeCanvas(tw + pad * 2 * SC, px * SC * 2 + pad * 2 * SC); const g = c.getContext("2d")!;
-  g.font = font; g.textAlign = "center"; g.textBaseline = "middle";
-  g.shadowColor = `hsla(${hue},100%,65%,1)`; g.shadowBlur = 24 * SC;
-  g.fillStyle = `hsla(${hue},100%,96%,1)`; g.fillText(text, c.width / 2, c.height / 2);
-  glyphSprites.set(key, c); return c;
+  const px = Math.round(size); const SC = 2; const pad = 16;
+  const c = makeCanvas(px * SC * 4, px * SC * 3); const g = c.getContext("2d")!;
+  g.font = `${px * SC}px "Amiri","Noto Naskh Arabic",serif`;
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.shadowColor = `hsla(${hue},100%,80%,1)`; g.shadowBlur = 24 * SC;
+  g.fillStyle = `hsla(${hue},100%,96%,1)`;
+  g.fillText(text, c.width / 2, c.height / 2); return c;
 };
-class Particle {
-  x = 0; y = 0; u = 0; dx = 0; dy = 0; alpha = 0;
-  baseAlpha: number; maxLife: number; size = 1; hue: number;
-  variant = Math.floor(rand(0, 3)); seed = rand(0, 1000);
-  rad = Math.sqrt(rand(0.01, 0.8)); th0 = rand(0, TAU);
-  turns = rand(0.3, 1.1) * (Math.random() < 0.5 ? -1 : 1);
-  spin = rand(0.1, 0.3) * (Math.random() < 0.5 ? -1 : 1);
-  rot = rand(0, TAU); rotSpeed = rand(-0.002, 0.002);
-  off = rand(-0.6, 0.6); text = ""; blinkRate = 2;
 
-  constructor(public kind: Kind, glyphs: string[]) {
+// --- FLUID PARTICLE SYSTEM ---
+class FluidParticle {
+  x: number; y: number;
+  vx: number; vy: number; // Velocity vectors for physics
+  life = 0; maxLife: number;
+  alpha = 0; baseAlpha: number;
+  size: number; hue: number; variant = Math.floor(rand(0, 3));
+  seed = rand(0, 1000);
+  rot = rand(0, TAU); rotSpeed = rand(-0.02, 0.02);
+  text = ""; blinkRate = 2;
+
+  constructor(public kind: Kind, glyphs: string[], ox: number, oy: number, dir: number) {
+    this.x = ox + rand(-10, 10);
+    this.y = oy + rand(-10, 10);
+    
+    // Nali (spout) se nikalne ka force (Cinematic thrust)
+    this.vx = (rand(1.5, 4.5) * dir) + rand(-0.5, 0.5);
+    this.vy = rand(-2, 1); 
+
     if (kind === "puff") {
-      this.hue = pick(SMOKE_HUES); this.size = rand(1.1, 1.6);
-      this.baseAlpha = rand(0.18, 0.28); this.maxLife = rand(450, 600);
-    } else if (kind === "wisp") {
-      this.hue = pick(SMOKE_HUES); this.size = rand(0.9, 1.4);
-      this.baseAlpha = rand(0.22, 0.35); this.maxLife = rand(400, 550);
+      this.hue = pick(SMOKE_HUES); this.size = rand(0.5, 1.5);
+      this.baseAlpha = rand(0.04, 0.12); this.maxLife = rand(300, 500);
+    } else if (kind === "halo") {
+      this.hue = pick(SMOKE_HUES); this.size = rand(2, 4);
+      this.baseAlpha = rand(0.02, 0.05); this.maxLife = rand(300, 500);
     } else if (kind === "glyph") {
-      this.text = pick(glyphs); this.hue = pick(SMOKE_HUES);
-      this.size = rand(14, 22); this.baseAlpha = rand(0.9, 1);
-      this.blinkRate = rand(0.8, 2); this.maxLife = rand(450, 600);
+      this.text = pick(glyphs); this.hue = pick([44, 48, 205]);
+      this.size = rand(12, 18); this.baseAlpha = rand(0.8, 1);
+      this.blinkRate = rand(1.2, 3); this.maxLife = rand(350, 600);
     } else {
-      this.hue = pick(SMOKE_HUES); this.size = rand(1.2, 2.8);
-      this.baseAlpha = rand(0.8, 1); this.blinkRate = rand(1, 2.5);
-      this.maxLife = rand(450, 650);
+      this.hue = pick(SMOKE_HUES); this.size = rand(0.5, 1.5);
+      this.baseAlpha = rand(0.1, 0.2); this.maxLife = rand(300, 500);
     }
   }
 
-  update(t: number, dt: number, wind: Wind, path: Path, k: number) {
-    this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.65 : 0.85);
-    const u = this.u; if (u >= 1) return;
-    const idx = u * (N - 1); const i = Math.floor(idx); const f = idx - i; const j = Math.min(N - 1, i + 1);
-    const px = path.x[i] + (path.x[j] - path.x[i]) * f;
-    const py = path.y[i] + (path.y[j] - path.y[i]) * f;
-    const nx = path.nx[i] + (path.nx[j] - path.nx[i]) * f;
-    const ny = path.ny[i] + (path.ny[j] - path.ny[i]) * f;
-    const tx = ny; const ty = -nx;
-    let offN = 0, offT = 0;
-    if (this.kind === "puff" || this.kind === "wisp") {
-      const spread = this.kind === "puff" ? 3 + 30 * smooth(0, 0.7, u) : 2 + 18 * smooth(0, 0.7, u);
-      const r = this.rad * k * spread; const th = this.th0 + TAU * this.turns * u + t * this.spin;
-      offN = Math.cos(th) * r + Math.sin(t * 0.4 + this.seed + u * 4) * k * 4; offT = Math.sin(th) * r * 0.5;
-    } else if (this.kind === "glyph") {
-      offN = this.off * k * (4 + 25 * u) + Math.sin(t * 0.5 + this.seed) * k * 3;
-    } else {
-      offN = this.off * k * (5 + 35 * u) + Math.sin(t * 0.4 + this.seed) * k * 3;
+  update(t: number, dt: number, dir: number) {
+    this.life += dt;
+    const progress = this.life / this.maxLife;
+    if (progress >= 1) return;
+
+    // 1. Curl Noise / Fluid Force
+    const noiseScale = 0.003;
+    const timeScale = t * 0.2;
+    const curl = getCurl(this.x * noiseScale, this.y * noiseScale, timeScale, this.seed);
+    
+    // Turbulence force multiplier based on life (grows as it spreads)
+    const turbulence = 1.5 + (progress * 4);
+
+    // 2. Base Buoyancy (Dhuan hamesha thoda upar uthta hai)
+    const buoyancy = -0.5 - (progress * 1.5);
+
+    // 3. Guiding cinematic flow (Aage ki taraf dhakelna)
+    const guideX = (0.5 * dir);
+
+    // Apply forces to velocity
+    this.vx += (curl.vx * turbulence + guideX) * dt * 0.05;
+    this.vy += (curl.vy * turbulence + buoyancy) * dt * 0.05;
+
+    // Apply drag/friction (Fluid resistance)
+    this.vx *= 0.96;
+    this.vy *= 0.96;
+
+    // Update position
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rot += this.rotSpeed * dt;
+
+    // Scale over time for thick volume
+    if (this.kind === "puff" || this.kind === "halo" || this.kind === "wisp") {
+        this.size += dt * 0.02;
     }
-    if (wind.power > 0.01) {
-      const ddx = px - wind.px; const ddy = py - wind.py; const d2 = ddx * ddx + ddy * ddy;
-      if (d2 < 140 * 140) {
-        const fo = (1 - Math.sqrt(d2) / 140) * wind.power;
-        this.dx += wind.x * fo * 0.25 * dt; this.dy += wind.y * fo * 0.25 * dt;
-      }
-    }
-    const relax = Math.pow(0.98, dt); this.dx *= relax; this.dy *= relax;
-    let wx = 0, wy = 0;
-    if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.4 + this.seed) * k * 5; wy = Math.cos(t * 0.3 + this.seed * 1.5) * k * 5;
-    }
-    this.x = px + nx * offN + tx * offT + this.dx + wx; this.y = py + ny * offN + ty * offT + this.dy + wy;
-    this.rot += this.rotSpeed * dt; const env = smooth(0, 0.08, u) * (1 - smooth(0.75, 1, u));
+
+    // Alpha lifecycle (Fade in, hold, fade out)
+    const env = smooth(0, 0.15, progress) * (1 - smooth(0.6, 1, progress));
     this.alpha = this.baseAlpha * env;
-    if (this.kind === "glyph" || this.kind === "spark") {
-      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed); this.alpha *= 0.3 + 0.7 * b * b;
+
+    if (this.kind === "glyph") {
+      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha *= 0.2 + 0.8 * b * b;
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D, k: number) {
-    if (this.alpha <= 0.003) return;
-    const u = this.u;
+  draw(ctx: CanvasRenderingContext2D) {
+    if (this.alpha <= 0.005) return;
+    
     if (this.kind === "puff" || this.kind === "wisp") {
-      const s = this.kind === "puff" ? k * (24 + 50 * u) * this.size : k * (12 + 24 * u) * this.size;
-      ctx.globalAlpha = Math.min(0.85, this.alpha); ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
-      ctx.drawImage(getNoiseSprite(this.hue, this.variant), -s, -s, s * 2, s * 2); ctx.restore();
-    } else if (this.kind === "spark") {
-      const s = this.size * 4; ctx.globalAlpha = Math.min(1, this.alpha);
-      ctx.drawImage(getSparkSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
-    } else {
-      const r = this.size * 3; ctx.globalAlpha = Math.min(1, this.alpha * 0.7);
-      ctx.drawImage(getSoftSprite(this.hue, 80), this.x - r, this.y - r, r * 2, r * 2); ctx.globalAlpha = Math.min(1, this.alpha);
-      const sp = getGlyphSprite(this.text, this.hue, this.size); const w = sp.width / 2; const h = sp.height / 2;
-      ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(Math.sin(this.rot * 10) * 0.1);
-      ctx.drawImage(sp, -w / 2, -h / 2, w, h); ctx.restore();
+      const s = 60 * this.size;
+      ctx.globalAlpha = Math.min(1, this.alpha);
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      ctx.drawImage(getNoiseSprite(this.hue, this.variant), -s, -s, s * 2, s * 2);
+      ctx.restore();
+    } else if (this.kind === "halo") {
+      const r = 80 * this.size;
+      ctx.globalAlpha = Math.min(1, this.alpha);
+      ctx.drawImage(getSoftSprite(this.hue, 60), this.x - r, this.y - r, r * 2, r * 2);
+    } else if (this.kind === "glyph") {
+      const r = this.size * 3.5;
+      ctx.globalAlpha = Math.min(1, this.alpha * 0.5);
+      ctx.drawImage(getSoftSprite(this.hue, 85), this.x - r, this.y - r, r * 2, r * 2);
+      
+      ctx.globalAlpha = Math.min(1, this.alpha);
+      const sp = getGlyphSprite(this.text, this.hue, this.size);
+      const w = sp.width / 2; const h = sp.height / 2;
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(Math.sin(this.rot * 20) * 0.15);
+      ctx.drawImage(sp, -w / 2, -h / 2, w, h);
+      ctx.restore();
     }
   }
 }
 
-export function MagicalSmoke({ originX = 0.76, originY = 0.64, glyphs = DEFAULT_GLYPHS, direction = "left", spiral = "down", drift = 1, speed = 0.85, debug = false }: Props) {
+export function MagicalSmoke({
+  originX = 0.76,
+  originY = 0.64,
+  glyphs = DEFAULT_GLYPHS,
+  direction = "left",
+  speed = 1,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
-    const canvas = canvasRef.current; const parent = canvas?.parentElement; if (!canvas || !parent) return;
-    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    const canvas = canvasRef.current;
+    const parent = canvas?.parentElement;
+    if (!canvas || !parent) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 400 : 3500; const rate = reduced ? 0.3 : 1; const reach = Math.max(0.3, drift); const sgn = direction === "left" ? -1 : 1;
-    const ctrl = spiral === "down" ? CTRL_DOWN : spiral === "under" ? CTRL_UNDER : CTRL_OVER;
-    const ext = { up: -Math.min(...ctrl.map((c) => c[1])), down: Math.max(0, ...ctrl.map((c) => c[1])), fwd: Math.max(...ctrl.map((c) => c[0])), back: Math.max(0, -Math.min(...ctrl.map((c) => c[0]))) };
-    let w = 0, h = 0, k = 1; let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl); let raf = 0; let particles: Particle[] = []; let t = 0; let last = performance.now();
-    const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 }; const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
+    const MAX = reduced ? 300 : 1500;
+    const rate = reduced ? 0.3 : 1;
+    const sgn = direction === "left" ? -1 : 1;
+    
+    let w = 0, h = 0;
+    let ox = 0, oy = 0;
+    let particles: FluidParticle[] = [];
+    let raf = 0, t = 0, last = performance.now();
+    const acc = { puff: 0, wisp: 0, halo: 0, glyph: 0 };
+
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
+
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); w = parent.clientWidth; h = parent.clientHeight || 450;
-      canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const ox = w * originX; const oy = h * originY; const fwdAvail = direction === "left" ? ox : w - ox; const backAvail = direction === "left" ? w - ox : ox;
-      const limits = [h / 478, (fwdAvail * 0.96) / (ext.fwd * reach), (oy * 0.97) / ext.up];
-      if (ext.back > 0) limits.push((backAvail * 0.96) / (ext.back * reach)); if (ext.down > 0) limits.push(((h - oy) * 0.97) / ext.down);
-      k = Math.max(0.35, Math.min(...limits)); path = buildPath(ox, oy, k, sgn, reach, ctrl);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = parent.clientWidth; h = parent.clientHeight || 450;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ox = w * originX;
+      oy = h * originY;
     };
-    resize(); window.addEventListener("resize", resize);
-    const onMove = (cx: number, cy: number) => {
-      const r = canvas.getBoundingClientRect(); const x = cx - r.left; const y = cy - r.top;
-      wind.x = x - wind.px; wind.y = y - wind.py; wind.px = x; wind.py = y; wind.power = Math.min(1, Math.hypot(wind.x, wind.y) / 25);
+    resize();
+    window.addEventListener("resize", resize);
+
+    const emit = (kind: Kind) => {
+      if (particles.length < MAX) particles.push(new FluidParticle(kind, glyphs, ox, oy, sgn));
     };
-    const mm = (e: MouseEvent) => onMove(e.clientX, e.clientY); const tm = (e: TouchEvent) => onMove(e.touches[0].clientX, e.touches[0].clientY);
-    window.addEventListener("mousemove", mm); window.addEventListener("touchmove", tm, { passive: true });
-    const emit = (kind: Kind) => { if (particles.length < MAX) particles.push(new Particle(kind, glyphs)); };
+
     const frame = (now: number) => {
-      const dt = Math.min((now - last) / 16.667, 3) * speed; last = now; t += dt / 60; ctx.clearRect(0, 0, w, h);
-      acc.puff += dt * 2.8 * rate; acc.wisp += dt * 3.2 * rate; acc.glyph += dt * 0.22 * rate; acc.spark += dt * 0.8 * rate;
-      while (acc.puff >= 1) { acc.puff--; emit("puff"); } while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); } while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); } while (acc.spark >= 1) { acc.spark--; emit("spark"); }
-      for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, wind, path, k); particles = particles.filter((p) => p.u < 1);
-      ctx.globalCompositeOperation = "screen"; for (const p of particles) if (p.kind === "puff") p.draw(ctx, k); for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k);
-      ctx.globalCompositeOperation = "lighter"; for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k); for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
-      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
-      if (debug) {
-        ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(path.x[0], path.y[0], 8, 0, TAU);
-        ctx.moveTo(path.x[0] - 14, path.y[0]); ctx.lineTo(path.x[0] + 14, path.y[0]); ctx.moveTo(path.x[0], path.y[0] - 14); ctx.lineTo(path.x[0], path.y[0] + 14); ctx.stroke();
-      }
-      wind.power *= Math.pow(0.92, dt); raf = requestAnimationFrame(frame);
+      const dt = Math.min((now - last) / 16.667, 3) * speed;
+      last = now; t += dt / 60;
+      ctx.clearRect(0, 0, w, h);
+
+      // Smooth stream emission
+      acc.puff += dt * 3.5 * rate;
+      acc.wisp += dt * 1.5 * rate;
+      acc.halo += dt * 0.8 * rate; 
+      acc.glyph += dt * 0.15 * rate;
+      
+      while (acc.puff >= 1) { acc.puff--; emit("puff"); }
+      while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
+      while (acc.halo >= 1) { acc.halo--; emit("halo"); }
+      while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
+
+      for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, sgn);
+      particles = particles.filter((p) => (p.life / p.maxLife) < 1);
+
+      // Rendering Passes
+      ctx.globalCompositeOperation = "screen";
+      for (const p of particles) if (p.kind === "halo") p.draw(ctx);
+      
+      ctx.globalCompositeOperation = "screen";
+      for (const p of particles) if (p.kind === "puff") p.draw(ctx);
+      for (const p of particles) if (p.kind === "wisp") p.draw(ctx);
+      
+      ctx.globalCompositeOperation = "lighter";
+      for (const p of particles) if (p.kind === "glyph") p.draw(ctx);
+      
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+
+      raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
+
     return () => {
-      cancelAnimationFrame(raf); window.removeEventListener("resize", resize); window.removeEventListener("mousemove", mm); window.removeEventListener("touchmove", tm); particles = [];
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      particles = [];
     };
-  }, [originX, originY, glyphs, direction, spiral, drift, speed, debug]);
+  }, [originX, originY, glyphs, direction, speed]);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-98" />
+      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
 }
 
-export const PaintedSmoke = MagicalSmoke;
 export default MagicalSmoke;
