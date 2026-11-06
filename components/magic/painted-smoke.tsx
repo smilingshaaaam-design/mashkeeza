@@ -3,14 +3,15 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * MagicalSmoke - Rich Purple, Blue, Cyan & Golden Smoke with 99 Names of Allah,
- * Full Arabic Alphabet (Alif to Ya), Talismantic Symbols & Glowing Firefly/Star Dots.
+ * MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
+ * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
  *
- * Path & Behavior:
- * - Lamp se nikal kar ulte 'S' (Inverted S) ki shape banata hua left side se upar uthta hai
- * - Upar ja kar menu/header ke upar se right se left ki taraf behta hai
- * - Ism-e-Allah aur symbols upar wale smoke se barish ki tarah neeche girte hain
- * - Girte girte ahista ahista invisible hote hain aur poori tarah gayab hote hi wahan ek star-like dot chamak kar bujh jata hai
+ * Flow:
+ * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
+ * 2. They travel up along the inverted 'S' curve to the top menu area.
+ * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
+ * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
+ * 5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
  */
 
 const ASMA_UL_HUSNA = [
@@ -72,6 +73,7 @@ const smooth = (a: number, b: number, x: number): number => {
 interface Props {
   originX?: number;
   originY?: number;
+  groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   glyphs?: string[];
   direction?: "left" | "right";
   spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
@@ -88,23 +90,19 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Ulte 'S' (Inverted S) + Top Header Right-to-Left Flow ---------- */
+/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top Menu ---------- */
 
-// Lamp se nikal kar ulte 'S' ki shape banata hua left se upar uthta hai,
-// phir upar menu ke barabar right se left ki taraf behta hai
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),          // Lamp nozzle origin
-  pt(55, 8),         // Thoda saamne left nikal kar halki si neeche lachak
-  pt(125, -25),      // Ulte 'S' ka neeche wala belly curve (left-upward turn)
-  pt(155, -105),     // Beech ki kamar (left se upar uthta hua)
-  pt(95, -185),      // Ulte 'S' ka upar wala curve (right ki taraf mudta hua)
-  pt(45, -255),      // Upar menu/header ke qareeb pahunch kar
-  pt(130, -295),     // Menu ke upar se right-to-left ki taraf ravangi
-  pt(275, -305),     // Menu ke upar lehraye hue left ki taraf
-  pt(430, -295),     // Aage left ki taraf behta hua
-  pt(590, -308),     // Mazeed left
-  pt(750, -295),     // Left kinare ke qareeb
-  pt(910, -305),     // Screen ke aakhiri left hissay mein dissolve
+  pt(0, 0),          // 1. Lamp nozzle origin
+  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -195),      // 5. Rises gracefully toward the upper menu height
+  pt(-45, -245),     // 6. Reaches top-right side above the navigation/menu
+  pt(90, -258),      // 7. Flows smoothly from right to left across the top menu
+  pt(270, -252),     // 8. Continues gliding across the center-top menu
+  pt(460, -260),     // 9. Flows toward the upper-left menu area
+  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -216,7 +214,7 @@ function buildPath(
   return { x, y, nx, ny };
 }
 
-/* ---------- Procedural Smoke, Firefly Dot, Star Flash & Glyph Textures ---------- */
+/* ---------- Procedural Smoke, Firefly Dot, Star Sparkle & Glyph Textures ---------- */
 
 const makeCanvas = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement("canvas");
@@ -346,7 +344,7 @@ const getDotSprite = (hue: number): HTMLCanvasElement => {
   return c;
 };
 
-// 4-point star flare dot sprite for when raining glyphs completely vanish
+// Twinkling 4-point star sparkle sprite for ground impact
 const starFlashSprites = new Map<number, HTMLCanvasElement>();
 const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   let c = starFlashSprites.get(hue);
@@ -356,29 +354,28 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   c = makeCanvas(S, S);
   const g = c.getContext("2d")!;
 
-  // Soft outer glow
-  const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid * 0.85);
-  gr.addColorStop(0, `hsla(${hue}, 100%, 96%, 1)`);
+  // Soft outer star halo
+  const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
+  gr.addColorStop(0, `hsla(${hue}, 100%, 97%, 1)`);
   gr.addColorStop(0.18, `hsla(${hue}, 100%, 78%, 0.85)`);
-  gr.addColorStop(0.5, `hsla(${hue}, 100%, 58%, 0.25)`);
+  gr.addColorStop(0.48, `hsla(${hue}, 100%, 58%, 0.25)`);
   gr.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
 
-  // Sharp 4-point star rays
+  // Crisp 4-point star rays (sitaray jaisi chamak)
   g.save();
   g.translate(mid, mid);
-  for (let i = 0; i < 2; i++) {
-    g.rotate((i * Math.PI) / 2);
-    const ray = g.createLinearGradient(-mid * 0.9, 0, mid * 0.9, 0);
-    ray.addColorStop(0, `hsla(${hue}, 100%, 85%, 0)`);
-    ray.addColorStop(0.45, `hsla(${hue}, 100%, 92%, 0.85)`);
-    ray.addColorStop(0.5, `hsla(0, 0%, 100%, 1)`);
-    ray.addColorStop(0.55, `hsla(${hue}, 100%, 92%, 0.85)`);
-    ray.addColorStop(1, `hsla(${hue}, 100%, 85%, 0)`);
-    g.fillStyle = ray;
+  g.fillStyle = `hsla(${hue}, 100%, 96%, 0.95)`;
+  for (let r = 0; r < 2; r++) {
+    g.rotate((r * Math.PI) / 2);
     g.beginPath();
-    g.ellipse(0, 0, mid * 0.88, 1.6, 0, 0, TAU);
+    g.moveTo(0, -mid * 0.88);
+    g.quadraticCurveTo(2.4, -2.4, mid * 0.88, 0);
+    g.quadraticCurveTo(2.4, 2.4, 0, mid * 0.88);
+    g.quadraticCurveTo(-2.4, 2.4, -mid * 0.88, 0);
+    g.quadraticCurveTo(-2.4, -2.4, 0, -mid * 0.88);
+    g.closePath();
     g.fill();
   }
   g.restore();
@@ -438,16 +435,16 @@ class Particle {
   text = "";
   blinkRate = 2;
 
-  // Raining glyph properties (barish ki tarah girne aur star flash ke liye)
-  rainSpawnU = 0;
-  rainFallSpeed = 0;
-  rainMaxDrop = 0;
-  rainSwayAmp = 0;
-  rainSwayFreq = 0;
-  flashSpawned = false;
-  flashScale = 1;
+  // Glyph ascent-then-rain state
+  isRaining = false;
+  releaseU = rand(0.46, 0.86); // Detaches along the upper menu portion of the smoke path
+  rainFallSpeed = rand(1.15, 2.05);
+  rainDriftX = rand(-0.22, 0.22);
+  rainSwayFreq = rand(1.1, 2.3);
+  rainSwayAmp = rand(5, 13);
+  hasFlashed = false;
 
-  constructor(public kind: Kind, glyphs: string[], spawnX = 0, spawnY = 0, spawnHue = 45) {
+  constructor(public kind: Kind, glyphs: string[]) {
     this.depth = rand(0.7, 1.32);
 
     if (kind === "puff") {
@@ -463,24 +460,15 @@ class Particle {
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
       this.hue = pick(GLYPH_HUES);
-      this.size = rand(12, 19);
-      this.baseAlpha = rand(0.82, 1.0);
-      this.blinkRate = rand(1.1, 2.5);
-      this.maxLife = rand(240, 360);
-      // Upar wale smoke ribbon (u = 0.44 se 0.94) se spawn ho kar neeche barish ki tarah girega
-      this.rainSpawnU = rand(0.44, 0.94);
-      this.rainFallSpeed = rand(0.45, 0.95);
-      this.rainMaxDrop = rand(140, 310);
-      this.rainSwayAmp = rand(5, 16);
-      this.rainSwayFreq = rand(1.2, 2.4);
+      this.size = rand(13, 20);
+      this.baseAlpha = rand(0.84, 1.0);
+      this.blinkRate = rand(1.1, 2.4);
+      this.maxLife = rand(680, 900);
     } else if (kind === "flash") {
-      // Star-like dot jo glyph ke mukammal invisible hone par chamak kar bujhta hai
-      this.x = spawnX;
-      this.y = spawnY;
-      this.hue = spawnHue;
-      this.size = rand(9, 15);
-      this.baseAlpha = 1;
-      this.maxLife = rand(38, 56);
+      this.hue = 45;
+      this.size = rand(2.4, 3.8);
+      this.baseAlpha = 1.0;
+      this.maxLife = rand(48, 72); // Twinkles brightly on the ground then fades out
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -497,70 +485,45 @@ class Particle {
     wind: Wind,
     path: Path,
     k: number,
-    onGlyphVanish?: (x: number, y: number, hue: number) => void
+    groundLevelPx: number,
+    onSpawnFlash: (x: number, y: number, hue: number) => void
   ): void {
+    // 1. Ground star flash particle (sitaray jaisa jagmagana)
     if (this.kind === "flash") {
       this.u += dt / this.maxLife;
       if (this.u >= 1) return;
-      // Tezi se chamakta hai (peak at u = 0.25) aur phir bujh jata hai
-      const rise = smooth(0, 0.22, this.u);
-      const fade = 1 - smooth(0.22, 1.0, this.u);
-      this.alpha = rise * fade;
-      this.flashScale = 0.4 + 0.95 * Math.sin(Math.min(1, this.u * 1.15) * Math.PI);
+      const peak = smooth(0, 0.16, this.u);
+      const fade = 1 - smooth(0.28, 1.0, this.u);
+      // Rapid star-like shimmer pulse before vanishing
+      const twinkle = 0.65 + 0.35 * Math.sin(this.u * Math.PI * 5);
+      this.alpha = this.baseAlpha * peak * fade * twinkle;
       return;
     }
 
-    if (this.kind === "glyph") {
-      this.u += dt / this.maxLife;
-      const u = this.u;
+    // 2. Glyph: First rises inside smoke from lamp to top menu, then rains down to the ground
+    if (this.kind === "glyph" && this.isRaining) {
+      this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
+      this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
+      this.rot += this.rotSpeed * 0.45 * dt;
 
-      // Path par upar menu ke paas anchor point nikalna
-      const idx = this.rainSpawnU * (N - 1);
-      const i = Math.floor(idx);
-      const f = idx - i;
-      const j = Math.min(N - 1, i + 1);
-      const anchorX = path.x[i] + (path.x[j] - path.x[i]) * f;
-      const anchorY = path.y[i] + (path.y[j] - path.y[i]) * f;
+      // Keep full visibility while falling, fade slightly right at ground contact
+      const distToGround = groundLevelPx - this.y;
+      const groundApproach = distToGround < 32 ? Math.max(0, distToGround / 32) : 1;
+      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha = this.baseAlpha * groundApproach * (0.45 + 0.55 * b * b);
 
-      // Barish ki tarah neeche girna + halka sa hawa mein lehrana
-      const dropY = u * this.rainMaxDrop * k * this.rainFallSpeed;
-      const swayX =
-        Math.sin(t * this.rainSwayFreq + this.seed) * this.rainSwayAmp * k +
-        this.off * 18 * k;
-
-      if (wind.power > 0.01) {
-        const ddx = anchorX + swayX + this.dx - wind.px;
-        const ddy = anchorY + dropY + this.dy - wind.py;
-        const d2 = ddx * ddx + ddy * ddy;
-        if (d2 < 170 * 170) {
-          const fo = (1 - Math.sqrt(d2) / 170) * wind.power;
-          this.dx += wind.x * fo * 0.25 * dt;
-          this.dy += wind.y * fo * 0.25 * dt;
+      // Hit the ground (zameen): vanish and burst into a twinkling star sparkle
+      if (this.y >= groundLevelPx) {
+        if (!this.hasFlashed) {
+          this.hasFlashed = true;
+          onSpawnFlash(this.x, groundLevelPx, this.hue);
         }
-      }
-      const relax = Math.pow(0.96, dt);
-      this.dx *= relax;
-      this.dy *= relax;
-
-      this.x = anchorX + swayX + this.dx;
-      this.y = anchorY + dropY + this.dy;
-      this.rot += this.rotSpeed * dt;
-
-      // Pehle wazeh dikhta hai, phir girte girte ahista ahista invisible hota jata hai
-      const fadeIn = smooth(0, 0.1, u);
-      const fadeOut = 1 - smooth(0.35, 0.96, u);
-      const shimmer = 0.78 + 0.22 * Math.sin(t * this.blinkRate + this.seed);
-      this.alpha = this.baseAlpha * fadeIn * fadeOut * shimmer;
-
-      // Junhi mukammal invisible ho, wahan ek star jesa dot chamak kar bujh jaye
-      if (u >= 0.96 && !this.flashSpawned) {
-        this.flashSpawned = true;
-        onGlyphVanish?.(this.x, this.y, this.hue);
+        this.u = 1; // Remove glyph immediately on ground impact
       }
       return;
     }
 
-    // Smoke puffs, wisps, and sparkles follow the Inverted-S -> Top Menu path
+    // 3. Standard path progression (from lamp up the inverted 'S' to the top menu)
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -576,28 +539,28 @@ class Particle {
     const tx = ny;
     const ty = -nx;
 
-    const chaos = smooth(0.1, 0.35, u);
+    const chaos = smooth(0.1, 0.36, u);
     const roamBoost = smooth(0.42, 0.95, u);
 
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      const spread =
-        (this.kind === "puff"
-          ? 4 + 62 * chaos + 42 * roamBoost
-          : 3 + 42 * chaos + 28 * roamBoost) * this.depth;
+      const spread = (this.kind === "puff" ? 4 + 62 * chaos + 38 * roamBoost : 3 + 42 * chaos + 26 * roamBoost) * this.depth;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
       const randWave =
-        Math.sin(t * 0.95 + this.seed + u * 9.5) * k * (18 * chaos + 20 * roamBoost) +
-        Math.cos(t * 0.65 + this.seed * 1.4 - u * 6.0) * k * (14 * chaos + 16 * roamBoost);
+        Math.sin(t * 0.95 + this.seed + u * 8.5) * k * (18 * chaos + 20 * roamBoost) +
+        Math.cos(t * 0.65 + this.seed * 1.4 - u * 5.5) * k * (14 * chaos + 16 * roamBoost);
       offN = Math.cos(th) * r + randWave;
-      offT = Math.sin(th) * r * 0.85;
+      offT = Math.sin(th) * r * 0.82;
+    } else if (this.kind === "glyph") {
+      offN = this.off * k * (6 + 44 * chaos) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 11 * chaos;
+      offT = Math.cos(t * 0.65 + this.seed) * k * 11 * chaos;
     } else {
       offN =
         this.off * k * (6 + 68 * chaos + 42 * roamBoost) * this.depth +
-        Math.sin(t * 0.95 + this.seed + u * 6) * k * 15 * chaos;
-      offT = Math.cos(t * 0.75 + this.seed) * k * 14 * chaos;
+        Math.sin(t * 0.95 + this.seed + u * 6) * k * 14 * chaos;
+      offT = Math.cos(t * 0.75 + this.seed) * k * 12 * chaos;
     }
 
     if (wind.power > 0.01) {
@@ -616,27 +579,37 @@ class Particle {
 
     let wx = 0;
     let wy = 0;
-    if (this.kind === "spark") {
-      wx = Math.sin(t * 0.65 + this.seed) * k * (14 * chaos + 12 * roamBoost);
-      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (14 * chaos + 12 * roamBoost);
+    if (this.kind === "glyph" || this.kind === "spark") {
+      wx = Math.sin(t * 0.65 + this.seed) * k * (11 * chaos + 9 * roamBoost);
+      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (11 * chaos + 9 * roamBoost);
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
+    // Once glyph reaches the top menu portion of the smoke, detach & start raining down
+    if (this.kind === "glyph" && u >= this.releaseU) {
+      this.isRaining = true;
+      return;
+    }
+
     const originDensityBoost =
       this.kind === "puff" || this.kind === "wisp"
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    const fadeOut = 1 - smooth(0.72, 1.0, u);
+    // Smoke stays aloft at the top menu and gently fades out as it travels left
+    const fadeOut = 1 - smooth(0.68, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
     if (this.kind === "spark") {
       const twinkle = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha *= 0.12 + 0.88 * Math.pow(twinkle, 2.5);
+    } else if (this.kind === "glyph") {
+      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha *= 0.35 + 0.65 * b * b;
     }
   }
 
@@ -660,9 +633,15 @@ class Particle {
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else if (this.kind === "flash") {
-      const s = this.size * this.flashScale;
+      // Expand sharply on impact, twinkle like a star, then shrink/fade away
+      const expand = this.u < 0.22 ? 0.4 + (this.u / 0.22) * 1.1 : 1.5 - (this.u - 0.22) * 0.65;
+      const s = this.size * 6.5 * Math.max(0.25, expand);
       ctx.globalAlpha = Math.min(1, this.alpha);
-      ctx.drawImage(getStarFlashSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.u * 0.8);
+      ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
+      ctx.restore();
     } else {
       const r = this.size * 2.0;
       ctx.globalAlpha = Math.min(1, this.alpha * 0.45);
@@ -673,7 +652,7 @@ class Particle {
       const h = sp.height / 2;
       ctx.save();
       ctx.translate(this.x, this.y);
-      ctx.rotate(Math.sin(this.rot * 18) * 0.1);
+      ctx.rotate(Math.sin(this.rot * 18) * 0.12);
       ctx.drawImage(sp, -w / 2, -h / 2, w, h);
       ctx.restore();
     }
@@ -685,6 +664,7 @@ class Particle {
 export function MagicalSmoke({
   originX = 0.76,
   originY = 0.64,
+  groundY = 0.94,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
@@ -756,11 +736,10 @@ export function MagicalSmoke({
       const backAvail = direction === "left" ? w - ox : ox;
       const limits: number[] = [
         h / 360,
-        (fwdAvail * 0.98) / Math.max(1, ext.fwd * reach),
+        (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
       ];
-      // Menu ke upar tak pahunchne ke liye top margin (oy * 0.94)
-      if (ext.up > 0) limits.push((oy * 0.94) / ext.up);
-      if (ext.back > 0) limits.push((backAvail * 0.96) / Math.max(1, ext.back * reach));
+      if (ext.up > 0) limits.push((oy * 0.92) / ext.up);
+      if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
       if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
       k = Math.max(0.45, Math.min(...limits));
       path = buildPath(ox, oy, k, sgn, reach, ctrl);
@@ -787,10 +766,12 @@ export function MagicalSmoke({
       if (particles.length < MAX) particles.push(new Particle(kind, glyphs));
     };
 
-    const spawnStarFlash = (fx: number, fy: number, fhue: number) => {
-      if (particles.length < MAX + 120) {
-        particles.push(new Particle("flash", glyphs, fx, fy, fhue));
-      }
+    const spawnFlash = (fx: number, fy: number, hue: number) => {
+      const flash = new Particle("flash", glyphs);
+      flash.x = fx;
+      flash.y = fy;
+      flash.hue = hue;
+      particles.push(flash);
     };
 
     const frame = (now: number) => {
@@ -802,7 +783,7 @@ export function MagicalSmoke({
 
       acc.puff += dt * 1.45 * rate;
       acc.wisp += dt * 1.7 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.34 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.28 * rate;
       acc.spark += dt * 1.15 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
@@ -810,8 +791,9 @@ export function MagicalSmoke({
       while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
       while (acc.spark >= 1) { acc.spark--; emit("spark"); }
 
+      const groundLevelPx = h * groundY;
       for (let i = 0; i < particles.length; i++) {
-        particles[i].update(t, dt, wind, path, k, spawnStarFlash);
+        particles[i].update(t, dt, wind, path, k, groundLevelPx, spawnFlash);
       }
       particles = particles.filter((p) => p.u < 1);
 
@@ -837,6 +819,15 @@ export function MagicalSmoke({
         ctx.moveTo(path.x[0], path.y[0] - 14);
         ctx.lineTo(path.x[0], path.y[0] + 14);
         ctx.stroke();
+
+        // Ground line debug indicator
+        ctx.strokeStyle = "gold";
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(0, groundLevelPx);
+        ctx.lineTo(w, groundLevelPx);
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
 
       wind.power *= Math.pow(0.92, dt);
@@ -851,7 +842,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
