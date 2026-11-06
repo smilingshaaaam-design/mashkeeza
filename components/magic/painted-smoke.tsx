@@ -60,7 +60,6 @@ const fbm = (x: number, y: number, s: number) => {
 };
 
 // CURL NOISE (Fluid Dynamics Simulation)
-// Ye divergence-free noise field banata hai jisse dhuan aapas mein fluid ki tarah ghoomta hai
 const getCurl = (x: number, y: number, t: number, seed: number) => {
   const eps = 0.1;
   const n1 = fbm(x, y + eps, seed + t);
@@ -117,6 +116,7 @@ const getNoiseSprite = (hue: number, variant: number) => {
 };
 
 const getSoftSprite = (hue: number, light: number) => {
+  const key = `${hue}|${light}`;
   const S = 96; const c = makeCanvas(S, S); const g = c.getContext("2d")!;
   const gr = g.createRadialGradient(S/2, S/2, 0, S/2, S/2, S/2);
   gr.addColorStop(0, `hsla(${hue},95%,${light}%,0.95)`);
@@ -138,7 +138,7 @@ const getGlyphSprite = (text: string, hue: number, size: number) => {
 // --- FLUID PARTICLE SYSTEM ---
 class FluidParticle {
   x: number; y: number;
-  vx: number; vy: number; // Velocity vectors for physics
+  vx: number; vy: number;
   life = 0; maxLife: number;
   alpha = 0; baseAlpha: number;
   size: number; hue: number; variant = Math.floor(rand(0, 3));
@@ -150,7 +150,7 @@ class FluidParticle {
     this.x = ox + rand(-10, 10);
     this.y = oy + rand(-10, 10);
     
-    // Nali (spout) se nikalne ka force (Cinematic thrust)
+    // Initial spout thrust
     this.vx = (rand(1.5, 4.5) * dir) + rand(-0.5, 0.5);
     this.vy = rand(-2, 1); 
 
@@ -175,39 +175,28 @@ class FluidParticle {
     const progress = this.life / this.maxLife;
     if (progress >= 1) return;
 
-    // 1. Curl Noise / Fluid Force
     const noiseScale = 0.003;
     const timeScale = t * 0.2;
     const curl = getCurl(this.x * noiseScale, this.y * noiseScale, timeScale, this.seed);
     
-    // Turbulence force multiplier based on life (grows as it spreads)
     const turbulence = 1.5 + (progress * 4);
-
-    // 2. Base Buoyancy (Dhuan hamesha thoda upar uthta hai)
     const buoyancy = -0.5 - (progress * 1.5);
-
-    // 3. Guiding cinematic flow (Aage ki taraf dhakelna)
     const guideX = (0.5 * dir);
 
-    // Apply forces to velocity
     this.vx += (curl.vx * turbulence + guideX) * dt * 0.05;
     this.vy += (curl.vy * turbulence + buoyancy) * dt * 0.05;
 
-    // Apply drag/friction (Fluid resistance)
     this.vx *= 0.96;
     this.vy *= 0.96;
 
-    // Update position
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     this.rot += this.rotSpeed * dt;
 
-    // Scale over time for thick volume
     if (this.kind === "puff" || this.kind === "halo" || this.kind === "wisp") {
         this.size += dt * 0.02;
     }
 
-    // Alpha lifecycle (Fade in, hold, fade out)
     const env = smooth(0, 0.15, progress) * (1 - smooth(0.6, 1, progress));
     this.alpha = this.baseAlpha * env;
 
@@ -298,7 +287,6 @@ export function MagicalSmoke({
       last = now; t += dt / 60;
       ctx.clearRect(0, 0, w, h);
 
-      // Smooth stream emission
       acc.puff += dt * 3.5 * rate;
       acc.wisp += dt * 1.5 * rate;
       acc.halo += dt * 0.8 * rate; 
@@ -312,7 +300,6 @@ export function MagicalSmoke({
       for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, sgn);
       particles = particles.filter((p) => (p.life / p.maxLife) < 1);
 
-      // Rendering Passes
       ctx.globalCompositeOperation = "screen";
       for (const p of particles) if (p.kind === "halo") p.draw(ctx);
       
@@ -344,4 +331,6 @@ export function MagicalSmoke({
   );
 }
 
+// Ye export add kar diya gaya hai build error theek karne ke liye
+export const PaintedSmoke = MagicalSmoke;
 export default MagicalSmoke;
