@@ -3,8 +3,13 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * MagicalSmoke - Multicolor realistic smoke (purple, blue, cyan, pink + hint of golden)
- * with original coordinates & twinkling firefly dots.
+ * MagicalSmoke - Purple, Blue, Cyan, Pink + subtle Golden realistic smoke
+ *
+ * Updates:
+ * - Higher smoke density right at the origin nozzle (u < 0.25)
+ * - Flows straight out for ~1.5 to 2 inches (~130px) before swinging up & down randomly
+ * - Mostly fine tiny firefly glitter dots with occasional larger glowing dots
+ * - 100% safe Array.of() syntax for zero copy-paste truncation issues
  */
 
 const DEFAULT_GLYPHS = Array.of(
@@ -15,18 +20,20 @@ const DEFAULT_GLYPHS = Array.of(
   "☉", "☽", "☿", "♀", "♂", "♃", "♄"
 );
 
-// Purple, Blue, Cyan, Pink + thora sa Golden (~14%)
+// Purple, Blue, Cyan, Pink + subtle Golden (~14%)
 const SMOKE_HUES = Array.of(
-  275, 282, 268, 292,
-  215, 222, 205, 232,
-  188, 195,
-  325, 335,
-  44, 42
+  272, 278, 285, 292, 265, // Purples & Violets
+  215, 224, 232,           // Royal Blues
+  192, 198,                // Cyans
+  315, 326,                // Pinks & Magentas
+  43, 46                   // Subtle Golden
 );
 
-// Jugnu dots ke rang
-const DOT_HUES = Array.of(
-  280, 292, 215, 190, 330, 46, 272
+const GLITTER_HUES = Array.of(
+  285, 295, 275, // Purple
+  215, 195,      // Blue & Cyan
+  320,           // Pink
+  44             // Subtle Golden
 );
 
 const TAU = Math.PI * 2;
@@ -42,7 +49,7 @@ interface Props {
   originY?: number;
   glyphs?: string[];
   direction?: "left" | "right";
-  spiral?: "down" | "under" | "over";
+  spiral?: "straight-swing" | "down" | "under" | "over";
   drift?: number;
   speed?: number;
   showGlyphs?: boolean;
@@ -53,64 +60,43 @@ type Kind = "puff" | "wisp" | "glyph" | "spark";
 type Wind = { x: number; y: number; px: number; py: number; power: number };
 type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
 
-/* ---------- Ribbon ka Rasta (Original Exact Coordinates) ---------- */
+/* ---------- Ribbon ka Rasta ---------- */
+
+// Nali se nikal kar ~1.5 se 2 inch (130px) bilkul seedha chalta hai, phir neechay aur upar random swing karta hai
+const CTRL_STRAIGHT_SWING: Array<[number, number]> = Array.of(
+  Array.of(0, 0),
+  Array.of(45, 0),     // ~0.5 inch seedha
+  Array.of(95, 1),     // ~1.0 inch seedha
+  Array.of(135, 2),    // ~1.5-2.0 inch bilkul seedha
+  Array.of(185, 42),   // Neechay ki taraf jhukna shuru
+  Array.of(235, 68),   // Neechay swing
+  Array.of(290, 15),   // Wapas upar ki taraf swing
+  Array.of(345, -45),  // Upar swing
+  Array.of(400, -15),  // Phir halki neechay lehar
+  Array.of(455, -65),  // Upar phailta hua random wave
+  Array.of(510, -45)   // Soft dissipating end
+);
+
 const CTRL_OVER: Array<[number, number]> = Array.of(
-  [0, 0] as [number, number],
-  [-45, -35] as [number, number],
-  [-80, -75] as [number, number],
-  [-80, -125] as [number, number],
-  [-45, -165] as [number, number],
-  [5, -178] as [number, number],
-  [55, -150] as [number, number],
-  [75, -105] as [number, number],
-  [100, -85] as [number, number],
-  [160, -85] as [number, number],
-  [220, -120] as [number, number],
-  [280, -165] as [number, number],
-  [350, -190] as [number, number],
-  [420, -225] as [number, number],
-  [460, -250] as [number, number]
+  Array.of(0, 0), Array.of(-45, -35), Array.of(-80, -75), Array.of(-80, -125),
+  Array.of(-45, -165), Array.of(5, -178), Array.of(55, -150), Array.of(75, -105),
+  Array.of(100, -85), Array.of(160, -85), Array.of(220, -120), Array.of(280, -165),
+  Array.of(350, -190), Array.of(420, -225), Array.of(460, -250)
 );
 
 const CTRL_UNDER: Array<[number, number]> = Array.of(
-  [0, 0] as [number, number],
-  [22, -40] as [number, number],
-  [42, -88] as [number, number],
-  [28, -135] as [number, number],
-  [-20, -152] as [number, number],
-  [-65, -122] as [number, number],
-  [-62, -72] as [number, number],
-  [-18, -58] as [number, number],
-  [45, -68] as [number, number],
-  [110, -95] as [number, number],
-  [170, -112] as [number, number],
-  [230, -147] as [number, number],
-  [290, -177] as [number, number],
-  [350, -202] as [number, number],
-  [420, -232] as [number, number],
-  [460, -250] as [number, number]
+  Array.of(0, 0), Array.of(22, -40), Array.of(42, -88), Array.of(28, -135),
+  Array.of(-20, -152), Array.of(-65, -122), Array.of(-62, -72), Array.of(-18, -58),
+  Array.of(45, -68), Array.of(110, -95), Array.of(170, -112), Array.of(230, -147),
+  Array.of(290, -177), Array.of(350, -202), Array.of(420, -232), Array.of(460, -250)
 );
 
 const CTRL_DOWN: Array<[number, number]> = Array.of(
-  [0, 0] as [number, number],
-  [-25, 30] as [number, number],
-  [-60, 70] as [number, number],
-  [-92, 120] as [number, number],
-  [-60, 150] as [number, number],
-  [-15, 128] as [number, number],
-  [-28, 88] as [number, number],
-  [-70, 45] as [number, number],
-  [-95, -10] as [number, number],
-  [-80, -70] as [number, number],
-  [-30, -108] as [number, number],
-  [30, -122] as [number, number],
-  [100, -118] as [number, number],
-  [170, -130] as [number, number],
-  [240, -155] as [number, number],
-  [300, -185] as [number, number],
-  [360, -210] as [number, number],
-  [420, -235] as [number, number],
-  [460, -250] as [number, number]
+  Array.of(0, 0), Array.of(-25, 30), Array.of(-60, 70), Array.of(-92, 120),
+  Array.of(-60, 150), Array.of(-15, 128), Array.of(-28, 88), Array.of(-70, 45),
+  Array.of(-95, -10), Array.of(-80, -70), Array.of(-30, -108), Array.of(30, -122),
+  Array.of(100, -118), Array.of(170, -130), Array.of(240, -155), Array.of(300, -185),
+  Array.of(360, -210), Array.of(420, -235), Array.of(460, -250)
 );
 
 const N = 220;
@@ -205,7 +191,7 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
   else if (h < 240) [r, g, b] = [0, x, c];
   else if (h < 300) [r, g, b] = [x, 0, c];
   else [r, g, b] = [c, 0, x];
-  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+  return Array.of((r + m) * 255, (g + m) * 255, (b + m) * 255) as [number, number, number];
 };
 
 const noiseSprites = new Map<string, HTMLCanvasElement>();
@@ -226,7 +212,7 @@ const getNoiseSprite = (hue: number, variant: number) => {
       const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
       const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
       const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
-      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 32, 88, 50 + 30 * n);
+      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 28, 90, 50 + 30 * n);
       const i = (py * S + px) * 4;
       img.data[i] = R;
       img.data[i + 1] = G;
@@ -258,22 +244,23 @@ const getSoftSprite = (hue: number, light: number) => {
   return c;
 };
 
-// Round glowing firefly dot sprite (no stars)
-const sparkSprites = new Map<number, HTMLCanvasElement>();
-const getSparkSprite = (hue: number) => {
-  let c = sparkSprites.get(hue);
+// Round glowing firefly dot sprite (no star points)
+const dotSprites = new Map<number, HTMLCanvasElement>();
+const getDotSprite = (hue: number) => {
+  let c = dotSprites.get(hue);
   if (c) return c;
   const S = 48;
+  const mid = S / 2;
   c = makeCanvas(S, S);
   const g = c.getContext("2d")!;
-  const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-  gr.addColorStop(0, `hsla(${hue},100%,96%,1)`);
-  gr.addColorStop(0.22, `hsla(${hue},100%,78%,0.85)`);
-  gr.addColorStop(0.55, `hsla(${hue},95%,62%,0.25)`);
-  gr.addColorStop(1, `hsla(${hue},90%,50%,0)`);
+  const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
+  gr.addColorStop(0, "rgba(255, 255, 255, 1)");
+  gr.addColorStop(0.18, `hsla(${hue}, 100%, 84%, 0.95)`);
+  gr.addColorStop(0.45, `hsla(${hue}, 100%, 62%, 0.38)`);
+  gr.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
-  sparkSprites.set(hue, c);
+  dotSprites.set(hue, c);
   return c;
 };
 
@@ -294,7 +281,7 @@ const getGlyphSprite = (text: string, hue: number, size: number) => {
   g.font = font;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.shadowColor = `hsla(${hue},100%,70%,1)`;
+  g.shadowColor = `hsla(${hue},100%,72%,1)`;
   g.shadowBlur = 16 * SC;
   g.fillStyle = `hsla(${hue},100%,92%,1)`;
   g.fillText(text, c.width / 2, c.height / 2);
@@ -314,45 +301,50 @@ class Particle {
   baseAlpha: number;
   maxLife: number;
   size = 1;
+  depth = 1;
   hue: number;
   variant = Math.floor(rand(0, 3));
   seed = rand(0, 1000);
   rad = Math.sqrt(rand(0.02, 1));
   th0 = rand(0, TAU);
-  turns = rand(0.6, 1.7) * (Math.random() < 0.5 ? -1 : 1);
-  spin = rand(0.15, 0.5) * (Math.random() < 0.5 ? -1 : 1);
+  turns = rand(0.55, 1.5) * (Math.random() < 0.5 ? -1 : 1);
+  spin = rand(0.14, 0.42) * (Math.random() < 0.5 ? -1 : 1);
   rot = rand(0, TAU);
-  rotSpeed = rand(-0.004, 0.004);
+  rotSpeed = rand(-0.003, 0.003);
   off = rand(-1, 1);
   text = "";
   blinkRate = 2;
+  swingFreq = rand(0.55, 1.15);
+  swingPhase = rand(0, TAU);
 
   constructor(public kind: Kind, glyphs: string[]) {
+    this.depth = rand(0.7, 1.35);
+
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.8, 1.3);
-      this.baseAlpha = rand(0.07, 0.16);
-      this.maxLife = rand(440, 600);
+      this.size = rand(0.85, 1.35) * this.depth;
+      this.baseAlpha = rand(0.10, 0.21); // Richer base opacity
+      this.maxLife = rand(460, 640);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.7, 1.3);
-      this.baseAlpha = rand(0.12, 0.26);
-      this.maxLife = rand(420, 580);
+      this.size = rand(0.75, 1.3) * this.depth;
+      this.baseAlpha = rand(0.16, 0.32); // Richer wisp opacity
+      this.maxLife = rand(440, 600);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
-      this.hue = pick(Array.of(280, 290, 215, 190, 46));
-      this.size = rand(11, 18);
-      this.baseAlpha = rand(0.8, 1);
-      this.blinkRate = rand(1.2, 3);
+      this.hue = pick(Array.of(280, 290, 215, 320, 44));
+      this.size = rand(11, 17);
+      this.baseAlpha = rand(0.75, 0.95);
+      this.blinkRate = rand(1.2, 2.6);
       this.maxLife = rand(440, 580);
     } else {
-      // 88% chotay barik dots, 12% kaheen-kaheen baray jugnu dots
-      this.hue = pick(DOT_HUES);
-      const isLarge = Math.random() < 0.12;
-      this.size = isLarge ? rand(1.5, 2.3) : rand(0.45, 0.95);
-      this.baseAlpha = isLarge ? rand(0.9, 1) : rand(0.7, 0.95);
-      this.blinkRate = rand(1.8, 4.2);
-      this.maxLife = rand(440, 620);
+      // 88% tiny fine firefly dots, 12% occasional larger glowing dots
+      this.hue = pick(GLITTER_HUES);
+      const isBig = Math.random() < 0.12;
+      this.size = isBig ? rand(1.9, 2.8) : rand(0.55, 1.15);
+      this.baseAlpha = isBig ? rand(0.88, 1) : rand(0.65, 0.95);
+      this.blinkRate = rand(2.2, 5.0);
+      this.maxLife = rand(440, 640);
     }
   }
 
@@ -372,18 +364,29 @@ class Particle {
     const tx = ny;
     const ty = -nx;
 
+    // Pehle 1.5-2 inch (u < 0.24) dhuan seedha aur tight rehta hai, phir random up/down swing shuru hota hai
+    const swingFactor = smooth(0.22, 0.50, u);
+    const randomUpDownSwing =
+      (Math.sin(t * this.swingFreq + this.swingPhase + u * 5.5) * 26 +
+        Math.cos(t * 0.45 + this.seed * 1.3 + u * 3.5) * 18) *
+      k *
+      swingFactor;
+
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      const spread = this.kind === "puff" ? 6 + 52 * u : 4 + 30 * u;
+      // Origin par tight stream (4px), phir swing ke baad phailta hai
+      const spread = (this.kind === "puff" ? 4 + 54 * swingFactor : 3 + 32 * swingFactor) * this.depth;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
-      offN = Math.cos(th) * r + Math.sin(t * 0.7 + this.seed + u * 5) * k * 7;
-      offT = Math.sin(th) * r * 0.7;
+      offN = Math.cos(th) * r + randomUpDownSwing;
+      offT = Math.sin(th) * r * 0.72;
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (8 + 44 * u) + Math.sin(t * 0.9 + this.seed) * k * 6;
+      offN = this.off * k * (5 + 42 * swingFactor) + randomUpDownSwing * 0.7;
     } else {
-      offN = this.off * k * (10 + 62 * u) + Math.sin(t * 0.7 + this.seed) * k * 5;
+      // Jugnu dots smoke ke andar aur uske gird random swing karte hain
+      offN = this.off * k * (6 + 60 * swingFactor) * this.depth + randomUpDownSwing * 0.85;
+      offT = Math.cos(t * 0.7 + this.seed) * k * 9 * swingFactor;
     }
 
     if (wind.power > 0.01) {
@@ -392,8 +395,8 @@ class Particle {
       const d2 = ddx * ddx + ddy * ddy;
       if (d2 < 160 * 160) {
         const fo = (1 - Math.sqrt(d2) / 160) * wind.power;
-        this.dx += wind.x * fo * 0.35 * dt;
-        this.dy += wind.y * fo * 0.35 * dt;
+        this.dx += wind.x * fo * 0.32 * dt;
+        this.dy += wind.y * fo * 0.32 * dt;
       }
     }
     const relax = Math.pow(0.97, dt);
@@ -403,17 +406,27 @@ class Particle {
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.6 + this.seed) * k * 9;
-      wy = Math.cos(t * 0.5 + this.seed * 1.7) * k * 9;
+      wx = Math.sin(t * 0.65 + this.seed) * k * 9 * swingFactor;
+      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * 9 * swingFactor;
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
-    const env = smooth(0, 0.1, u) * (1 - smooth(0.6, 1, u));
-    this.alpha = this.baseAlpha * env;
-    if (this.kind === "glyph" || this.kind === "spark") {
+    // Fast fade-in at nozzle (0 -> 0.03) + extra density boost near origin (u < 0.25)
+    const env = smooth(0, 0.03, u) * (1 - smooth(0.62, 1, u));
+    const nozzleBoost =
+      this.kind === "puff" || this.kind === "wisp"
+        ? 1 + 0.65 * (1 - smooth(0, 0.26, u))
+        : 1;
+
+    this.alpha = this.baseAlpha * env * nozzleBoost;
+
+    if (this.kind === "spark") {
+      const twinkle = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha *= 0.12 + 0.88 * Math.pow(twinkle, 2.5);
+    } else if (this.kind === "glyph") {
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha *= 0.15 + 0.85 * b * b;
     }
@@ -424,7 +437,10 @@ class Particle {
     const u = this.u;
 
     if (this.kind === "puff" || this.kind === "wisp") {
-      const s = this.kind === "puff" ? k * (16 + 44 * u) * this.size : k * (7 + 16 * u) * this.size;
+      const s =
+        this.kind === "puff"
+          ? k * (12 + 44 * u) * this.size
+          : k * (5.5 + 17 * u) * this.size;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -434,7 +450,7 @@ class Particle {
     } else if (this.kind === "spark") {
       const s = this.size * 3.0;
       ctx.globalAlpha = Math.min(1, this.alpha);
-      ctx.drawImage(getSparkSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
+      ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else {
       const r = this.size * 2.2;
       ctx.globalAlpha = Math.min(1, this.alpha * 0.55);
@@ -459,9 +475,9 @@ export function MagicalSmoke({
   originY = 0.64,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
-  spiral = "down",
+  spiral = "straight-swing",
   drift = 1,
-  speed = 0.6,
+  speed = 0.55,
   showGlyphs = false,
   debug = false,
 }: Props) {
@@ -475,14 +491,22 @@ export function MagicalSmoke({
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 300 : 2400;
-    const rate = reduced ? 0.3 : 1;
+    const MAX = reduced ? 350 : 2800;
+    const rate = reduced ? 0.35 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
-    const ctrl = spiral === "down" ? CTRL_DOWN : spiral === "under" ? CTRL_UNDER : CTRL_OVER;
+    const ctrl =
+      spiral === "straight-swing"
+        ? CTRL_STRAIGHT_SWING
+        : spiral === "down"
+        ? CTRL_DOWN
+        : spiral === "under"
+        ? CTRL_UNDER
+        : CTRL_OVER;
+
     const ext = {
-      up: -Math.min(...ctrl.map((c) => c[1])),
-      down: Math.max(0, ...ctrl.map((c) => c[1])),
+      up: Math.max(20, -Math.min(...ctrl.map((c) => c[1]))),
+      down: Math.max(20, ...ctrl.map((c) => c[1])),
       fwd: Math.max(...ctrl.map((c) => c[0])),
       back: Math.max(0, -Math.min(...ctrl.map((c) => c[0]))),
     };
@@ -499,7 +523,7 @@ export function MagicalSmoke({
     const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
-    for (const dh of DOT_HUES) getSparkSprite(dh);
+    for (const gh of GLITTER_HUES) getDotSprite(gh);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -513,7 +537,8 @@ export function MagicalSmoke({
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
-      const limits = Array.of(h / 478, (fwdAvail * 0.96) / (ext.fwd * reach), (oy * 0.97) / ext.up);
+      const limits = Array.of(h / 478, (fwdAvail * 0.96) / (ext.fwd * reach));
+      if (ext.up > 0) limits.push((oy * 0.97) / ext.up);
       if (ext.back > 0) limits.push((backAvail * 0.96) / (ext.back * reach));
       if (ext.down > 0) limits.push(((h - oy) * 0.97) / ext.down);
       k = Math.max(0.35, Math.min(...limits));
@@ -548,10 +573,12 @@ export function MagicalSmoke({
 
       ctx.clearRect(0, 0, w, h);
 
-      acc.puff += dt * 1.3 * rate;
-      acc.wisp += dt * 1.6 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.16 * rate;
-      acc.spark += dt * 0.85 * rate;
+      // Higher emission rate for richer density at the origin nozzle
+      acc.puff += dt * 1.85 * rate;
+      acc.wisp += dt * 2.15 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.14 * rate;
+      acc.spark += dt * 0.95 * rate;
+
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
       while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
@@ -563,9 +590,11 @@ export function MagicalSmoke({
       ctx.globalCompositeOperation = "screen";
       for (const p of particles) if (p.kind === "puff") p.draw(ctx, k);
       for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k);
+
       ctx.globalCompositeOperation = "lighter";
       for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
       for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
+
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
 
