@@ -90,13 +90,21 @@ function SmokeParticles() {
   );
 }
 
+// Is baar brackets ka jhanjhat hi khatam kar diya hai variables use karke
+const camX = 0;
+const camY = 0;
+const camZ = 5;
+
+const lightX = 10;
+const lightY = 10;
+const lightZ = 10;
+
 export default function MagicSmokeScene() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0a16' }}>
-      {/* Is baar position aur pointLight ki complete arrays set hain */}
-      <Canvas camera={{ position:, fov: 60 }}>
+      <Canvas camera={{ position: [camX, camY, camZ], fov: 60 }}>
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1.5} />
+        <pointLight position={[lightX, lightY, lightZ]} intensity={1.5} />
         <SmokeParticles />
       </Canvas>
     </div>
