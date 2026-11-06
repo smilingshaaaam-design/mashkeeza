@@ -2,24 +2,6 @@
 
 import React, { useEffect, useRef } from "react";
 
-/**
- * MagicalSmoke - purple / blue / golden mixed realistic smoke
- *
- * - Asli dhuan: noise se bane naram, patchy gubaar (puffs), jo ghoomte, phailte aur ghul jaate hain
- * - Rang mix: golden, purple aur blue ek dusre mein ghul-mil jaate hain
- * - Nali se nikal kar pehle NEECHAY jaata hai, wahan twist hota hai, phir upar ribbon ban kar behta hai
- * - Haroof aur symbols jugnu ki tarah jalte bujhte aur tairte hain
- *
- * Props:
- *  originX / originY : nali ki position (canvas ke relative, 0-1)
- *  direction         : "left" (default) ya "right"
- *  spiral            : "down" (default) | "under" | "over"
- *  drift             : ribbon ki lambai (1 = normal)
- *  speed             : 1 = dheemi natural speed
- *  glyphs            : apne haroof
- *  debug             : true = nali par laal nishan
- */
-
 const DEFAULT_GLYPHS = [
   "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ",
   "النُّورُ", "الْهَادِي", "الْبَاقِي", "الْحَيُّ", "الْقَيُّومُ",
@@ -28,7 +10,6 @@ const DEFAULT_GLYPHS = [
   "☉", "☽", "☿", "♀", "♂", "♃", "♄",
 ];
 
-// golden + purple + blue ka mix
 const SMOKE_HUES = [44, 40, 46, 275, 282, 268, 292, 215, 222, 205, 232];
 
 const TAU = Math.PI * 2;
@@ -50,12 +31,10 @@ interface Props {
   debug?: boolean;
 }
 
-type Kind = "puff" | "wisp" | "glyph" | "spark";
+type Kind = "puff" | "wisp" | "glyph" | "spark" | "halo";
 type Wind = { x: number; y: number; px: number; py: number; power: number };
 type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
 
-/* ---------- Ribbon ka rasta ---------- */
-// (dx, dy) nali se, video pixels mein; dy negative = upar
 const CTRL_OVER: [number, number][] = [
   [0, 0], [-45, -35], [-80, -75], [-80, -125], [-45, -165], [5, -178],
   [55, -150], [75, -105], [100, -85], [160, -85], [220, -120], [280, -165],
@@ -66,7 +45,6 @@ const CTRL_UNDER: [number, number][] = [
   [-62, -72], [-18, -58], [45, -68], [110, -95], [170, -112], [230, -147],
   [290, -177], [350, -202], [420, -232], [460, -250],
 ];
-// nali se nikal kar neechay jaata hai, wahan coil banata hai, phir upar ribbon mein
 const CTRL_DOWN: [number, number][] = [
   [0, 0], [-25, 30], [-60, 70], [-92, 120], [-60, 150], [-15, 128],
   [-28, 88], [-70, 45], [-95, -10], [-80, -70], [-30, -108], [30, -122],
@@ -117,8 +95,6 @@ function buildPath(
   }
   return { x, y, nx, ny };
 }
-
-/* ---------- Procedural smoke texture (noise se bana gubaar) ---------- */
 
 const makeCanvas = (w: number, h: number) => {
   const c = document.createElement("canvas");
@@ -249,20 +225,18 @@ const getGlyphSprite = (text: string, hue: number, size: number) => {
   g.font = font;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.shadowColor = `hsla(${hue},100%,70%,1)`;
-  g.shadowBlur = 16 * SC;
-  g.fillStyle = `hsla(${hue},100%,92%,1)`;
+  g.shadowColor = `hsla(${hue},100%,80%,1)`;
+  g.shadowBlur = 24 * SC; 
+  g.fillStyle = `hsla(${hue},100%,96%,1)`;
   g.fillText(text, c.width / 2, c.height / 2);
   glyphSprites.set(key, c);
   return c;
 };
 
-/* ---------- Particle ---------- */
-
 class Particle {
   x = 0;
   y = 0;
-  u = 0; // ribbon par position: 0 = nali, 1 = end
+  u = 0;
   dx = 0;
   dy = 0;
   alpha = 0;
@@ -272,12 +246,12 @@ class Particle {
   hue: number;
   variant = Math.floor(rand(0, 3));
   seed = rand(0, 1000);
-  rad = Math.sqrt(rand(0.02, 1)); // path ke gird kitni doori par ghoomta hai
+  rad = Math.sqrt(rand(0.01, 0.8));
   th0 = rand(0, TAU);
   turns = rand(0.6, 1.7) * (Math.random() < 0.5 ? -1 : 1);
-  spin = rand(0.15, 0.5) * (Math.random() < 0.5 ? -1 : 1);
+  spin = rand(0.15, 0.4) * (Math.random() < 0.5 ? -1 : 1);
   rot = rand(0, TAU);
-  rotSpeed = rand(-0.004, 0.004);
+  rotSpeed = rand(-0.003, 0.003);
   off = rand(-1, 1);
   text = "";
   blinkRate = 2;
@@ -285,32 +259,37 @@ class Particle {
   constructor(public kind: Kind, glyphs: string[]) {
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.8, 1.3);
-      this.baseAlpha = rand(0.07, 0.16);
-      this.maxLife = rand(380, 520);
+      this.size = rand(1.8, 3.2); 
+      this.baseAlpha = rand(0.03, 0.08); 
+      this.maxLife = rand(450, 650);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.7, 1.3);
-      this.baseAlpha = rand(0.12, 0.26);
-      this.maxLife = rand(360, 500);
+      this.size = rand(1.2, 2.4);
+      this.baseAlpha = rand(0.06, 0.15);
+      this.maxLife = rand(420, 600);
+    } else if (kind === "halo") {
+      this.hue = pick(SMOKE_HUES);
+      this.size = rand(3, 5);
+      this.baseAlpha = rand(0.02, 0.04);
+      this.maxLife = rand(450, 650);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
       this.hue = pick([44, 48, 52, 44, 205]);
-      this.size = rand(11, 18);
-      this.baseAlpha = rand(0.8, 1);
+      this.size = rand(12, 20);
+      this.baseAlpha = rand(0.9, 1); 
       this.blinkRate = rand(1.2, 3);
-      this.maxLife = rand(380, 520);
+      this.maxLife = rand(450, 650);
     } else {
       this.hue = pick([44, 48, 205, 215]);
-      this.size = rand(0.8, 2.2);
+      this.size = rand(1.0, 2.5);
       this.baseAlpha = rand(0.8, 1);
       this.blinkRate = rand(1.5, 3.5);
-      this.maxLife = rand(380, 560);
+      this.maxLife = rand(450, 650);
     }
   }
 
   update(t: number, dt: number, wind: Wind, path: Path, k: number) {
-    this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.8 : 1);
+    this.u += (dt / this.maxLife) * (this.kind === "spark" || this.kind === "glyph" ? 0.6 : 0.65);
     const u = this.u;
     if (u >= 1) return;
 
@@ -322,26 +301,27 @@ class Particle {
     const py = path.y[i] + (path.y[j] - path.y[i]) * f;
     const nx = path.nx[i] + (path.nx[j] - path.nx[i]) * f;
     const ny = path.ny[i] + (path.ny[j] - path.ny[i]) * f;
-    // tangent = normal ko 90 degree ghuma kar
     const tx = ny;
     const ty = -nx;
 
     let offN = 0;
     let offT = 0;
+    const wander = u * u; 
+
     if (this.kind === "puff" || this.kind === "wisp") {
-      // path ke gird ghoomta hua: corkscrew twist, jo dhuan ko ghumaoo deta hai
-      const spread = this.kind === "puff" ? 6 + 52 * u : 4 + 30 * u;
+      const spread = this.kind === "puff" ? 1 + 55 * wander : 1 + 35 * wander;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
-      offN = Math.cos(th) * r + Math.sin(t * 0.7 + this.seed + u * 5) * k * 7;
-      offT = Math.sin(th) * r * 0.7;
+      offN = Math.cos(th) * r + Math.sin(t * 0.6 + this.seed + u * 5) * k * (12 * wander);
+      offT = Math.sin(th) * r * (0.2 + 0.8 * wander);
+    } else if (this.kind === "halo") {
+      offN = 0; offT = 0; 
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (8 + 44 * u) + Math.sin(t * 0.9 + this.seed) * k * 6;
+      offN = this.off * k * (4 + 40 * u) + Math.sin(t * 0.8 + this.seed) * k * 5;
     } else {
-      offN = this.off * k * (10 + 62 * u) + Math.sin(t * 0.7 + this.seed) * k * 5;
+      offN = this.off * k * (5 + 50 * u) + Math.sin(t * 0.6 + this.seed) * k * 4;
     }
 
-    // mouse wind
     if (wind.power > 0.01) {
       const ddx = px - wind.px;
       const ddy = py - wind.py;
@@ -356,12 +336,11 @@ class Particle {
     this.dx *= relax;
     this.dy *= relax;
 
-    // jugnu ki tarah idhar udhar tairna
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.6 + this.seed) * k * 9;
-      wy = Math.cos(t * 0.5 + this.seed * 1.7) * k * 9;
+      wx = Math.sin(t * 0.5 + this.seed) * k * 8;
+      wy = Math.cos(t * 0.4 + this.seed * 1.7) * k * 8;
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
@@ -371,7 +350,6 @@ class Particle {
     const env = smooth(0, 0.1, u) * (1 - smooth(0.6, 1, u));
     this.alpha = this.baseAlpha * env;
     if (this.kind === "glyph" || this.kind === "spark") {
-      // jugnu ki chamak: dheere se jalta hai, phir bujhta hai
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha *= 0.15 + 0.85 * b * b;
     }
@@ -382,22 +360,25 @@ class Particle {
     const u = this.u;
 
     if (this.kind === "puff" || this.kind === "wisp") {
-      const s = this.kind === "puff" ? k * (16 + 44 * u) * this.size : k * (7 + 16 * u) * this.size;
+      const s = this.kind === "puff" ? k * (20 + 60 * u) * this.size : k * (10 + 25 * u) * this.size;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rot);
       ctx.drawImage(getNoiseSprite(this.hue, this.variant), -s, -s, s * 2, s * 2);
       ctx.restore();
+    } else if (this.kind === "halo") {
+      const r = k * (30 + 80 * u) * this.size;
+      ctx.globalAlpha = Math.min(1, this.alpha);
+      ctx.drawImage(getSoftSprite(this.hue, 60), this.x - r, this.y - r, r * 2, r * 2);
     } else if (this.kind === "spark") {
-      const s = this.size * 3.2;
+      const s = this.size * 3.5;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.drawImage(getSparkSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else {
-      // peeche naram roshni (halo), jugnu jaisi
-      const r = this.size * 2.2;
-      ctx.globalAlpha = Math.min(1, this.alpha * 0.55);
-      ctx.drawImage(getSoftSprite(this.hue, 76), this.x - r, this.y - r, r * 2, r * 2);
+      const r = this.size * 3.5; 
+      ctx.globalAlpha = Math.min(1, this.alpha * 0.6);
+      ctx.drawImage(getSoftSprite(this.hue, 85), this.x - r, this.y - r, r * 2, r * 2);
       ctx.globalAlpha = Math.min(1, this.alpha);
       const sp = getGlyphSprite(this.text, this.hue, this.size);
       const w = sp.width / 2;
@@ -410,8 +391,6 @@ class Particle {
     }
   }
 }
-
-/* ---------- Component ---------- */
 
 export function MagicalSmoke({
   originX = 0.76,
@@ -433,7 +412,7 @@ export function MagicalSmoke({
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 300 : 2400;
+    const MAX = reduced ? 400 : 3800; 
     const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
@@ -445,18 +424,15 @@ export function MagicalSmoke({
       back: Math.max(0, -Math.min(...ctrl.map((c) => c[0]))),
     };
 
-    let w = 0;
-    let h = 0;
-    let k = 1;
+    let w = 0, h = 0, k = 1;
     let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl);
     let raf = 0;
     let particles: Particle[] = [];
     let t = 0;
     let last = performance.now();
-    const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
+    const acc = { puff: 0, wisp: 0, halo: 0, glyph: 0, spark: 0 };
     const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
-    // texture pehle hi bana lo, taaki animation ke beech atke nahi
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
 
     const resize = () => {
@@ -467,7 +443,6 @@ export function MagicalSmoke({
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Original code ki tarah source point canvas ke 76% width aur 64% height par.
       const ox = w * originX;
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
@@ -507,25 +482,32 @@ export function MagicalSmoke({
 
       ctx.clearRect(0, 0, w, h);
 
-      acc.puff += dt * 1.3 * rate;
-      acc.wisp += dt * 1.6 * rate;
-      acc.glyph += dt * 0.16 * rate;
-      acc.spark += dt * 0.45 * rate;
+      acc.puff += dt * 4.2 * rate;
+      acc.wisp += dt * 3.8 * rate;
+      acc.halo += dt * 0.5 * rate; 
+      acc.glyph += dt * 0.25 * rate;
+      acc.spark += dt * 0.6 * rate;
+      
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
+      while (acc.halo >= 1) { acc.halo--; emit("halo"); }
       while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
       while (acc.spark >= 1) { acc.spark--; emit("spark"); }
 
       for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, wind, path, k);
       particles = particles.filter((p) => p.u < 1);
 
-      // dhuan "screen" se mix hota hai (rang ghul-mil jaate hain), jugnu "lighter" se chamakte hain
       ctx.globalCompositeOperation = "screen";
+      for (const p of particles) if (p.kind === "halo") p.draw(ctx, k);
+
+      ctx.globalCompositeOperation = "screen"; 
       for (const p of particles) if (p.kind === "puff") p.draw(ctx, k);
       for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k);
+      
       ctx.globalCompositeOperation = "lighter";
       for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
       for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
+      
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
 
@@ -562,7 +544,6 @@ export function MagicalSmoke({
   );
 }
 
-// Purane import ke liye alias: app/page.tsx mein { PaintedSmoke } chalta rahega
 export const PaintedSmoke = MagicalSmoke;
 
 export default MagicalSmoke;
