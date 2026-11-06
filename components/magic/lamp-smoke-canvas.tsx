@@ -10,9 +10,10 @@ const ATLAS_CELL = 128
 const SIM_RESOLUTION = 128
 const DYE_RESOLUTION = 512
 const PRESSURE_ITERATIONS = 20
-const CURL_STRENGTH = 28
-const VELOCITY_DISSIPATION = 0.25
-const DYE_DISSIPATION = 0.85
+const CURL_STRENGTH = 18
+const VELOCITY_DISSIPATION = 0.4
+const DYE_DISSIPATION = 0.42
+const EMIT_SUBSTEPS = 3
 
 const STATE_W = 32
 const STATE_H = 20
@@ -157,17 +158,34 @@ void main() {
   vec3 dye = texture(uDye, vUv).rgb;
   float density = clamp(max(dye.r, max(dye.g, dye.b)), 0.0, 1.0);
   float height = smoothstep(spout.y + 0.12, spout.y + 0.55, vUv.y);
-  vec2 force = vec2(mix(-25.0, 120.0, height), mix(75.0, 35.0, height));
+  vec2 force = vec2(mix(-18.0, 85.0, height), mix(52.0, 24.0, height));
   fragColor = vec4(velocity + force * density * dt, 0.0, 1.0);
 }`
 
 const DISPLAY_SHADER = `${FRAG_HEADER}
 uniform sampler2D uDye;
+uniform vec2 spout;
+uniform vec2 dyeTexel;
+uniform float aspectRatio;
 void main() {
   vec3 dye = texture(uDye, vUv).rgb;
+  vec3 bloom = vec3(0.0);
+  for (int i = 0; i < 8; i++) {
+    float a = float(i) * 0.785398;
+    vec2 dir = vec2(cos(a), sin(a));
+    bloom += texture(uDye, vUv + dir * dyeTexel * 6.0).rgb * 0.6;
+    bloom += texture(uDye, vUv + dir * dyeTexel * 16.0).rgb * 0.4;
+  }
+  bloom /= 8.0;
+  vec2 d = (vUv - spout - vec2(0.0, 0.16)) * vec2(aspectRatio, 1.0);
+  float halo = exp(-dot(d, d) * 9.0) * 0.16;
+  vec3 haloColor = vec3(1.0, 0.72, 0.32) * halo;
   vec2 edge = smoothstep(vec2(0.0), vec2(0.08), vUv) * smoothstep(vec2(0.0), vec2(0.08), 1.0 - vUv);
-  vec3 color = (1.0 - exp(-dye * 1.6)) * edge.x * edge.y;
-  float alpha = clamp(max(color.r, max(color.g, color.b)) * 1.15, 0.0, 1.0);
+  vec3 core = 1.0 - exp(-dye * 2.4);
+  vec3 glow = (1.0 - exp(-bloom * 1.8)) * vec3(1.0, 0.85, 0.7);
+  vec3 color = (core + glow * 0.75 + haloColor) * edge.x * edge.y;
+  color = color / (1.0 + color * 0.35);
+  float alpha = clamp(max(color.r, max(color.g, color.b)) * 1.1, 0.0, 1.0);
   fragColor = vec4(color, alpha);
 }`
 
@@ -191,16 +209,17 @@ void main() {
     float r1 = hash(id + seed);
     float r2 = hash(id * 1.7 + seed * 1.3);
     float r3 = hash(id * 2.3 + seed * 0.7);
-    float life = glyph ? mix(2.8, 4.6, r1) : mix(1.4, 3.2, r1);
+    float life = glyph ? mix(3.8, 6.0, r1) : mix(2.2, 4.2, r1);
     float age = state.w <= 0.0 ? -r3 * life : 0.0;
-    vec2 jitter = (vec2(r2, r3) - 0.5) * vec2(0.035 / aspectRatio, 0.035);
+    vec2 jitter = (vec2(r2, r3) - 0.5) * vec2(0.012 / aspectRatio, 0.012);
     fragColor = vec4(spout + jitter, age, life);
     return;
   }
   vec2 position = state.xy;
   if (state.z >= 0.0) {
     vec2 velocity = texture(uVelocity, position).xy * velocityTexel;
-    float drift = glyph ? 0.012 : 0.03;
+    float widen = smoothstep(0.0, 0.5, state.z / state.w);
+    float drift = (glyph ? 0.006 : 0.014) * widen;
     velocity += (vec2(hash(id + state.z), hash(id - state.z)) - 0.5) * drift;
     position += velocity * dt;
   }
@@ -273,8 +292,8 @@ void main() {
   vec4 texel = texture(uAtlas, (cell + pc) / atlasCols);
   float core = texel.r;
   float glow = texel.g;
-  vec3 color = vec3(1.0, 0.9, 0.62) * core + vec3(1.0, 0.6, 0.18) * glow * 0.9;
-  float alpha = clamp(core + glow * 0.55, 0.0, 1.0) * vAlpha;
+  vec3 color = vec3(1.0, 0.93, 0.7) * core * 1.2 + vec3(1.0, 0.62, 0.2) * glow * 1.4;
+  float alpha = clamp(core + glow * 0.75, 0.0, 1.0) * vAlpha;
   fragColor = vec4(color * vAlpha, alpha);
 }`
 
@@ -570,19 +589,28 @@ export function LampSmokeCanvas({ originX = 0.3, originY = 0.85, scale = 0.7, cl
     }
 
     const emit = (time: number, dt: number) => {
-      const angle = 1.95 + Math.sin(time * 1.1) * 0.45 + Math.sin(time * 2.7 + 1.3) * 0.18
+      const angle = 1.85 + Math.sin(time * 0.7) * 0.2 + Math.sin(time * 1.9 + 1.3) * 0.08
       const dirX = Math.cos(angle)
       const dirY = Math.sin(angle)
-      const strength = dt * 60
-      const force = 60 * scale * strength
-      const pulse = 0.75 + 0.25 * Math.sin(time * 3.1)
-      const radius = 0.0007 * scale * scale
-      splat(spout.x, spout.y, dirX * force, dirY * force, [0.5 * strength * pulse, 0.32 * strength * pulse, 0.1 * strength * pulse], radius)
+      const strength = (dt * 60) / EMIT_SUBSTEPS
+      const force = 38 * scale * strength
+      const pulse = 0.85 + 0.15 * Math.sin(time * 2.2)
+      const radius = 0.00045 * scale * scale
+      const gold: [number, number, number] = [0.62 * strength * pulse, 0.42 * strength * pulse, 0.14 * strength * pulse]
+      const blue: [number, number, number] = [0.06 * strength, 0.14 * strength, 0.42 * strength]
+      const side = 0.007 * scale
+      const reach = 0.012 * scale
 
-      const side = 0.012 * scale
-      const blue: [number, number, number] = [0.05 * strength, 0.12 * strength, 0.38 * strength]
-      splat(spout.x - dirY * side, spout.y + dirX * side, dirX * force * 0.8, dirY * force * 0.8, blue, radius * 0.6)
-      splat(spout.x + dirY * side, spout.y - dirX * side, dirX * force * 0.8, dirY * force * 0.8, blue, radius * 0.6)
+      for (let i = 0; i < EMIT_SUBSTEPS; i++) {
+        const offset = (i / EMIT_SUBSTEPS) * reach
+        const x = spout.x + dirX * offset
+        const y = spout.y + dirY * offset
+        splat(x, y, dirX * force, dirY * force, gold, radius)
+        if (i === 0) {
+          splat(x - dirY * side, y + dirX * side, dirX * force * 0.85, dirY * force * 0.85, blue, radius * 0.55)
+          splat(x + dirY * side, y - dirX * side, dirX * force * 0.85, dirY * force * 0.85, blue, radius * 0.55)
+        }
+      }
     }
 
     const step = (time: number, dt: number) => {
@@ -678,6 +706,9 @@ export function LampSmokeCanvas({ originX = 0.3, originY = 0.85, scale = 0.7, cl
 
       let u = use(programs.display)
       gl.uniform1i(u.uDye, dye.read.attach(0))
+      gl.uniform2f(u.spout, spout.x, spout.y)
+      gl.uniform2f(u.dyeTexel, dye.texelX, dye.texelY)
+      gl.uniform1f(u.aspectRatio, canvas.width / canvas.height)
       blit(null)
 
       u = use(programs.particleDraw)
