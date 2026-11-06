@@ -10,8 +10,8 @@ const DEFAULT_GLYPHS = [
   "☉", "☽", "☿", "♀", "♂", "♃", "♄",
 ];
 
-// Golden aur blue colors ka mix
-const SMOKE_HUES = [44, 40, 46, 205, 215, 222];
+// Golden, blue, and purple shimmer hues
+const SMOKE_HUES = [44, 40, 46, 205, 215, 222, 275];
 
 const TAU = Math.PI * 2;
 const rand = (a: number, b: number) => Math.random() * (b - a) + a;
@@ -22,16 +22,17 @@ const smooth = (a: number, b: number, x: number) => {
 };
 
 interface Props {
-  originX?: number;
-  originY?: number;
+  originX?: number; // Lamp spout horizontal relative (0.748 is exact for image_4)
+  originY?: number; // Lamp spout vertical relative (0.655 is exact for image_4)
   glyphs?: string[];
   direction?: "left" | "right";
   speed?: number;
+  bgImageUrl?: string; // image_4 overlay container
 }
 
 type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
 
-// Agarbatti / Lamp ka specific tightly curled rasta
+// Natural, undulating coiling path starting right, coiling then floating left-upward
 const CTRL_DOWN: [number, number][] = [
   [0, 0], [-25, 30], [-60, 70], [-92, 120], [-60, 150], [-15, 128],
   [-28, 88], [-70, 45], [-95, -10], [-80, -70], [-30, -108], [30, -122],
@@ -168,7 +169,6 @@ class SmokeParticle {
   size: number; hue: number;
   variant = Math.floor(rand(0, 3));
   seed = rand(0, 1000);
-  // Tight radius for incense look
   rad = rand(0.01, 0.2); 
   th0 = rand(0, TAU);
   spin = rand(0.1, 0.25) * (Math.random() < 0.5 ? -1 : 1);
@@ -179,12 +179,11 @@ class SmokeParticle {
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
       this.size = rand(0.6, 1.2); 
-      // Base alpha heavily reduced to fix white screen
       this.baseAlpha = rand(0.01, 0.04); 
       this.maxLife = rand(350, 450);
     } else {
       this.text = pick(glyphs);
-      this.hue = pick([44, 48, 205]);
+      this.hue = pick([44, 48, 205, 275]);
       this.size = rand(10, 16); 
       this.baseAlpha = rand(0.7, 1);
       this.blinkRate = rand(1.5, 3);
@@ -193,7 +192,7 @@ class SmokeParticle {
   }
 
   update(t: number, dt: number, path: Path, k: number) {
-    this.u += (dt / this.maxLife) * 0.7; // Slowed down for elegant movement
+    this.u += (dt / this.maxLife) * 0.7; 
     const u = this.u;
     if (u >= 1) return;
 
@@ -202,7 +201,6 @@ class SmokeParticle {
     const f = idx - i;
     const j = Math.min(N - 1, i + 1);
     
-    // Follow the path strictly
     const px = path.x[i] + (path.x[j] - path.x[i]) * f;
     const py = path.y[i] + (path.y[j] - path.y[i]) * f;
     const nx = path.nx[i] + (path.nx[j] - path.nx[i]) * f;
@@ -211,21 +209,18 @@ class SmokeParticle {
     let offN = 0;
     
     if (this.kind === "puff") {
-      // Very tight spread (doesn't scatter)
       const spread = 2 + 15 * u; 
       const r = this.rad * k * spread;
       const th = this.th0 + t * this.spin;
-      // Wavy sine motion for 3D twist effect instead of random scatter
       offN = Math.cos(th) * r + Math.sin(t * 0.8 + this.seed + u * 8) * k * 4;
     } else {
       offN = Math.sin(t * 0.6 + this.seed) * k * (5 + 10 * u);
     }
 
     this.x = px + nx * offN;
-    this.y = py + ny * offN - (u * 20); // slight extra upward drift
+    this.y = py + ny * offN - (u * 20); 
     this.rot += this.rotSpeed * dt;
 
-    // Fade in and out smoothly
     const env = smooth(0, 0.1, u) * (1 - smooth(0.7, 1, u));
     this.alpha = this.baseAlpha * env;
 
@@ -240,7 +235,6 @@ class SmokeParticle {
     const u = this.u;
 
     if (this.kind === "puff") {
-      // Keeps size relatively stable so it doesn't blow out
       const s = k * (15 + 25 * u) * this.size;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.save();
@@ -262,11 +256,12 @@ class SmokeParticle {
 }
 
 export function MagicalSmoke({
-  originX = 0.76,
-  originY = 0.64,
+  originX = 0.748, // Exact lamp spout x in image_4
+  originY = 0.655, // Exact lamp spout y in image_4
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   speed = 1,
+  bgImageUrl = "/image_4.png", // Specify the correct path for image_4
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -277,7 +272,7 @@ export function MagicalSmoke({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const MAX = 800; // Controlled particle count
+    const MAX = 800; 
     const sgn = direction === "left" ? -1 : 1;
     
     let w = 0, h = 0, k = 1;
@@ -309,7 +304,6 @@ export function MagicalSmoke({
       last = now; t += dt / 60;
       ctx.clearRect(0, 0, w, h);
 
-      // Smooth emission rate
       acc.puff += dt * 1.5;
       acc.glyph += dt * 0.1;
       
@@ -325,11 +319,9 @@ export function MagicalSmoke({
       for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, path, k);
       particles = particles.filter((p) => p.u < 1);
 
-      // Draw Base Smoke
       ctx.globalCompositeOperation = "screen";
       for (const p of particles) if (p.kind === "puff") p.draw(ctx, k);
       
-      // Draw Glowing Glyphs
       ctx.globalCompositeOperation = "lighter";
       for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
       
@@ -348,8 +340,17 @@ export function MagicalSmoke({
   }, [originX, originY, glyphs, direction, speed]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Background with search or direct src url */}
+      <img
+        src={bgImageUrl}
+        alt="Enchanted Desert"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none z-0"
+      />
+      {/* Canvas magical overlay precisely positioned */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
+        <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
+      </div>
     </div>
   );
 }
