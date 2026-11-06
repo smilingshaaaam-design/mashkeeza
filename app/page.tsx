@@ -79,27 +79,42 @@ export default function HomePage() {
 
       <main>
         <section aria-label="روحانی منظر" className="relative -mt-2">
-          <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[16/8]">
-            <div className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size]">
-              <Image
-                src="/images/desert-scene.png"
-                alt="صحرا میں روشن قدیم کتابیں، جادوئی چراغ اور سنہری روشنی کا دریا"
-                fill
-                sizes="(min-width: 768px) 118vw, 148vw"
-                className="object-cover"
+          {/* Changed aspect ratio to better fit the lamp image and full screen */}
+          <div className="relative w-full h-[60vh] min-h-[500px] overflow-hidden md:h-[80vh]">
+            
+            {/* Background Image: using next/image with layout fill */}
+            <Image
+              src="/image_4.png" // Apni lamp wali picture ka sahi naam/path likhein
+              alt="Enchanted Desert with Magic Lamp"
+              fill
+              priority
+              className="object-cover z-0"
+            />
+            
+            {/* Overlay Elements */}
+            <div className="absolute inset-0 z-10">
+              <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[40%]" />
+              {/* Agar aapko Mashk ki zaroorat nahi is image par to isy comment/remove kar dein */}
+              {/* <Mashk /> */}
+              
+              {/* Smoke Animation precisely positioned over the lamp */}
+              <PaintedSmoke 
+                originX={0.748} // Lamp spout X
+                originY={0.655} // Lamp spout Y
+                direction="left"
+                speed={1}
               />
-              <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[38%]" />
-              <Mashk />
-              <PaintedSmoke />
             </div>
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-night/60 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-night to-transparent" />
+
+            {/* Gradient fading to content */}
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-night/60 to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-night to-transparent z-10 pointer-events-none" />
           </div>
         </section>
 
         <section
           aria-labelledby="services-heading"
-          className="relative mx-auto -mt-16 max-w-7xl px-4 pb-12 md:-mt-28"
+          className="relative mx-auto -mt-16 max-w-7xl px-4 pb-12 md:-mt-28 z-20" // added z-20 so cards overlay the bottom gradient
         >
           <h2 id="services-heading" className="sr-only">
             ہماری روحانی خدمات
