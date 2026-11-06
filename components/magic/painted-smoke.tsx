@@ -1,4 +1,4 @@
-"use client"; // Next.js ke Canvas components ke liye yeh line sab se upar hona zaroori hai
+"use client";
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -93,7 +93,7 @@ function SmokeParticles() {
 export default function MagicSmokeScene() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#0a0a16' }}>
-      {/* Yahan camera position set karke syntax fix kar diya hai */}
+      {/* Is baar position aur pointLight ki complete arrays set hain */}
       <Canvas camera={{ position:, fov: 60 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1.5} />
