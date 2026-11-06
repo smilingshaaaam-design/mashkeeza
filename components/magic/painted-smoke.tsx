@@ -7,11 +7,10 @@ import React, { useEffect, useRef } from "react";
  * Full Arabic Alphabet (Alif to Ya), Talismantic Symbols & Glowing Firefly Dots.
  *
  * Updates:
- * - Reduced whitish blowout (deeper saturation & lower lightness in noise textures + balanced alpha)
- * - Rich blend of Purple, Royal Blue, Cyan, and Golden hues
- * - Complete 99 Names of Allah (Asma-ul-Husna), full Arabic Alphabet (ا to ي), and Magical/Talismantic symbols
- * - Extended full-page wandering path that loops and swirls across the entire screen without abruptly cutting off
- * - Strict TypeScript types (zero tuple-length errors)
+ * - True left direction (forward = left when direction="left", right when direction="right")
+ * - Extended full-page wandering path with deep swirls/bal reaching far across the screen
+ * - All original features preserved: 99 Names of Allah, full Arabic Alphabet, Talisman symbols,
+ *   procedural fbm noise smoke textures, glowing firefly dots, interactive mouse/touch wind, and exports.
  */
 
 const ASMA_UL_HUSNA = [
@@ -90,60 +89,59 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Extended Full-Page Roaming Ribbon Paths ---------- */
+/* ---------- Extended Full-Page Swirling Ribbon Paths (Positive X = Forward) ---------- */
 
-// Nali se 1.5-2 inch seedha nikal kar poore page par ghoomta hua lamba rasta (no abrupt cutoff)
+// Nali se seedha saamne (left) nikal kar gehre bal (swirls/loops) khata hua door tak jata rasta
 const CTRL_FULL_ROAM: CtrlPoint[] = [
   pt(0, 0),
-  pt(-60, -2),      // ~1 inch seedha
-  pt(-125, 2),      // ~2 inch bilkul seedha
-  pt(-185, 42),     // Neechay ki taraf swing
-  pt(-260, 95),     // Neeche gehri lehar
-  pt(-350, 65),     // Wapas upar ki taraf swing
-  pt(-430, -15),    // Beech page par lehar
-  pt(-500, -110),   // Upar ki taraf uthta hua
-  pt(-440, -210),   // Upar se ghoom kar
-  pt(-310, -255),   // Page ke upari hissay mein behta hua
-  pt(-160, -225),   // Wapas center-top ki taraf loop
-  pt(-40, -150),    // Organic curve
-  pt(60, -210),     // Right-top ki taraf phailta hua
-  pt(120, -295),    // Page ke aakhiri hissay mein gracefully dissolve
+  pt(65, -3),       // ~1 inch seedha aage
+  pt(135, 4),       // ~2 inch seedha saamne
+  pt(210, 55),      // Neechay ki taraf pehla gehra bal (swing)
+  pt(290, 105),     // Neeche gehri lehar
+  pt(360, 40),      // Wapas upar ki taraf murta hua
+  pt(325, -45),     // Andaruni swirl / bal
+  pt(410, -115),    // Upar ki taraf lamba bal
+  pt(510, -65),     // Aage badhte hue phir neeche lehar
+  pt(595, 25),      // Door saamne ki taraf gehri wave
+  pt(680, -70),     // Upar ki taraf bal khata hua
+  pt(760, -175),    // Screen ke door kinare tak phailta hua
+  pt(840, -250),    // Aakhiri hissay mein gracefully dissolve
 ];
 
 const CTRL_STRAIGHT_SWING: CtrlPoint[] = [
   pt(0, 0),
-  pt(-60, -2),
-  pt(-125, 2),
-  pt(-175, 36),
-  pt(-230, 68),
-  pt(-295, 35),
-  pt(-360, -35),
-  pt(-425, -95),
-  pt(-485, -60),
-  pt(-545, -135),
-  pt(-600, -195),
+  pt(65, -2),
+  pt(130, 3),
+  pt(195, 48),
+  pt(265, 85),
+  pt(340, 25),
+  pt(415, -55),
+  pt(490, -110),
+  pt(565, -40),
+  pt(645, -125),
+  pt(730, -205),
 ];
 
 const CTRL_OVER: CtrlPoint[] = [
-  pt(0, 0), pt(-45, -35), pt(-80, -75), pt(-80, -125), pt(-45, -165), pt(5, -178),
-  pt(55, -150), pt(75, -105), pt(100, -85), pt(160, -85), pt(220, -120), pt(280, -165),
-  pt(350, -190), pt(420, -225), pt(460, -250),
+  pt(0, 0), pt(45, -35), pt(80, -75), pt(80, -125), pt(45, -165), pt(-5, -178),
+  pt(-55, -150), pt(-75, -105), pt(100, -85), pt(180, -85), pt(260, -120), pt(350, -165),
+  pt(450, -190), pt(560, -225), pt(680, -250),
 ];
 
 const CTRL_UNDER: CtrlPoint[] = [
-  pt(0, 0), pt(22, -40), pt(42, -88), pt(28, -135), pt(-20, -152), pt(-65, -122),
-  pt(-62, -72), pt(-18, -58), pt(45, -68), pt(110, -95), pt(170, -112), pt(230, -147),
-  pt(290, -177), pt(350, -202), pt(420, -232), pt(460, -250),
+  pt(0, 0), pt(-22, -40), pt(-42, -88), pt(-28, -135), pt(20, -152), pt(65, -122),
+  pt(62, -72), pt(18, -58), pt(85, -68), pt(160, -95), pt(240, -112), pt(330, -147),
+  pt(430, -177), pt(530, -202), pt(630, -232), pt(720, -250),
 ];
 
 const CTRL_DOWN: CtrlPoint[] = [
-  pt(0, 0), pt(-25, 30), pt(-60, 70), pt(-92, 120), pt(-60, 150), pt(-15, 128),
-  pt(-28, 88), pt(-70, 45), pt(-95, -10), pt(-80, -70), pt(-30, -108), pt(30, -122),
-  pt(100, -118), pt(170, -130), pt(240, -155), pt(300, -185), pt(360, -210),
-  pt(420, -235), pt(460, -250),
+  pt(0, 0), pt(25, 30), pt(60, 70), pt(92, 120), pt(60, 150), pt(15, 128),
+  pt(28, 88), pt(70, 45), pt(95, -10), pt(80, -70), pt(120, -108), pt(200, -122),
+  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210),
+  pt(730, -235),
 ];
 
-const N = 320; // Higher resolution spline for long full-page path
+const N = 360; // Higher resolution spline for long full-page path
 
 function buildPath(
   ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: CtrlPoint[]
@@ -378,10 +376,10 @@ class Particle {
   seed = rand(0, 1000);
   rad = Math.sqrt(rand(0.02, 1));
   th0 = rand(0, TAU);
-  turns = rand(0.5, 1.4) * (Math.random() < 0.5 ? -1 : 1);
-  spin = rand(0.12, 0.36) * (Math.random() < 0.5 ? -1 : 1);
+  turns = rand(0.9, 2.2) * (Math.random() < 0.5 ? -1 : 1);
+  spin = rand(0.18, 0.45) * (Math.random() < 0.5 ? -1 : 1);
   rot = rand(0, TAU);
-  rotSpeed = rand(-0.003, 0.003);
+  rotSpeed = rand(-0.004, 0.004);
   off = rand(-1, 1);
   text = "";
   blinkRate = 2;
@@ -392,29 +390,27 @@ class Particle {
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
       this.size = rand(0.85, 1.3) * this.depth;
-      // Balanced alpha so overlapping screen blend stays richly colored, never white
       this.baseAlpha = rand(0.055, 0.115);
-      this.maxLife = rand(650, 880); // Longer life for full-page journey
+      this.maxLife = rand(720, 960);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
       this.size = rand(0.75, 1.25) * this.depth;
       this.baseAlpha = rand(0.095, 0.19);
-      this.maxLife = rand(620, 840);
+      this.maxLife = rand(680, 920);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
       this.hue = pick(GLYPH_HUES);
       this.size = rand(12, 19);
       this.baseAlpha = rand(0.75, 0.98);
       this.blinkRate = rand(1.1, 2.5);
-      this.maxLife = rand(600, 820);
+      this.maxLife = rand(660, 880);
     } else {
-      // 88% tiny fine shimmer dots, 12% occasional larger firefly dots
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
       this.size = isLarge ? rand(1.6, 2.6) : rand(0.35, 0.8);
       this.baseAlpha = isLarge ? rand(0.85, 1.0) : rand(0.55, 0.85);
       this.blinkRate = rand(2.2, 5.0);
-      this.maxLife = rand(600, 840);
+      this.maxLife = rand(660, 900);
     }
   }
 
@@ -434,29 +430,28 @@ class Particle {
     const tx = ny;
     const ty = -nx;
 
-    // Tight stream for first ~2 inches (u < 0.14), then wide full-page roaming dispersion
-    const chaos = smooth(0.14, 0.42, u);
-    const roamBoost = smooth(0.45, 0.95, u);
+    const chaos = smooth(0.12, 0.38, u);
+    const roamBoost = smooth(0.4, 0.95, u);
 
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      const spread = (this.kind === "puff" ? 4 + 68 * chaos + 45 * roamBoost : 3 + 42 * chaos + 28 * roamBoost) * this.depth;
+      const spread = (this.kind === "puff" ? 4 + 74 * chaos + 48 * roamBoost : 3 + 48 * chaos + 32 * roamBoost) * this.depth;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
       const randWave =
-        Math.sin(t * 0.8 + this.seed + u * 7) * k * (16 * chaos + 18 * roamBoost) +
-        Math.cos(t * 0.5 + this.seed * 1.4) * k * (12 * chaos + 14 * roamBoost);
+        Math.sin(t * 0.95 + this.seed + u * 9.5) * k * (22 * chaos + 24 * roamBoost) +
+        Math.cos(t * 0.65 + this.seed * 1.4 - u * 6.0) * k * (16 * chaos + 18 * roamBoost);
       offN = Math.cos(th) * r + randWave;
-      offT = Math.sin(th) * r * 0.8;
+      offT = Math.sin(th) * r * 0.85;
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (8 + 56 * chaos + 35 * roamBoost) + Math.sin(t * 0.75 + this.seed) * k * 12 * chaos;
-      offT = Math.cos(t * 0.6 + this.seed) * k * 14 * chaos;
+      offN = this.off * k * (8 + 60 * chaos + 38 * roamBoost) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 15 * chaos;
+      offT = Math.cos(t * 0.65 + this.seed) * k * 15 * chaos;
     } else {
       offN =
-        this.off * k * (6 + 75 * chaos + 45 * roamBoost) * this.depth +
-        Math.sin(t * 0.9 + this.seed) * k * 14 * chaos;
-      offT = Math.cos(t * 0.7 + this.seed) * k * 12 * chaos;
+        this.off * k * (6 + 78 * chaos + 48 * roamBoost) * this.depth +
+        Math.sin(t * 0.95 + this.seed + u * 6) * k * 16 * chaos;
+      offT = Math.cos(t * 0.75 + this.seed) * k * 14 * chaos;
     }
 
     if (wind.power > 0.01) {
@@ -476,21 +471,20 @@ class Particle {
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.6 + this.seed) * k * (12 * chaos + 10 * roamBoost);
-      wy = Math.cos(t * 0.5 + this.seed * 1.7) * k * (12 * chaos + 10 * roamBoost);
+      wx = Math.sin(t * 0.65 + this.seed) * k * (14 * chaos + 12 * roamBoost);
+      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (14 * chaos + 12 * roamBoost);
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
-    // Dense at nozzle (u < 0.22), then gradually dissolves completely to 0 at end (u -> 1.0)
     const originDensityBoost =
       this.kind === "puff" || this.kind === "wisp"
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    const fadeOut = 1 - smooth(0.68, 1.0, u);
+    const fadeOut = 1 - smooth(0.7, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
@@ -510,8 +504,8 @@ class Particle {
     if (this.kind === "puff" || this.kind === "wisp") {
       const s =
         this.kind === "puff"
-          ? k * (11 + 52 * u) * this.size
-          : k * (5 + 22 * u) * this.size;
+          ? k * (11 + 54 * u) * this.size
+          : k * (5 + 23 * u) * this.size;
       ctx.globalAlpha = Math.min(0.65, this.alpha);
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -547,7 +541,7 @@ export function MagicalSmoke({
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "full-roam",
-  drift = 1.25,
+  drift = 1.35,
   speed = 0.55,
   showGlyphs = true,
   debug = false,
@@ -565,6 +559,7 @@ export function MagicalSmoke({
     const MAX = reduced ? 350 : 2800;
     const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
+    // "left" matlab -X direction (right se left ki taraf)
     const sgn = direction === "left" ? -1 : 1;
     const ctrl: CtrlPoint[] =
       spiral === "full-roam"
@@ -580,7 +575,7 @@ export function MagicalSmoke({
     const ext = {
       up: Math.max(20, -Math.min(...ctrl.map((c) => c.y))),
       down: Math.max(20, ...ctrl.map((c) => c.y)),
-      fwd: Math.max(...ctrl.map((c) => c.x)),
+      fwd: Math.max(1, ...ctrl.map((c) => c.x)),
       back: Math.max(0, -Math.min(...ctrl.map((c) => c.x))),
     };
 
@@ -610,11 +605,14 @@ export function MagicalSmoke({
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
-      const limits: number[] = [h / 440, (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach)];
+      const limits: number[] = [
+        h / 420,
+        (fwdAvail * 0.98) / Math.max(1, ext.fwd * reach),
+      ];
       if (ext.up > 0) limits.push((oy * 0.96) / ext.up);
       if (ext.back > 0) limits.push((backAvail * 0.96) / Math.max(1, ext.back * reach));
       if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
-      k = Math.max(0.42, Math.min(...limits));
+      k = Math.max(0.45, Math.min(...limits));
       path = buildPath(ox, oy, k, sgn, reach, ctrl);
     };
     resize();
