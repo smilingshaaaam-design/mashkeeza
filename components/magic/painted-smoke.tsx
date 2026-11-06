@@ -4,13 +4,13 @@ import React, { useEffect, useRef } from "react";
 
 /**
  * MagicalSmoke - Rich Purple, Blue, Cyan & Golden Smoke with 99 Names of Allah,
- * Full Arabic Alphabet (Alif to Ya), Talismantic Symbols & Glowing Firefly Dots.
+ * Full Arabic Alphabet (Alif to Ya), Talismantic Symbols & Glowing Firefly/Star Dots.
  *
- * Updates:
- * - True left direction (forward = left when direction="left", right when direction="right")
- * - Extended full-page wandering path with deep swirls/bal reaching far across the screen
- * - All original features preserved: 99 Names of Allah, full Arabic Alphabet, Talisman symbols,
- *   procedural fbm noise smoke textures, glowing firefly dots, interactive mouse/touch wind, and exports.
+ * Path & Behavior:
+ * - Lamp se nikal kar ulte 'S' (Inverted S) ki shape banata hua left side se upar uthta hai
+ * - Upar ja kar menu/header ke upar se right se left ki taraf behta hai
+ * - Ism-e-Allah aur symbols upar wale smoke se barish ki tarah neeche girte hain
+ * - Girte girte ahista ahista invisible hote hain aur poori tarah gayab hote hi wahan ek star-like dot chamak kar bujh jata hai
  */
 
 const ASMA_UL_HUSNA = [
@@ -41,7 +41,6 @@ const DEFAULT_GLYPHS: string[] = [
   ...TALISMAN_SYMBOLS,
 ];
 
-// Deep Purple, Royal Blue, Cyan, and Golden blend (rich saturated hues, low whitish blowout)
 const SMOKE_HUES: number[] = [
   272, 280, 288, 265, // Deep & Royal Purple
   218, 226, 234,      // Rich Royal Blue
@@ -75,37 +74,53 @@ interface Props {
   originY?: number;
   glyphs?: string[];
   direction?: "left" | "right";
-  spiral?: "full-roam" | "straight-swing" | "down" | "under" | "over";
+  spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
   drift?: number;
   speed?: number;
   showGlyphs?: boolean;
   debug?: boolean;
 }
 
-type Kind = "puff" | "wisp" | "glyph" | "spark";
+type Kind = "puff" | "wisp" | "glyph" | "spark" | "flash";
 type Wind = { x: number; y: number; px: number; py: number; power: number };
 type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
 type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Extended Full-Page Swirling Ribbon Paths (Positive X = Forward) ---------- */
+/* ---------- Ulte 'S' (Inverted S) + Top Header Right-to-Left Flow ---------- */
 
-// Nali se seedha saamne (left) nikal kar gehre bal (swirls/loops) khata hua door tak jata rasta
+// Lamp se nikal kar ulte 'S' ki shape banata hua left se upar uthta hai,
+// phir upar menu ke barabar right se left ki taraf behta hai
+const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
+  pt(0, 0),          // Lamp nozzle origin
+  pt(55, 8),         // Thoda saamne left nikal kar halki si neeche lachak
+  pt(125, -25),      // Ulte 'S' ka neeche wala belly curve (left-upward turn)
+  pt(155, -105),     // Beech ki kamar (left se upar uthta hua)
+  pt(95, -185),      // Ulte 'S' ka upar wala curve (right ki taraf mudta hua)
+  pt(45, -255),      // Upar menu/header ke qareeb pahunch kar
+  pt(130, -295),     // Menu ke upar se right-to-left ki taraf ravangi
+  pt(275, -305),     // Menu ke upar lehraye hue left ki taraf
+  pt(430, -295),     // Aage left ki taraf behta hua
+  pt(590, -308),     // Mazeed left
+  pt(750, -295),     // Left kinare ke qareeb
+  pt(910, -305),     // Screen ke aakhiri left hissay mein dissolve
+];
+
 const CTRL_FULL_ROAM: CtrlPoint[] = [
   pt(0, 0),
-  pt(65, -3),       // ~1 inch seedha aage
-  pt(135, 4),       // ~2 inch seedha saamne
-  pt(210, 55),      // Neechay ki taraf pehla gehra bal (swing)
-  pt(290, 105),     // Neeche gehri lehar
-  pt(360, 40),      // Wapas upar ki taraf murta hua
-  pt(325, -45),     // Andaruni swirl / bal
-  pt(410, -115),    // Upar ki taraf lamba bal
-  pt(510, -65),     // Aage badhte hue phir neeche lehar
-  pt(595, 25),      // Door saamne ki taraf gehri wave
-  pt(680, -70),     // Upar ki taraf bal khata hua
-  pt(760, -175),    // Screen ke door kinare tak phailta hua
-  pt(840, -250),    // Aakhiri hissay mein gracefully dissolve
+  pt(65, -3),
+  pt(135, 4),
+  pt(210, 55),
+  pt(290, 105),
+  pt(360, 40),
+  pt(325, -45),
+  pt(410, -115),
+  pt(510, -65),
+  pt(595, 25),
+  pt(680, -70),
+  pt(760, -175),
+  pt(840, -250),
 ];
 
 const CTRL_STRAIGHT_SWING: CtrlPoint[] = [
@@ -141,7 +156,7 @@ const CTRL_DOWN: CtrlPoint[] = [
   pt(730, -235),
 ];
 
-const N = 360; // Higher resolution spline for long full-page path
+const N = 360;
 
 function buildPath(
   ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: CtrlPoint[]
@@ -201,7 +216,7 @@ function buildPath(
   return { x, y, nx, ny };
 }
 
-/* ---------- Procedural Smoke, Firefly Dot & Glyph Textures ---------- */
+/* ---------- Procedural Smoke, Firefly Dot, Star Flash & Glyph Textures ---------- */
 
 const makeCanvas = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement("canvas");
@@ -280,7 +295,6 @@ const getNoiseSprite = (hue: number, variant: number): HTMLCanvasElement => {
       const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
       const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
       const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
-      // Deeper saturation (95%) and lower lightness (36 + 22*n) to prevent whitish washout
       const [R, G, B] = hslToRgb(hue + (n - 0.5) * 24, 95, 36 + 22 * n);
       const i = (py * S + px) * 4;
       img.data[i] = R;
@@ -313,7 +327,6 @@ const getSoftSprite = (hue: number, light: number): HTMLCanvasElement => {
   return c;
 };
 
-// Round glowing firefly dot sprite (no star points)
 const dotSprites = new Map<number, HTMLCanvasElement>();
 const getDotSprite = (hue: number): HTMLCanvasElement => {
   let c = dotSprites.get(hue);
@@ -330,6 +343,47 @@ const getDotSprite = (hue: number): HTMLCanvasElement => {
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
   dotSprites.set(hue, c);
+  return c;
+};
+
+// 4-point star flare dot sprite for when raining glyphs completely vanish
+const starFlashSprites = new Map<number, HTMLCanvasElement>();
+const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
+  let c = starFlashSprites.get(hue);
+  if (c) return c;
+  const S = 72;
+  const mid = S / 2;
+  c = makeCanvas(S, S);
+  const g = c.getContext("2d")!;
+
+  // Soft outer glow
+  const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid * 0.85);
+  gr.addColorStop(0, `hsla(${hue}, 100%, 96%, 1)`);
+  gr.addColorStop(0.18, `hsla(${hue}, 100%, 78%, 0.85)`);
+  gr.addColorStop(0.5, `hsla(${hue}, 100%, 58%, 0.25)`);
+  gr.addColorStop(1, `hsla(${hue}, 100%, 45%, 0)`);
+  g.fillStyle = gr;
+  g.fillRect(0, 0, S, S);
+
+  // Sharp 4-point star rays
+  g.save();
+  g.translate(mid, mid);
+  for (let i = 0; i < 2; i++) {
+    g.rotate((i * Math.PI) / 2);
+    const ray = g.createLinearGradient(-mid * 0.9, 0, mid * 0.9, 0);
+    ray.addColorStop(0, `hsla(${hue}, 100%, 85%, 0)`);
+    ray.addColorStop(0.45, `hsla(${hue}, 100%, 92%, 0.85)`);
+    ray.addColorStop(0.5, `hsla(0, 0%, 100%, 1)`);
+    ray.addColorStop(0.55, `hsla(${hue}, 100%, 92%, 0.85)`);
+    ray.addColorStop(1, `hsla(${hue}, 100%, 85%, 0)`);
+    g.fillStyle = ray;
+    g.beginPath();
+    g.ellipse(0, 0, mid * 0.88, 1.6, 0, 0, TAU);
+    g.fill();
+  }
+  g.restore();
+
+  starFlashSprites.set(hue, c);
   return c;
 };
 
@@ -384,7 +438,16 @@ class Particle {
   text = "";
   blinkRate = 2;
 
-  constructor(public kind: Kind, glyphs: string[]) {
+  // Raining glyph properties (barish ki tarah girne aur star flash ke liye)
+  rainSpawnU = 0;
+  rainFallSpeed = 0;
+  rainMaxDrop = 0;
+  rainSwayAmp = 0;
+  rainSwayFreq = 0;
+  flashSpawned = false;
+  flashScale = 1;
+
+  constructor(public kind: Kind, glyphs: string[], spawnX = 0, spawnY = 0, spawnHue = 45) {
     this.depth = rand(0.7, 1.32);
 
     if (kind === "puff") {
@@ -401,9 +464,23 @@ class Particle {
       this.text = pick(glyphs);
       this.hue = pick(GLYPH_HUES);
       this.size = rand(12, 19);
-      this.baseAlpha = rand(0.75, 0.98);
+      this.baseAlpha = rand(0.82, 1.0);
       this.blinkRate = rand(1.1, 2.5);
-      this.maxLife = rand(660, 880);
+      this.maxLife = rand(240, 360);
+      // Upar wale smoke ribbon (u = 0.44 se 0.94) se spawn ho kar neeche barish ki tarah girega
+      this.rainSpawnU = rand(0.44, 0.94);
+      this.rainFallSpeed = rand(0.45, 0.95);
+      this.rainMaxDrop = rand(140, 310);
+      this.rainSwayAmp = rand(5, 16);
+      this.rainSwayFreq = rand(1.2, 2.4);
+    } else if (kind === "flash") {
+      // Star-like dot jo glyph ke mukammal invisible hone par chamak kar bujhta hai
+      this.x = spawnX;
+      this.y = spawnY;
+      this.hue = spawnHue;
+      this.size = rand(9, 15);
+      this.baseAlpha = 1;
+      this.maxLife = rand(38, 56);
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -414,7 +491,76 @@ class Particle {
     }
   }
 
-  update(t: number, dt: number, wind: Wind, path: Path, k: number): void {
+  update(
+    t: number,
+    dt: number,
+    wind: Wind,
+    path: Path,
+    k: number,
+    onGlyphVanish?: (x: number, y: number, hue: number) => void
+  ): void {
+    if (this.kind === "flash") {
+      this.u += dt / this.maxLife;
+      if (this.u >= 1) return;
+      // Tezi se chamakta hai (peak at u = 0.25) aur phir bujh jata hai
+      const rise = smooth(0, 0.22, this.u);
+      const fade = 1 - smooth(0.22, 1.0, this.u);
+      this.alpha = rise * fade;
+      this.flashScale = 0.4 + 0.95 * Math.sin(Math.min(1, this.u * 1.15) * Math.PI);
+      return;
+    }
+
+    if (this.kind === "glyph") {
+      this.u += dt / this.maxLife;
+      const u = this.u;
+
+      // Path par upar menu ke paas anchor point nikalna
+      const idx = this.rainSpawnU * (N - 1);
+      const i = Math.floor(idx);
+      const f = idx - i;
+      const j = Math.min(N - 1, i + 1);
+      const anchorX = path.x[i] + (path.x[j] - path.x[i]) * f;
+      const anchorY = path.y[i] + (path.y[j] - path.y[i]) * f;
+
+      // Barish ki tarah neeche girna + halka sa hawa mein lehrana
+      const dropY = u * this.rainMaxDrop * k * this.rainFallSpeed;
+      const swayX =
+        Math.sin(t * this.rainSwayFreq + this.seed) * this.rainSwayAmp * k +
+        this.off * 18 * k;
+
+      if (wind.power > 0.01) {
+        const ddx = anchorX + swayX + this.dx - wind.px;
+        const ddy = anchorY + dropY + this.dy - wind.py;
+        const d2 = ddx * ddx + ddy * ddy;
+        if (d2 < 170 * 170) {
+          const fo = (1 - Math.sqrt(d2) / 170) * wind.power;
+          this.dx += wind.x * fo * 0.25 * dt;
+          this.dy += wind.y * fo * 0.25 * dt;
+        }
+      }
+      const relax = Math.pow(0.96, dt);
+      this.dx *= relax;
+      this.dy *= relax;
+
+      this.x = anchorX + swayX + this.dx;
+      this.y = anchorY + dropY + this.dy;
+      this.rot += this.rotSpeed * dt;
+
+      // Pehle wazeh dikhta hai, phir girte girte ahista ahista invisible hota jata hai
+      const fadeIn = smooth(0, 0.1, u);
+      const fadeOut = 1 - smooth(0.35, 0.96, u);
+      const shimmer = 0.78 + 0.22 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha = this.baseAlpha * fadeIn * fadeOut * shimmer;
+
+      // Junhi mukammal invisible ho, wahan ek star jesa dot chamak kar bujh jaye
+      if (u >= 0.96 && !this.flashSpawned) {
+        this.flashSpawned = true;
+        onGlyphVanish?.(this.x, this.y, this.hue);
+      }
+      return;
+    }
+
+    // Smoke puffs, wisps, and sparkles follow the Inverted-S -> Top Menu path
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -430,27 +576,27 @@ class Particle {
     const tx = ny;
     const ty = -nx;
 
-    const chaos = smooth(0.12, 0.38, u);
-    const roamBoost = smooth(0.4, 0.95, u);
+    const chaos = smooth(0.1, 0.35, u);
+    const roamBoost = smooth(0.42, 0.95, u);
 
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      const spread = (this.kind === "puff" ? 4 + 74 * chaos + 48 * roamBoost : 3 + 48 * chaos + 32 * roamBoost) * this.depth;
+      const spread =
+        (this.kind === "puff"
+          ? 4 + 62 * chaos + 42 * roamBoost
+          : 3 + 42 * chaos + 28 * roamBoost) * this.depth;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
       const randWave =
-        Math.sin(t * 0.95 + this.seed + u * 9.5) * k * (22 * chaos + 24 * roamBoost) +
-        Math.cos(t * 0.65 + this.seed * 1.4 - u * 6.0) * k * (16 * chaos + 18 * roamBoost);
+        Math.sin(t * 0.95 + this.seed + u * 9.5) * k * (18 * chaos + 20 * roamBoost) +
+        Math.cos(t * 0.65 + this.seed * 1.4 - u * 6.0) * k * (14 * chaos + 16 * roamBoost);
       offN = Math.cos(th) * r + randWave;
       offT = Math.sin(th) * r * 0.85;
-    } else if (this.kind === "glyph") {
-      offN = this.off * k * (8 + 60 * chaos + 38 * roamBoost) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 15 * chaos;
-      offT = Math.cos(t * 0.65 + this.seed) * k * 15 * chaos;
     } else {
       offN =
-        this.off * k * (6 + 78 * chaos + 48 * roamBoost) * this.depth +
-        Math.sin(t * 0.95 + this.seed + u * 6) * k * 16 * chaos;
+        this.off * k * (6 + 68 * chaos + 42 * roamBoost) * this.depth +
+        Math.sin(t * 0.95 + this.seed + u * 6) * k * 15 * chaos;
       offT = Math.cos(t * 0.75 + this.seed) * k * 14 * chaos;
     }
 
@@ -470,7 +616,7 @@ class Particle {
 
     let wx = 0;
     let wy = 0;
-    if (this.kind === "glyph" || this.kind === "spark") {
+    if (this.kind === "spark") {
       wx = Math.sin(t * 0.65 + this.seed) * k * (14 * chaos + 12 * roamBoost);
       wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (14 * chaos + 12 * roamBoost);
     }
@@ -484,16 +630,13 @@ class Particle {
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    const fadeOut = 1 - smooth(0.7, 1.0, u);
+    const fadeOut = 1 - smooth(0.72, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
     if (this.kind === "spark") {
       const twinkle = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha *= 0.12 + 0.88 * Math.pow(twinkle, 2.5);
-    } else if (this.kind === "glyph") {
-      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
-      this.alpha *= 0.2 + 0.8 * b * b;
     }
   }
 
@@ -504,8 +647,8 @@ class Particle {
     if (this.kind === "puff" || this.kind === "wisp") {
       const s =
         this.kind === "puff"
-          ? k * (11 + 54 * u) * this.size
-          : k * (5 + 23 * u) * this.size;
+          ? k * (11 + 52 * u) * this.size
+          : k * (5 + 22 * u) * this.size;
       ctx.globalAlpha = Math.min(0.65, this.alpha);
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -516,6 +659,10 @@ class Particle {
       const s = this.size * 3.0;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
+    } else if (this.kind === "flash") {
+      const s = this.size * this.flashScale;
+      ctx.globalAlpha = Math.min(1, this.alpha);
+      ctx.drawImage(getStarFlashSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else {
       const r = this.size * 2.0;
       ctx.globalAlpha = Math.min(1, this.alpha * 0.45);
@@ -526,7 +673,7 @@ class Particle {
       const h = sp.height / 2;
       ctx.save();
       ctx.translate(this.x, this.y);
-      ctx.rotate(Math.sin(this.rot * 18) * 0.14);
+      ctx.rotate(Math.sin(this.rot * 18) * 0.1);
       ctx.drawImage(sp, -w / 2, -h / 2, w, h);
       ctx.restore();
     }
@@ -540,8 +687,8 @@ export function MagicalSmoke({
   originY = 0.64,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
-  spiral = "full-roam",
-  drift = 1.35,
+  spiral = "inverted-s-top",
+  drift = 1.25,
   speed = 0.55,
   showGlyphs = true,
   debug = false,
@@ -559,10 +706,11 @@ export function MagicalSmoke({
     const MAX = reduced ? 350 : 2800;
     const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
-    // "left" matlab -X direction (right se left ki taraf)
     const sgn = direction === "left" ? -1 : 1;
     const ctrl: CtrlPoint[] =
-      spiral === "full-roam"
+      spiral === "inverted-s-top"
+        ? CTRL_INVERTED_S_TOP
+        : spiral === "full-roam"
         ? CTRL_FULL_ROAM
         : spiral === "straight-swing"
         ? CTRL_STRAIGHT_SWING
@@ -592,6 +740,7 @@ export function MagicalSmoke({
 
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
     for (const dh of DOT_HUES) getDotSprite(dh);
+    for (const gh of GLYPH_HUES) getStarFlashSprite(gh);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -606,10 +755,11 @@ export function MagicalSmoke({
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
       const limits: number[] = [
-        h / 420,
+        h / 360,
         (fwdAvail * 0.98) / Math.max(1, ext.fwd * reach),
       ];
-      if (ext.up > 0) limits.push((oy * 0.96) / ext.up);
+      // Menu ke upar tak pahunchne ke liye top margin (oy * 0.94)
+      if (ext.up > 0) limits.push((oy * 0.94) / ext.up);
       if (ext.back > 0) limits.push((backAvail * 0.96) / Math.max(1, ext.back * reach));
       if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
       k = Math.max(0.45, Math.min(...limits));
@@ -637,6 +787,12 @@ export function MagicalSmoke({
       if (particles.length < MAX) particles.push(new Particle(kind, glyphs));
     };
 
+    const spawnStarFlash = (fx: number, fy: number, fhue: number) => {
+      if (particles.length < MAX + 120) {
+        particles.push(new Particle("flash", glyphs, fx, fy, fhue));
+      }
+    };
+
     const frame = (now: number) => {
       const dt = Math.min((now - last) / 16.667, 3) * speed;
       last = now;
@@ -646,7 +802,7 @@ export function MagicalSmoke({
 
       acc.puff += dt * 1.45 * rate;
       acc.wisp += dt * 1.7 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.22 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.34 * rate;
       acc.spark += dt * 1.15 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
@@ -654,7 +810,9 @@ export function MagicalSmoke({
       while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
       while (acc.spark >= 1) { acc.spark--; emit("spark"); }
 
-      for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, wind, path, k);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update(t, dt, wind, path, k, spawnStarFlash);
+      }
       particles = particles.filter((p) => p.u < 1);
 
       ctx.globalCompositeOperation = "screen";
@@ -664,6 +822,7 @@ export function MagicalSmoke({
       ctx.globalCompositeOperation = "lighter";
       for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
       for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
+      for (const p of particles) if (p.kind === "flash") p.draw(ctx, k);
 
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
