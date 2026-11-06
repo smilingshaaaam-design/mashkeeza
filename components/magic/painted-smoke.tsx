@@ -3,13 +3,7 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * MagicalSmoke - Purple, Blue, Cyan, Pink + subtle Golden realistic smoke
- *
- * Updates:
- * - Higher smoke density right at the origin nozzle (u < 0.25)
- * - Flows straight out for ~1.5 to 2 inches (~130px) before swinging up & down randomly
- * - Mostly fine tiny firefly glitter dots with occasional larger glowing dots
- * - 100% safe Array.of() syntax for zero copy-paste truncation issues
+ * MagicalSmoke - Purple, Blue, Cyan, Pink & subtle Golden smoke with firefly glitter dots
  */
 
 const DEFAULT_GLYPHS = Array.of(
@@ -20,25 +14,27 @@ const DEFAULT_GLYPHS = Array.of(
   "☉", "☽", "☿", "♀", "♂", "♃", "♄"
 );
 
-// Purple, Blue, Cyan, Pink + subtle Golden (~14%)
+// Purple, Blue, Cyan, Pink + thora sa Golden (~14%)
 const SMOKE_HUES = Array.of(
-  272, 278, 285, 292, 265, // Purples & Violets
-  215, 224, 232,           // Royal Blues
-  192, 198,                // Cyans
-  315, 326,                // Pinks & Magentas
-  43, 46                   // Subtle Golden
+  274, 280, 286, 268, // Rich Purples
+  215, 224, 205,      // Royal Blues
+  188, 194,           // Cyan
+  322, 332,           // Pink
+  44, 42              // Thora sa Golden
 );
 
+// Multicolor firefly dots (jugnu)
 const GLITTER_HUES = Array.of(
-  285, 295, 275, // Purple
-  215, 195,      // Blue & Cyan
-  320,           // Pink
-  44             // Subtle Golden
+  282, 290, 274,      // Purple / Violet
+  215, 225,           // Blue
+  188, 195,           // Cyan
+  325, 335,           // Pink
+  45, 48              // Subtle Golden
 );
 
 const TAU = Math.PI * 2;
 const rand = (a: number, b: number) => Math.random() * (b - a) + a;
-const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const smooth = (a: number, b: number, x: number) => {
   const v = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return v * v * (3 - 2 * v);
@@ -59,54 +55,62 @@ interface Props {
 type Kind = "puff" | "wisp" | "glyph" | "spark";
 type Wind = { x: number; y: number; px: number; py: number; power: number };
 type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
+type CtrlPoint = readonly [number, number];
 
 /* ---------- Ribbon ka Rasta ---------- */
 
-// Nali se nikal kar ~1.5 se 2 inch (130px) bilkul seedha chalta hai, phir neechay aur upar random swing karta hai
-const CTRL_STRAIGHT_SWING: Array<[number, number]> = Array.of(
-  Array.of(0, 0),
-  Array.of(45, 0),     // ~0.5 inch seedha
-  Array.of(95, 1),     // ~1.0 inch seedha
-  Array.of(135, 2),    // ~1.5-2.0 inch bilkul seedha
-  Array.of(185, 42),   // Neechay ki taraf jhukna shuru
-  Array.of(235, 68),   // Neechay swing
-  Array.of(290, 15),   // Wapas upar ki taraf swing
-  Array.of(345, -45),  // Upar swing
-  Array.of(400, -15),  // Phir halki neechay lehar
-  Array.of(455, -65),  // Upar phailta hua random wave
-  Array.of(510, -45)   // Soft dissipating end
+// Nali se nikal kar pehle 1.5 - 2 inch (~125px) bilkul seedha, phir neechay aur upar random swing
+const CTRL_STRAIGHT_SWING: readonly CtrlPoint[] = Array.of(
+  Array.of(0, 0) as CtrlPoint,
+  Array.of(42, 0) as CtrlPoint,
+  Array.of(85, 0) as CtrlPoint,
+  Array.of(125, 2) as CtrlPoint,
+  Array.of(165, 36) as CtrlPoint,
+  Array.of(205, 62) as CtrlPoint,
+  Array.of(245, 18) as CtrlPoint,
+  Array.of(285, -48) as CtrlPoint,
+  Array.of(325, -72) as CtrlPoint,
+  Array.of(365, -24) as CtrlPoint,
+  Array.of(405, -95) as CtrlPoint,
+  Array.of(445, -155) as CtrlPoint,
+  Array.of(485, -195) as CtrlPoint
 );
 
-const CTRL_OVER: Array<[number, number]> = Array.of(
-  Array.of(0, 0), Array.of(-45, -35), Array.of(-80, -75), Array.of(-80, -125),
-  Array.of(-45, -165), Array.of(5, -178), Array.of(55, -150), Array.of(75, -105),
-  Array.of(100, -85), Array.of(160, -85), Array.of(220, -120), Array.of(280, -165),
-  Array.of(350, -190), Array.of(420, -225), Array.of(460, -250)
+const CTRL_OVER: readonly CtrlPoint[] = Array.of(
+  Array.of(0, 0) as CtrlPoint, Array.of(-45, -35) as CtrlPoint, Array.of(-80, -75) as CtrlPoint,
+  Array.of(-80, -125) as CtrlPoint, Array.of(-45, -165) as CtrlPoint, Array.of(5, -178) as CtrlPoint,
+  Array.of(55, -150) as CtrlPoint, Array.of(75, -105) as CtrlPoint, Array.of(100, -85) as CtrlPoint,
+  Array.of(160, -85) as CtrlPoint, Array.of(220, -120) as CtrlPoint, Array.of(280, -165) as CtrlPoint,
+  Array.of(350, -190) as CtrlPoint, Array.of(420, -225) as CtrlPoint, Array.of(460, -250) as CtrlPoint
 );
 
-const CTRL_UNDER: Array<[number, number]> = Array.of(
-  Array.of(0, 0), Array.of(22, -40), Array.of(42, -88), Array.of(28, -135),
-  Array.of(-20, -152), Array.of(-65, -122), Array.of(-62, -72), Array.of(-18, -58),
-  Array.of(45, -68), Array.of(110, -95), Array.of(170, -112), Array.of(230, -147),
-  Array.of(290, -177), Array.of(350, -202), Array.of(420, -232), Array.of(460, -250)
+const CTRL_UNDER: readonly CtrlPoint[] = Array.of(
+  Array.of(0, 0) as CtrlPoint, Array.of(22, -40) as CtrlPoint, Array.of(42, -88) as CtrlPoint,
+  Array.of(28, -135) as CtrlPoint, Array.of(-20, -152) as CtrlPoint, Array.of(-65, -122) as CtrlPoint,
+  Array.of(-62, -72) as CtrlPoint, Array.of(-18, -58) as CtrlPoint, Array.of(45, -68) as CtrlPoint,
+  Array.of(110, -95) as CtrlPoint, Array.of(170, -112) as CtrlPoint, Array.of(230, -147) as CtrlPoint,
+  Array.of(290, -177) as CtrlPoint, Array.of(350, -202) as CtrlPoint, Array.of(420, -232) as CtrlPoint,
+  Array.of(460, -250) as CtrlPoint
 );
 
-const CTRL_DOWN: Array<[number, number]> = Array.of(
-  Array.of(0, 0), Array.of(-25, 30), Array.of(-60, 70), Array.of(-92, 120),
-  Array.of(-60, 150), Array.of(-15, 128), Array.of(-28, 88), Array.of(-70, 45),
-  Array.of(-95, -10), Array.of(-80, -70), Array.of(-30, -108), Array.of(30, -122),
-  Array.of(100, -118), Array.of(170, -130), Array.of(240, -155), Array.of(300, -185),
-  Array.of(360, -210), Array.of(420, -235), Array.of(460, -250)
+const CTRL_DOWN: readonly CtrlPoint[] = Array.of(
+  Array.of(0, 0) as CtrlPoint, Array.of(-25, 30) as CtrlPoint, Array.of(-60, 70) as CtrlPoint,
+  Array.of(-92, 120) as CtrlPoint, Array.of(-60, 150) as CtrlPoint, Array.of(-15, 128) as CtrlPoint,
+  Array.of(-28, 88) as CtrlPoint, Array.of(-70, 45) as CtrlPoint, Array.of(-95, -10) as CtrlPoint,
+  Array.of(-80, -70) as CtrlPoint, Array.of(-30, -108) as CtrlPoint, Array.of(30, -122) as CtrlPoint,
+  Array.of(100, -118) as CtrlPoint, Array.of(170, -130) as CtrlPoint, Array.of(240, -155) as CtrlPoint,
+  Array.of(300, -185) as CtrlPoint, Array.of(360, -210) as CtrlPoint, Array.of(420, -235) as CtrlPoint,
+  Array.of(460, -250) as CtrlPoint
 );
 
 const N = 220;
 
 function buildPath(
-  ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: Array<[number, number]>
+  ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: readonly CtrlPoint[]
 ): Path {
   const pts = ctrl.map(([dx, dy]) => Array.of(ox + sgn * dx * k * reach, oy + dy * k));
   const P = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
-  const dense: number[][] = [];
+  const dense: number[][] = Array.of();
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
     for (let s = 0; s < 20; s++) {
@@ -177,7 +181,7 @@ const fbm = (x: number, y: number, s: number) => {
   return v;
 };
 
-const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
+const hslToRgb = (h: number, s: number, l: number): readonly [number, number, number] => {
   h = ((h % 360) + 360) % 360;
   s /= 100;
   l /= 100;
@@ -185,13 +189,13 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
   let r = 0, g = 0, b = 0;
-  if (h < 60) [r, g, b] = [c, x, 0];
-  else if (h < 120) [r, g, b] = [x, c, 0];
-  else if (h < 180) [r, g, b] = [0, c, x];
-  else if (h < 240) [r, g, b] = [0, x, c];
-  else if (h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  return Array.of((r + m) * 255, (g + m) * 255, (b + m) * 255) as [number, number, number];
+  if (h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+  return Array.of((r + m) * 255, (g + m) * 255, (b + m) * 255) as unknown as readonly [number, number, number];
 };
 
 const noiseSprites = new Map<string, HTMLCanvasElement>();
@@ -212,7 +216,7 @@ const getNoiseSprite = (hue: number, variant: number) => {
       const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
       const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
       const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
-      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 28, 90, 50 + 30 * n);
+      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 26, 90, 50 + 30 * n);
       const i = (py * S + px) * 4;
       img.data[i] = R;
       img.data[i + 1] = G;
@@ -244,10 +248,10 @@ const getSoftSprite = (hue: number, light: number) => {
   return c;
 };
 
-// Round glowing firefly dot sprite (no star points)
-const dotSprites = new Map<number, HTMLCanvasElement>();
-const getDotSprite = (hue: number) => {
-  let c = dotSprites.get(hue);
+// Round glowing firefly dot sprite (no stars)
+const sparkSprites = new Map<number, HTMLCanvasElement>();
+const getSparkSprite = (hue: number) => {
+  let c = sparkSprites.get(hue);
   if (c) return c;
   const S = 48;
   const mid = S / 2;
@@ -255,12 +259,12 @@ const getDotSprite = (hue: number) => {
   const g = c.getContext("2d")!;
   const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
   gr.addColorStop(0, "rgba(255, 255, 255, 1)");
-  gr.addColorStop(0.18, `hsla(${hue}, 100%, 84%, 0.95)`);
-  gr.addColorStop(0.45, `hsla(${hue}, 100%, 62%, 0.38)`);
+  gr.addColorStop(0.18, `hsla(${hue}, 100%, 82%, 0.95)`);
+  gr.addColorStop(0.48, `hsla(${hue}, 100%, 62%, 0.42)`);
   gr.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
-  dotSprites.set(hue, c);
+  sparkSprites.set(hue, c);
   return c;
 };
 
@@ -281,7 +285,7 @@ const getGlyphSprite = (text: string, hue: number, size: number) => {
   g.font = font;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.shadowColor = `hsla(${hue},100%,72%,1)`;
+  g.shadowColor = `hsla(${hue},100%,70%,1)`;
   g.shadowBlur = 16 * SC;
   g.fillStyle = `hsla(${hue},100%,92%,1)`;
   g.fillText(text, c.width / 2, c.height / 2);
@@ -301,50 +305,45 @@ class Particle {
   baseAlpha: number;
   maxLife: number;
   size = 1;
-  depth = 1;
   hue: number;
   variant = Math.floor(rand(0, 3));
   seed = rand(0, 1000);
   rad = Math.sqrt(rand(0.02, 1));
   th0 = rand(0, TAU);
-  turns = rand(0.55, 1.5) * (Math.random() < 0.5 ? -1 : 1);
-  spin = rand(0.14, 0.42) * (Math.random() < 0.5 ? -1 : 1);
+  turns = rand(0.6, 1.6) * (Math.random() < 0.5 ? -1 : 1);
+  spin = rand(0.14, 0.45) * (Math.random() < 0.5 ? -1 : 1);
   rot = rand(0, TAU);
-  rotSpeed = rand(-0.003, 0.003);
+  rotSpeed = rand(-0.004, 0.004);
   off = rand(-1, 1);
   text = "";
   blinkRate = 2;
-  swingFreq = rand(0.55, 1.15);
-  swingPhase = rand(0, TAU);
 
   constructor(public kind: Kind, glyphs: string[]) {
-    this.depth = rand(0.7, 1.35);
-
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.85, 1.35) * this.depth;
-      this.baseAlpha = rand(0.10, 0.21); // Richer base opacity
-      this.maxLife = rand(460, 640);
+      this.size = rand(0.85, 1.35);
+      this.baseAlpha = rand(0.10, 0.20);
+      this.maxLife = rand(460, 620);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.75, 1.3) * this.depth;
-      this.baseAlpha = rand(0.16, 0.32); // Richer wisp opacity
-      this.maxLife = rand(440, 600);
+      this.size = rand(0.75, 1.35);
+      this.baseAlpha = rand(0.16, 0.32);
+      this.maxLife = rand(440, 580);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
-      this.hue = pick(Array.of(280, 290, 215, 320, 44));
-      this.size = rand(11, 17);
-      this.baseAlpha = rand(0.75, 0.95);
-      this.blinkRate = rand(1.2, 2.6);
-      this.maxLife = rand(440, 580);
+      this.hue = pick(Array.of(285, 195, 325, 46, 220));
+      this.size = rand(11, 18);
+      this.baseAlpha = rand(0.8, 1);
+      this.blinkRate = rand(1.2, 3);
+      this.maxLife = rand(420, 560);
     } else {
-      // 88% tiny fine firefly dots, 12% occasional larger glowing dots
+      // 88% chotay barik dots, 12% kaheen-kaheen baray dots
+      const isBigDot = Math.random() < 0.12;
       this.hue = pick(GLITTER_HUES);
-      const isBig = Math.random() < 0.12;
-      this.size = isBig ? rand(1.9, 2.8) : rand(0.55, 1.15);
-      this.baseAlpha = isBig ? rand(0.88, 1) : rand(0.65, 0.95);
-      this.blinkRate = rand(2.2, 5.0);
-      this.maxLife = rand(440, 640);
+      this.size = isBigDot ? rand(1.9, 2.7) : rand(0.55, 1.15);
+      this.baseAlpha = isBigDot ? rand(0.9, 1) : rand(0.65, 0.92);
+      this.blinkRate = rand(1.8, 4.2);
+      this.maxLife = rand(420, 600);
     }
   }
 
@@ -364,29 +363,25 @@ class Particle {
     const tx = ny;
     const ty = -nx;
 
-    // Pehle 1.5-2 inch (u < 0.24) dhuan seedha aur tight rehta hai, phir random up/down swing shuru hota hai
+    // Pehle 1.5-2 inch (u < 0.25) dhuan tight aur dense rehta hai, phir random swing karta hai
     const swingFactor = smooth(0.22, 0.50, u);
-    const randomUpDownSwing =
-      (Math.sin(t * this.swingFreq + this.swingPhase + u * 5.5) * 26 +
-        Math.cos(t * 0.45 + this.seed * 1.3 + u * 3.5) * 18) *
-      k *
-      swingFactor;
 
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      // Origin par tight stream (4px), phir swing ke baad phailta hai
-      const spread = (this.kind === "puff" ? 4 + 54 * swingFactor : 3 + 32 * swingFactor) * this.depth;
+      const spread = this.kind === "puff" ? 3.5 + 56 * swingFactor : 2.5 + 34 * swingFactor;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
-      offN = Math.cos(th) * r + randomUpDownSwing;
+      const randomSwing =
+        Math.sin(t * 0.85 + this.seed + u * 6) * k * 14 * swingFactor +
+        Math.cos(t * 0.6 + this.seed * 1.3) * k * 10 * swingFactor;
+      offN = Math.cos(th) * r + randomSwing;
       offT = Math.sin(th) * r * 0.72;
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (5 + 42 * swingFactor) + randomUpDownSwing * 0.7;
+      offN = this.off * k * (5 + 44 * swingFactor) + Math.sin(t * 0.9 + this.seed) * k * 8 * swingFactor;
     } else {
-      // Jugnu dots smoke ke andar aur uske gird random swing karte hain
-      offN = this.off * k * (6 + 60 * swingFactor) * this.depth + randomUpDownSwing * 0.85;
-      offT = Math.cos(t * 0.7 + this.seed) * k * 9 * swingFactor;
+      offN = this.off * k * (5 + 64 * swingFactor) + Math.sin(t * 0.75 + this.seed) * k * 10 * swingFactor;
+      offT = Math.cos(t * 0.65 + this.seed) * k * 8 * swingFactor;
     }
 
     if (wind.power > 0.01) {
@@ -406,29 +401,24 @@ class Particle {
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.65 + this.seed) * k * 9 * swingFactor;
-      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * 9 * swingFactor;
+      wx = Math.sin(t * 0.6 + this.seed) * k * 9 * swingFactor;
+      wy = Math.cos(t * 0.5 + this.seed * 1.7) * k * 9 * swingFactor;
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
-    // Fast fade-in at nozzle (0 -> 0.03) + extra density boost near origin (u < 0.25)
+    // Origin par zyada density aur fori opacity boost
+    const originBoost = (this.kind === "puff" || this.kind === "wisp")
+      ? 1 + 0.55 * (1 - smooth(0.05, 0.30, u))
+      : 1;
     const env = smooth(0, 0.03, u) * (1 - smooth(0.62, 1, u));
-    const nozzleBoost =
-      this.kind === "puff" || this.kind === "wisp"
-        ? 1 + 0.65 * (1 - smooth(0, 0.26, u))
-        : 1;
+    this.alpha = Math.min(0.65, this.baseAlpha * env * originBoost);
 
-    this.alpha = this.baseAlpha * env * nozzleBoost;
-
-    if (this.kind === "spark") {
-      const twinkle = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
-      this.alpha *= 0.12 + 0.88 * Math.pow(twinkle, 2.5);
-    } else if (this.kind === "glyph") {
+    if (this.kind === "glyph" || this.kind === "spark") {
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
-      this.alpha *= 0.15 + 0.85 * b * b;
+      this.alpha = this.baseAlpha * env * (0.15 + 0.85 * b * b);
     }
   }
 
@@ -437,10 +427,7 @@ class Particle {
     const u = this.u;
 
     if (this.kind === "puff" || this.kind === "wisp") {
-      const s =
-        this.kind === "puff"
-          ? k * (12 + 44 * u) * this.size
-          : k * (5.5 + 17 * u) * this.size;
+      const s = this.kind === "puff" ? k * (12 + 46 * u) * this.size : k * (6 + 18 * u) * this.size;
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -450,7 +437,7 @@ class Particle {
     } else if (this.kind === "spark") {
       const s = this.size * 3.0;
       ctx.globalAlpha = Math.min(1, this.alpha);
-      ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
+      ctx.drawImage(getSparkSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else {
       const r = this.size * 2.2;
       ctx.globalAlpha = Math.min(1, this.alpha * 0.55);
@@ -491,8 +478,8 @@ export function MagicalSmoke({
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 350 : 2800;
-    const rate = reduced ? 0.35 : 1;
+    const MAX = reduced ? 320 : 2800;
+    const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
     const ctrl =
@@ -516,14 +503,14 @@ export function MagicalSmoke({
     let k = 1;
     let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl);
     let raf = 0;
-    let particles: Particle[] = [];
+    let particles: Particle[] = Array.of();
     let t = 0;
     let last = performance.now();
     const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
     const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
-    for (const gh of GLITTER_HUES) getDotSprite(gh);
+    for (const gh of GLITTER_HUES) getSparkSprite(gh);
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -537,8 +524,7 @@ export function MagicalSmoke({
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
-      const limits = Array.of(h / 478, (fwdAvail * 0.96) / (ext.fwd * reach));
-      if (ext.up > 0) limits.push((oy * 0.97) / ext.up);
+      const limits = Array.of(h / 478, (fwdAvail * 0.96) / (ext.fwd * reach), (oy * 0.97) / ext.up);
       if (ext.back > 0) limits.push((backAvail * 0.96) / (ext.back * reach));
       if (ext.down > 0) limits.push(((h - oy) * 0.97) / ext.down);
       k = Math.max(0.35, Math.min(...limits));
@@ -573,11 +559,10 @@ export function MagicalSmoke({
 
       ctx.clearRect(0, 0, w, h);
 
-      // Higher emission rate for richer density at the origin nozzle
-      acc.puff += dt * 1.85 * rate;
-      acc.wisp += dt * 2.15 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.14 * rate;
-      acc.spark += dt * 0.95 * rate;
+      acc.puff += dt * 1.75 * rate;
+      acc.wisp += dt * 2.05 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.16 * rate;
+      acc.spark += dt * 0.85 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
@@ -620,7 +605,7 @@ export function MagicalSmoke({
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", mm);
       window.removeEventListener("touchmove", tm);
-      particles = [];
+      particles = Array.of();
     };
   }, [originX, originY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
@@ -631,7 +616,6 @@ export function MagicalSmoke({
   );
 }
 
-// Purane import ke liye alias: app/page.tsx mein { PaintedSmoke } chalta rahega
 export const PaintedSmoke = MagicalSmoke;
 
 export default MagicalSmoke;
