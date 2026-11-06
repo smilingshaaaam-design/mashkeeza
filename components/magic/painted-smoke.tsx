@@ -1,127 +1,100 @@
 
     
   
-      back: Math.max(0, -Math.min(...ctrl.map((c) => c[0]))),
-    };
+"use client";
 
-    let w = 0;
-    let h = 0;
-    let k = 1;
-    let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl);
-    let raf = 0;
-    let particles: Particle[] = [];
-    let t = 0;
-    let last = performance.now();
-    const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
-    const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
+import React, { useEffect, useRef } from "react";
 
-    // texture pehle hi bana lo, taaki animation ke beech atke nahi
-    for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
+/**
+ * MagicalSmoke - purple / blue / golden mixed realistic smoke
+ *
+ * - Asli dhuan: noise se bane naram, patchy gubaar (puffs), jo ghoomte, phailte aur ghul jaate hain
+ * - Rang mix: golden, purple aur blue ek dusre mein ghul-mil jaate hain
+ * - Nali se nikal kar pehle NEECHAY jaata hai, wahan twist hota hai, phir upar ribbon ban kar behta hai
+ * - Haroof aur symbols jugnu ki tarah jalte bujhte aur tairte hain
+ *
+ * Props:
+ *  originX / originY : nali ki position (canvas ke relative, 0-1)
+ *  direction         : "left" (default) ya "right"
+ *  spiral            : "down" (default) | "under" | "over"
+ *  drift             : ribbon ki lambai (1 = normal)
+ *  speed             : 1 = dheemi natural speed
+ *  glyphs            : apne haroof
+ *  debug             : true = nali par laal nishan
+ */
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = parent.clientWidth;
-      h = parent.clientHeight || 450;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+const DEFAULT_GLYPHS = [
+  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ",
+  "النُّورُ", "الْهَادِي", "الْبَاقِي", "الْحَيُّ", "الْقَيُّومُ",
+  "الم", "يس", "طه", "حم", "ق", "ن",
+  "ا", "ب", "ج", "د", "ه", "و",
+  "☉", "☽", "☿", "♀", "♂", "♃", "♄",
+];
 
-      // Original code ki tarah source point canvas ke 76% width aur 64% height par.
-      const ox = w * originX;
-      const oy = h * originY;
-      const fwdAvail = direction === "left" ? ox : w - ox;
-      const backAvail = direction === "left" ? w - ox : ox;
-      const limits = [h / 478, (fwdAvail * 0.96) / (ext.fwd * reach), (oy * 0.97) / ext.up];
-      if (ext.back > 0) limits.push((backAvail * 0.96) / (ext.back * reach));
-      if (ext.down > 0) limits.push(((h - oy) * 0.97) / ext.down);
-      k = Math.max(0.35, Math.min(...limits));
-      path = buildPath(ox, oy, k, sgn, reach, ctrl);
-    };
-    resize();
-    window.addEventListener("resize", resize);
+// golden + purple + blue ka mix
+const SMOKE_HUES = [44, 40, 46, 275, 282, 268, 292, 215, 222, 205, 232];
 
-    const onMove = (cx: number, cy: number) => {
-      const r = canvas.getBoundingClientRect();
-      const x = cx - r.left;
-      const y = cy - r.top;
-      wind.x = x - wind.px;
-      wind.y = y - wind.py;
-      wind.px = x;
-      wind.py = y;
-      wind.power = Math.min(1, Math.hypot(wind.x, wind.y) / 25);
-    };
-    const mm = (e: MouseEvent) => onMove(e.clientX, e.clientY);
-    const tm = (e: TouchEvent) => onMove(e.touches[0].clientX, e.touches[0].clientY);
-    window.addEventListener("mousemove", mm);
-    window.addEventListener("touchmove", tm, { passive: true });
+const TAU = Math.PI * 2;
+const rand = (a: number, b: number) => Math.random() * (b - a) + a;
+const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const smooth = (a: number, b: number, x: number) => {
+  const v = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return v * v * (3 - 2 * v);
+};
 
-    const emit = (kind: Kind) => {
-      if (particles.length < MAX) particles.push(new Particle(kind, glyphs));
-    };
-
-    const frame = (now: number) => {
-      const dt = Math.min((now - last) / 16.667, 3) * speed;
-      last = now;
-      t += dt / 60;
-
-      ctx.clearRect(0, 0, w, h);
-
-      acc.puff += dt * 1.3 * rate;
-      acc.wisp += dt * 1.6 * rate;
-      acc.glyph += dt * 0.16 * rate;
-      acc.spark += dt * 0.45 * rate;
-      while (acc.puff >= 1) { acc.puff--; emit("puff"); }
-      while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
-      while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
-      while (acc.spark >= 1) { acc.spark--; emit("spark"); }
-
-      for (let i = 0; i < particles.length; i++) particles[i].update(t, dt, wind, path, k);
-      particles = particles.filter((p) => p.u < 1);
-
-      // dhuan "screen" se mix hota hai (rang ghul-mil jaate hain), jugnu "lighter" se chamakte hain
-      ctx.globalCompositeOperation = "screen";
-      for (const p of particles) if (p.kind === "puff") p.draw(ctx, k);
-      for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k);
-      ctx.globalCompositeOperation = "lighter";
-      for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
-      for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = "source-over";
-
-      if (debug) {
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(path.x[0], path.y[0], 8, 0, TAU);
-        ctx.moveTo(path.x[0] - 14, path.y[0]);
-        ctx.lineTo(path.x[0] + 14, path.y[0]);
-        ctx.moveTo(path.x[0], path.y[0] - 14);
-        ctx.lineTo(path.x[0], path.y[0] + 14);
-        ctx.stroke();
-      }
-
-      wind.power *= Math.pow(0.92, dt);
-      raf = requestAnimationFrame(frame);
-    };
-    raf = requestAnimationFrame(frame);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", mm);
-      window.removeEventListener("touchmove", tm);
-      particles = [];
-    };
-  }, [originX, originY, glyphs, direction, spiral, drift, speed, debug]);
-
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
-    </div>
-  );
+interface Props {
+  originX?: number;
+  originY?: number;
+  glyphs?: string[];
+  direction?: "left" | "right";
+  spiral?: "down" | "under" | "over";
+  drift?: number;
+  speed?: number;
+  debug?: boolean;
 }
 
-// Purane import ke liye alias: app/page.tsx mein { PaintedSmoke } chalta rahega
-export const PaintedSmoke = MagicalSmoke;
+type Kind = "puff" | "wisp" | "glyph" | "spark";
+type Wind = { x: number; y: number; px: number; py: number; power: number };
+type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
 
-export default MagicalSmoke;
+/* ---------- Ribbon ka rasta ---------- */
+// (dx, dy) nali se, video pixels mein; dy negative = upar
+const CTRL_OVER: [number, number][] = [
+  [0, 0], [-45, -35], [-80, -75], [-80, -125], [-45, -165], [5, -178],
+  [55, -150], [75, -105], [100, -85], [160, -85], [220, -120], [280, -165],
+  [350, -190], [420, -225], [460, -250],
+];
+const CTRL_UNDER: [number, number][] = [
+  [0, 0], [22, -40], [42, -88], [28, -135], [-20, -152], [-65, -122],
+  [-62, -72], [-18, -58], [45, -68], [110, -95], [170, -112], [230, -147],
+  [290, -177], [350, -202], [420, -232], [460, -250],
+];
+// nali se nikal kar neechay jaata hai, wahan coil banata hai, phir upar ribbon mein
+const CTRL_DOWN: [number, number][] = [
+  [0, 0], [-25, 30], [-60, 70], [-92, 120], [-60, 150], [-15, 128],
+  [-28, 88], [-70, 45], [-95, -10], [-80, -70], [-30, -108], [30, -122],
+  [100, -118], [170, -130], [240, -155], [300, -185], [360, -210],
+  [420, -235], [460, -250],
+];
+const N = 220;
+
+function buildPath(
+  ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: [number, number][]
+): Path {
+  const pts = ctrl.map(([dx, dy]) => [ox + sgn * dx * k * reach, oy + dy * k]);
+  const P = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+  const dense: number[][] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+    for (let s = 0; s < 20; s++) {
+      const t = s / 20, t2 = t * t, t3 = t2 * t;
+      const cr = (a: number, b: number, c: number, d: number) =>
+        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+      dense.push([cr(p0[0], p1[0], p2[0], p3[0]), cr(p0[1], p1[1], p2[1], p3[1])]);
+    }
+  }
+  dense.push(pts[pts.length - 1]);
+
+  const len = [0];
+  for (let i = 1; i < dense.length; i++) {
+
