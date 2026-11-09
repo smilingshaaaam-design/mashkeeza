@@ -5,6 +5,13 @@ import React, { useEffect, useRef } from "react";
 /**
  * MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
  * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
+ *
+ * Flow:
+ * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
+ * 2. They travel up along the inverted 'S' curve to the top menu area.
+ * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
+ * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
+ * 5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
  */
 
 const ASMA_UL_HUSNA: string[] = [
@@ -13,10 +20,10 @@ const ASMA_UL_HUSNA: string[] = [
   "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِیعُ", "الْبَصِیرُ", "الْحَکَمُ", "الْعَدْلُ", "اللَّطِیفُ",
   "الْخَبِیرُ", "الْحَلِیمُ", "الْعَظِیمُ", "الْغَفُورُ", "الشَّکُورُ", "الْعَلِيُّ", "الْکَبِیرُ", "الْحَفِیظُ", "الْمُقِیتُ", "الْحَسِیبُ",
   "الْجَلِيلُ", "الْکَرِیمُ", "الرَّقِیبُ", "الْمُجِیبُ", "الْوَاسِعُ", "الْحَکِیمُ", "الْوَدُودُ", "الْمَجِیدُ", "الْبَاعِثُ", "الشَّهِیدُ",
-  "الْحَقُّ", "الْوَکِیلُ", "الْقَوِیُّ", "الْمَتِینُ", "الْوَلِیُّ", "الْحَمِیدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِیدُ", "الْمُحْيِي",
+  "الْحَقُّ", "الْوَکِیلُ", "الْقَوِیُّ", "الْمَتِینُ", "الْوَلِيُّ", "الْحَمِیدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِیدُ", "الْمُحْيِي",
   "الْمُمِیتُ", "الْحَيُّ", "الْقَیُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
   "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِیُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
   "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِیعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِیدُ", "الصَّبُورُ",
 ];
 
@@ -36,23 +43,23 @@ const DEFAULT_GLYPHS: string[] = [
 ];
 
 const SMOKE_HUES: number[] = [
-  272, 280, 288, 265,
-  218, 226, 234,
-  188, 194, 200,
-  42, 46, 38,
+  272, 280, 288, 265, // Deep & Royal Purple
+  218, 226, 234,      // Rich Royal Blue
+  188, 194, 200,      // Vibrant Cyan
+  42, 46, 38,         // Warm Golden
 ];
 
 const DOT_HUES: number[] = [
-  44, 48, 38,
-  190, 198,
-  278, 290, 325,
-  220,
+  44, 48, 38,         // Golden fireflies
+  190, 198,           // Cyan sparkles
+  278, 290, 325,      // Purple & Magenta
+  220,                // Blue
 ];
 
 const GLYPH_HUES: number[] = [
-  45, 48, 42,
-  192, 198,
-  282, 295,
+  45, 48, 42,         // Golden calligraphy
+  192, 198,           // Cyan glow
+  282, 295,           // Violet-purple glow
 ];
 
 const TAU = Math.PI * 2;
@@ -66,7 +73,7 @@ const smooth = (a: number, b: number, x: number): number => {
 interface Props {
   originX?: number;
   originY?: number;
-  groundY?: number;
+  groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   glyphs?: string[];
   direction?: "left" | "right";
   spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
@@ -83,18 +90,19 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Modified Control Points to stretch past the Header Content ---------- */
+/* ---------- Inverted 'S' Path Stretched Far Upward Past Menu Layout Bounds ---------- */
+
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),          
-  pt(55, -40),       
-  pt(115, -110),      
-  pt(95, -220),      
-  pt(35, -340),      
-  pt(-45, -440),     // Rises much higher past the initial header boundary
-  pt(90, -460),      
-  pt(270, -450),     
-  pt(460, -460),     
-  pt(650, -450),     // Glides horizontally along the absolute top boundary
+  pt(0, 0),          // 1. Lamp nozzle origin
+  pt(55, -40),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -110),     // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -220),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -340),      // 5. Rises gracefully way past the menu bounding height
+  pt(-45, -440),     // 6. Reaches absolute top-right side above heading limits
+  pt(90, -460),      // 7. Flows smoothly from right to left across topmost canvas
+  pt(270, -450),     // 8. Continues gliding across the center-top screen
+  pt(460, -460),     // 9. Flows toward the upper-left boundary area
+  pt(650, -450),     // 10. Gently lingers & fades out on the far upper-left ceiling
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -247,41 +255,39 @@ const hslToRgb = (h: number, s: number, l: number): [number, number, number] => 
 
 const noiseSprites = new Map<string, HTMLCanvasElement>();
 const getNoiseSprite = (hue: number, variant: number): HTMLCanvasElement => {
-  const key = `${hue}|${variant}`;
-  let c = noiseSprites.get(key);
-  if (c) return c;
-  const S = 128;
-  c = makeCanvas(S, S);
-  const g = c.getContext("2d")!;
-  const img = g.createImageData(S, S);
-  const seed = variant * 101 + hue;
-  for (let py = 0; py < S; py++) {
-    for (let px = 0; px < S; px++) {
-      const fx = px / S;
-      const fy = py / S;
-      const r = Math.hypot(fx * 2 - 1, fy * 2 - 1);
-      const fall = 1 - smooth(0.15, 1, r);
-      const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
-      const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
-      const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
-      const [R, G, B] = hslToRgb(hue + (n - 0.5) * 24, 95, 36 + 22 * n);
-      const i = (py * S + px) * 4;
-      img.data[i] = R;
-      img.data[i + 1] = G;
-      img.data[i + 2] = B;
-      img.data[i + 3] = a * 255;
-    }
-  }
-  g.putImageData(img, 0, 0);
-  noiseSprites.set(key, c);
-  return c;
+const key = ${hue}|${variant};
+let c = noiseSprites.get(key);
+if (c) return c;
+const S = 128;
+c = makeCanvas(S, S);
+const g = c.getContext("2d")!;
+const img = g.createImageData(S, S);
+const seed = variant * 101 + hue;
+for (let py = 0; py < S; py++) {
+for (let px = 0; px < S; px++) {
+const fx = px / S;
+const fy = py / S;
+const r = Math.hypot(fx * 2 - 1, fy * 2 - 1);
+const fall = 1 - smooth(0.15, 1, r);
+const wv = fbm(fx * 2.2, fy * 2.2, seed + 5);
+const n = fbm(fx * 3.4 + wv * 1.4, fy * 3.4 + wv * 1.4, seed);
+const a = Math.min(1, Math.max(0, (n - 0.3) * 2.1)) * fall;
+const [R, G, B] = hslToRgb(hue + (n - 0.5) * 24, 95, 36 + 22 * n);
+const i = (py * S + px) * 4;
+img.data[i] = R;
+img.data[i + 1] = G;
+img.data[i + 2] = B;
+img.data[i + 3] = a * 255;
+}
+}
+g.putImageData(img, 0, 0);
+noiseSprites.set(key, c);
+return c;
 };
-
 const softSprites = new Map<string, HTMLCanvasElement>();
 const getSoftSprite = (hue: number, light: number): HTMLCanvasElement => {
-  const key = `${hue}|${light}`;
-  let c = softSprites.get(key);
-Use code with caution.
+const key = ${hue}|${light};
+let c = softSprites.get(key);
 if (c) return c;
 const S = 96;
 c = makeCanvas(S, S);
@@ -396,7 +402,7 @@ off = rand(-1, 1);
 text = "";
 blinkRate = 2;
 isRaining = false;
-releaseU = rand(0.65, 0.92); // Releasing glyphs further up along the path
+releaseU = rand(0.65, 0.92);
 rainFallSpeed = rand(1.15, 2.05);
 rainDriftX = rand(-0.22, 0.22);
 rainSwayFreq = rand(1.1, 2.3);
@@ -732,6 +738,7 @@ ctx.lineTo(path.x[0] + 14, path.y[0]);
 ctx.moveTo(path.x[0], path.y[0] - 14);
 ctx.lineTo(path.x[0], path.y[0] + 14);
 ctx.stroke();
+// Ground line debug indicator
 ctx.strokeStyle = "gold";
 ctx.setLineDash([6, 6]);
 ctx.beginPath();
