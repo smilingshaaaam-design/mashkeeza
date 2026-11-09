@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * MagicalSmoke - Inverted 'S' Path to Top of Page (below menu bar), with Raining Ism-e-Allah,
@@ -692,6 +693,14 @@ export function MagicalSmoke({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // With anchorSelector the smoke is rendered through a portal straight into <body>,
+  // so no parent (z-index, transform, overflow, isolate) can ever put it behind the header image.
+  const usePortal = !!anchorSelector;
+  const [mounted, setMounted] = useState(!usePortal);
+  useEffect(() => {
+    if (usePortal) setMounted(true);
+  }, [usePortal]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const parent = canvas?.parentElement;
@@ -750,7 +759,7 @@ export function MagicalSmoke({
       const anchored = !!(anchorEl && host);
       let ax = 0, ay = 0, aw = 0, ah = 0;
       if (anchored && anchorEl && host) {
-        const hr = host.getBoundingClientRect();
+        const hr = parent.getBoundingClientRect(); // wrapper sits at the top-left of the page
         const ar = anchorEl.getBoundingClientRect();
         ax = ar.left - hr.left;
         ay = ar.top - hr.top;
@@ -923,17 +932,25 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
-  return (
+  if (!mounted) return null;
+
+  const layer = (
     <div
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className={
+        usePortal
+          ? "pointer-events-none absolute left-0 top-0 w-full overflow-hidden"
+          : "pointer-events-none absolute inset-0 overflow-hidden"
+      }
       style={{ zIndex }}
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
+
+  return usePortal ? createPortal(layer, document.body) : layer;
 }
 
 export const PaintedSmoke = MagicalSmoke;
