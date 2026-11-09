@@ -76,6 +76,7 @@ interface Props {
   originY?: number;
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
+  anchorSelector?: string; // CSS selector of the hero box (e.g. "#hero-stage"). origin/ground are measured inside it, but the smoke canvas covers the page from the very top down to the bottom of this box, so smoke can rise over the header/title
   targetSelector?: string; // CSS selector of the element smoke should rise up to (e.g. "#hero-tagline"). Overrides menuHeight/heightBoost
   zIndex?: number; // Layer order of the smoke. Must be higher than the images it should appear over
   heightBoost?: number; // Vertical stretch multiplier (1 = fit exactly, >1 = taller)
@@ -679,6 +680,7 @@ export function MagicalSmoke({
   topGap = 0,
   heightBoost = 1.4,
   targetSelector,
+  anchorSelector,
   zIndex = 100,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
@@ -727,6 +729,7 @@ export function MagicalSmoke({
     let k = 1;
     let ky = 1; // vertical scale
     let topLimit = menuHeight; // y (px) where the smoke path ends at the top
+    let groundPx = 0; // y (px) of the ground line
     let path: Path = buildPath(0, 0, 1, 1, sgn, reach, ctrl);
     let raf = 0;
     let particles: Particle[] = [];
@@ -741,20 +744,39 @@ export function MagicalSmoke({
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Anchored mode: canvas spans from page top to the bottom of the anchor (hero) box
+      const host = parent.parentElement;
+      const anchorEl = anchorSelector ? document.querySelector(anchorSelector) : null;
+      const anchored = !!(anchorEl && host);
+      let ax = 0, ay = 0, aw = 0, ah = 0;
+      if (anchored && anchorEl && host) {
+        const hr = host.getBoundingClientRect();
+        const ar = anchorEl.getBoundingClientRect();
+        ax = ar.left - hr.left;
+        ay = ar.top - hr.top;
+        aw = ar.width;
+        ah = ar.height;
+        parent.style.height = `${Math.round(ay + ah)}px`;
+      }
       w = parent.clientWidth;
-      h = parent.clientHeight || 450;
+      h = anchored ? Math.round(ay + ah) : parent.clientHeight || 450;
+      const boxX = anchored ? ax : 0;
+      const boxY = anchored ? ay : 0;
+      const boxW = anchored ? aw : w;
+      const boxH = anchored ? ah : h;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const ox = w * originX;
-      const oy = h * originY;
+      const ox = boxX + boxW * originX;
+      const oy = boxY + boxH * originY;
+      groundPx = boxY + boxH * groundY;
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
 
       // Horizontal scale (vertical-up limit removed so the path can reach the top)
       const limits: number[] = [
-        h / 360,
+        boxH / 360,
         (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
       ];
       if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
@@ -787,6 +809,11 @@ export function MagicalSmoke({
     window.addEventListener("load", resize);
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
     ro?.observe(parent);
+    if (parent.parentElement) ro?.observe(parent.parentElement);
+    if (anchorSelector) {
+      const ael = document.querySelector(anchorSelector);
+      if (ael) ro?.observe(ael);
+    }
     if (targetSelector) {
       const el = document.querySelector(targetSelector);
       if (el) ro?.observe(el);
@@ -836,7 +863,7 @@ export function MagicalSmoke({
       while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
       while (acc.spark >= 1) { acc.spark--; emit("spark"); }
 
-      const groundLevelPx = h * groundY;
+      const groundLevelPx = groundPx;
       for (let i = 0; i < particles.length; i++) {
         particles[i].update(t, dt, wind, path, k, groundLevelPx, spawnFlash);
       }
@@ -896,7 +923,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
     <div
