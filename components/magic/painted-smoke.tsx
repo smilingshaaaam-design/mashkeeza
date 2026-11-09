@@ -3,12 +3,13 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
+ * MagicalSmoke - Inverted 'S' Path to Top of Page (below menu bar), with Raining Ism-e-Allah,
  * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
  *
  * Flow:
  * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
- * 2. They travel up along the inverted 'S' curve to the top menu area.
+ * 2. They travel up along the inverted 'S' curve all the way to the top of the page
+ *    (stopping just below the menu bar, so they never collide with it).
  * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
  * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
  * 5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
@@ -74,6 +75,7 @@ interface Props {
   originX?: number;
   originY?: number;
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
+  menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
   glyphs?: string[];
   direction?: "left" | "right";
   spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
@@ -90,16 +92,19 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top Menu ---------- */
-// MODIFIED: Straight vertical wave path, no sideways deflection.
+/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top of Page ---------- */
+
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),
-  pt(25, -60),
-  pt(-15, -140),
-  pt(20, -220),
-  pt(-10, -300),
-  pt(5, -380),
-  pt(0, -460) // Goes straight off the top
+  pt(0, 0),          // 1. Lamp nozzle origin
+  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -195),      // 5. Rises gracefully toward the upper height
+  pt(-45, -245),     // 6. Reaches top-right side
+  pt(90, -258),      // 7. Flows smoothly from right to left across the top
+  pt(270, -252),     // 8. Continues gliding across the center-top
+  pt(460, -260),     // 9. Flows toward the upper-left area
+  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -153,12 +158,16 @@ const CTRL_DOWN: CtrlPoint[] = [
 
 const N = 360;
 
+/**
+ * k  = horizontal scale (also used for particle sizes / spread)
+ * ky = vertical scale (so the path can stretch to the top of the page independently)
+ */
 function buildPath(
-  ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: CtrlPoint[]
+  ox: number, oy: number, k: number, ky: number, sgn: number, reach: number, ctrl: CtrlPoint[]
 ): Path {
   const pts: CtrlPoint[] = ctrl.map((c) => ({
     x: ox + sgn * c.x * k * reach,
-    y: oy + c.y * k,
+    y: oy + c.y * ky,
   }));
   const P = (i: number): CtrlPoint => pts[Math.max(0, Math.min(pts.length - 1, i))];
   const dense: CtrlPoint[] = [];
@@ -434,7 +443,7 @@ class Particle {
 
   // Glyph ascent-then-rain state
   isRaining = false;
-  releaseU = rand(0.46, 0.86); // Detaches along the upper menu portion of the smoke path
+  releaseU = rand(0.46, 0.86); // Detaches along the upper portion of the smoke path
   rainFallSpeed = rand(1.15, 2.05);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
@@ -497,7 +506,7 @@ class Particle {
       return;
     }
 
-    // 2. Glyph: First rises inside smoke from lamp to top menu, then rains down to the ground
+    // 2. Glyph: First rises inside smoke from lamp to top, then rains down to the ground
     if (this.kind === "glyph" && this.isRaining) {
       this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
@@ -520,7 +529,7 @@ class Particle {
       return;
     }
 
-    // 3. Standard path progression (from lamp up the inverted 'S' to the top menu)
+    // 3. Standard path progression (from lamp up the inverted 'S' to the top of the page)
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -585,7 +594,7 @@ class Particle {
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
-    // Once glyph reaches the top menu portion of the smoke, detach & start raining down
+    // Once glyph reaches the upper portion of the smoke path, detach & start raining down
     if (this.kind === "glyph" && u >= this.releaseU) {
       this.isRaining = true;
       return;
@@ -596,8 +605,8 @@ class Particle {
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    // MODIFIED: fadeOut happens much later (at 90% of life instead of 68%) so it doesn't vanish below the menu bar
-    const fadeOut = 1 - smooth(0.90, 1.0, u);
+    // Smoke stays aloft at the top and gently fades out as it travels left
+    const fadeOut = 1 - smooth(0.68, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
@@ -662,11 +671,12 @@ export function MagicalSmoke({
   originX = 0.76,
   originY = 0.64,
   groundY = 0.94,
+  menuHeight = 90,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
   drift = 1.25,
-  speed = 1.15, // MODIFIED: Increased default speed to compensate for the shorter vertical path length
+  speed = 0.55,
   showGlyphs = true,
   debug = false,
 }: Props) {
@@ -707,7 +717,8 @@ export function MagicalSmoke({
     let w = 0;
     let h = 0;
     let k = 1;
-    let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl);
+    let ky = 1; // vertical scale
+    let path: Path = buildPath(0, 0, 1, 1, sgn, reach, ctrl);
     let raf = 0;
     let particles: Particle[] = [];
     let t = 0;
@@ -731,15 +742,26 @@ export function MagicalSmoke({
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
+
+      // Horizontal scale (vertical-up limit removed so the path can reach the top)
       const limits: number[] = [
         h / 360,
         (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
       ];
-      if (ext.up > 0) limits.push((oy * 0.92) / ext.up);
       if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
-      if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
       k = Math.max(0.45, Math.min(...limits));
-      path = buildPath(ox, oy, k, sgn, reach, ctrl);
+
+      // Vertical scale: origin -> top of page (just below the menu bar)
+      const topMargin = menuHeight + 40 * k; // menu + smoke spread safety gap
+      const upAvail = Math.max(60, oy - topMargin);
+      ky = upAvail / ext.up;
+
+      // Paths that go downward (e.g. "down") must not exit the bottom of the page
+      if (ext.down > 20) {
+        ky = Math.min(ky, ((h - oy) * 0.96) / ext.down);
+      }
+
+      path = buildPath(ox, oy, k, ky, sgn, reach, ctrl);
     };
     resize();
     window.addEventListener("resize", resize);
@@ -824,6 +846,13 @@ export function MagicalSmoke({
         ctx.moveTo(0, groundLevelPx);
         ctx.lineTo(w, groundLevelPx);
         ctx.stroke();
+
+        // Menu bar limit debug indicator
+        ctx.strokeStyle = "cyan";
+        ctx.beginPath();
+        ctx.moveTo(0, menuHeight);
+        ctx.lineTo(w, menuHeight);
+        ctx.stroke();
         ctx.setLineDash([]);
       }
 
@@ -839,11 +868,10 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
-    // Z-index set to 0 ensures it renders behind elements with higher z-index (like navigation menus).
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
       <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
