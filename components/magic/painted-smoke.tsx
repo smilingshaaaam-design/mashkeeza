@@ -1268,3 +1268,7 @@ class Particle {
     }
   }
 }
+
+export const PaintedSmoke = MagicalSmoke;
+
+export default MagicalSmoke;
