@@ -481,6 +481,12 @@ class Particle {
   rainSwayFreq = rand(1.1, 2.3);
   rainSwayAmp = rand(5, 13);
   hasFlashed = false;
+  // Some glyphs turn into a star in mid-air (before touching the ground)
+  midAirStar = Math.random() < 0.4;
+  starFrac = rand(0.12, 0.7); // how far down (0..1) the fall the glyph becomes a star
+  starFadeLen = rand(110, 260); // px the mid-air star keeps falling/twinkling before it fades out
+  rainStartY = -1;
+  fade = 1;
   noiseSpr?: HTMLCanvasElement;
   glyphSpr?: HTMLCanvasElement;
   softSpr?: HTMLCanvasElement;
@@ -549,9 +555,24 @@ class Particle {
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
       this.rot += this.rotSpeed * 0.45 * dt;
 
-      // From ~110px above the ground the glyph slowly turns into a star/dot
-      const fallZone = 110 * Math.max(0.8, k);
-      this.morph = smooth(groundLevelPx - fallZone, groundLevelPx - 6, this.y);
+      if (this.rainStartY < 0) this.rainStartY = this.y;
+      const kk = Math.max(0.8, k);
+
+      if (this.midAirStar) {
+        // Turns into a dot -> star somewhere in the air, twinkles while falling, then fades away
+        const trig = this.rainStartY + (groundLevelPx - this.rainStartY) * this.starFrac;
+        this.morph = smooth(trig, trig + 45 * kk, this.y);
+        const fadeStart = trig + 70 * kk;
+        this.fade = 1 - smooth(fadeStart, fadeStart + this.starFadeLen * kk, this.y);
+        if (this.fade <= 0.01) {
+          this.u = 1; // vanished in the air
+          return;
+        }
+      } else {
+        // From ~110px above the ground the glyph slowly turns into a star/dot
+        const fallZone = 110 * kk;
+        this.morph = smooth(groundLevelPx - fallZone, groundLevelPx - 6, this.y);
+      }
 
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha = this.baseAlpha * (0.5 + 0.5 * b * b);
@@ -711,8 +732,8 @@ class Particle {
       // (b) Dot -> Star: grows and twinkles as it nears the ground
       if (m > 0.01) {
         const tw = 0.7 + 0.3 * Math.sin(this.rot * 40 + this.u * 30);
-        const s = (3 + 9 * m) * tw;
-        ctx.globalAlpha = Math.min(1, m * 1.3) * this.baseAlpha;
+        const s = (2.5 + 6.5 * m) * tw;
+        ctx.globalAlpha = Math.min(1, m * 1.3) * this.baseAlpha * this.fade;
         place(ctx, dpr, this.x, this.y, this.rot * 6);
         ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
       }
@@ -947,23 +968,23 @@ export function MagicalSmoke({
       main.x = fx;
       main.y = fy;
       main.hue = hue;
-      main.size = rand(3.4, 4.6);
-      main.maxLife = rand(55, 80);
+      main.size = rand(1.6, 2.2);
+      main.maxLife = rand(40, 60);
       particles.push(main);
 
       // Small sparkles that scatter around and fade out
-      const n = 4 + Math.floor(Math.random() * 3);
+      const n = 3 + Math.floor(Math.random() * 3);
       for (let i = 0; i < n; i++) {
         const sp = new Particle("flash", glyphs);
         const a = rand(Math.PI * 1.05, Math.PI * 1.95); // scatter upwards
-        const v = rand(0.25, 0.9);
+        const v = rand(0.15, 0.55);
         sp.x = fx;
         sp.y = fy;
         sp.vx = Math.cos(a) * v;
         sp.vy = Math.sin(a) * v;
         sp.hue = Math.random() < 0.5 ? hue : 45;
-        sp.size = rand(1.0, 1.9);
-        sp.maxLife = rand(30, 52);
+        sp.size = rand(0.5, 1.0);
+        sp.maxLife = rand(24, 40);
         particles.push(sp);
       }
     };
