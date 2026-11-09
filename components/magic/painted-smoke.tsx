@@ -9,12 +9,13 @@ import { createPortal } from "react-dom";
  *
  * Flow:
  * 1. Smoke + Ism-e-Allah + Haroof + Symbols emerge together from the lamp nozzle.
- * 2. They swirl upward (bal khate hue), and near the menu/heading the smoke moves to the
- *    RIGHT side, then rises up to the roof.
+ * 2. They swirl upward, and near the menu/heading the smoke moves to the RIGHT side,
+ *    then rises up to the roof.
  * 3. At the roof the smoke sticks to the top and starts drifting LEFT, gently dissipating.
- * 4. Meanwhile glyphs detach and rain down toward the ground.
- * 5. Near the ground each glyph turns into a dot -> twinkling star, and on touching the
- *    ground it bursts into a bright sparkle and vanishes.
+ * 4. Meanwhile glyphs detach and rain down toward a randomly chosen LANDING SPOT
+ *    (book, inkpot, desert, ground ... - configurable with `landingSpots`).
+ * 5. Near the landing spot each glyph turns into a dot -> twinkling star, and on touching
+ *    the surface it bursts into a (small) bright sparkle and vanishes.
  */
 
 const ASMA_UL_HUSNA = [
@@ -80,6 +81,24 @@ const smooth = (a: number, b: number, x: number): number => {
   return v * v * (3 - 2 * v);
 };
 
+/* ---------- Landing spots (where the glyph-stars fall) ---------- */
+
+export type LandingSpot = {
+  x: number;       // 0..1 (relative to hero box width)
+  y: number;       // 0..1 (relative to hero box height) - the surface the star lands on
+  spread?: number; // horizontal spread (0..1 of width), default 0.03
+  weight?: number; // chance of landing here compared to the other spots (default 1)
+};
+type SpotPx = { x: number; y: number; spread: number; weight: number };
+
+// Adjust these numbers to your background image (turn on debug to see them as magenta lines)
+const DEFAULT_SPOTS: LandingSpot[] = [
+  { x: 0.30, y: 0.80, spread: 0.04, weight: 1 },   // on the book
+  { x: 0.55, y: 0.72, spread: 0.02, weight: 1 },   // on the inkpot (mashkeeza)
+  { x: 0.82, y: 0.94, spread: 0.08, weight: 1.5 }, // desert / ground
+  { x: 0.12, y: 0.94, spread: 0.06, weight: 1 },   // ground
+];
+
 interface Props {
   originX?: number;
   originY?: number;
@@ -97,6 +116,8 @@ interface Props {
   speed?: number;
   showGlyphs?: boolean;
   debug?: boolean;
+  landingSpots?: LandingSpot[]; // Places (book, inkpot, desert...) where the stars land. Pass a stable constant / useMemo
+  flashScale?: number; // Size of the star that appears after landing (default 0.5 = half size)
 }
 
 type Kind = "puff" | "wisp" | "glyph" | "spark" | "flash";
@@ -481,11 +502,14 @@ class Particle {
   rainSwayFreq = rand(1.1, 2.3);
   rainSwayAmp = rand(5, 13);
   hasFlashed = false;
-  // Some glyphs turn into a star in mid-air (before touching the ground)
+  // Some glyphs turn into a star in mid-air (before touching the surface)
   midAirStar = Math.random() < 0.4;
   starFrac = rand(0.12, 0.7); // how far down (0..1) the fall the glyph becomes a star
   starFadeLen = rand(110, 260); // px the mid-air star keeps falling/twinkling before it fades out
   rainStartY = -1;
+  rainStartX = 0; // where the glyph started to fall
+  landX = 0; // chosen landing spot (x)
+  landY = 0; // chosen landing spot (y)
   fade = 1;
   noiseSpr?: HTMLCanvasElement;
   glyphSpr?: HTMLCanvasElement;
@@ -515,7 +539,7 @@ class Particle {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
       this.baseAlpha = 1.0;
-      this.maxLife = rand(48, 72); // Twinkles brightly on the ground then fades out
+      this.maxLife = rand(48, 72); // Twinkles brightly on the surface then fades out
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -533,9 +557,10 @@ class Particle {
     path: Path,
     k: number,
     groundLevelPx: number,
+    pickSpot: () => SpotPx | null,
     onSpawnFlash: (x: number, y: number, hue: number) => void
   ): void {
-    // 1. Ground star flash particle (twinkles, scatters slightly, then fades)
+    // 1. Landing star flash particle (twinkles, scatters slightly, then fades)
     if (this.kind === "flash") {
       this.u += dt / this.maxLife;
       if (this.u >= 1) return;
@@ -549,18 +574,34 @@ class Particle {
       return;
     }
 
-    // 2. Glyph: first rises inside smoke from lamp to top, then rains down to the ground
+    // 2. Glyph: first rises inside smoke from lamp to top, then rains down to its landing spot
     if (this.kind === "glyph" && this.isRaining) {
       this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
-      this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
       this.rot += this.rotSpeed * 0.45 * dt;
 
-      if (this.rainStartY < 0) this.rainStartY = this.y;
+      if (this.rainStartY < 0) {
+        this.rainStartY = this.y;
+        this.rainStartX = this.x;
+        const s = pickSpot();
+        if (s) {
+          this.landX = s.x + rand(-1, 1) * s.spread;
+          this.landY = Math.max(s.y, this.y + 40); // landing spot must be below the start
+        } else {
+          this.landX = this.x;
+          this.landY = groundLevelPx;
+        }
+      }
       const kk = Math.max(0.8, k);
+      const landY = this.landY;
+
+      // x: glides toward the chosen spot while falling + a gentle sway
+      const prog = Math.min(1, Math.max(0, (this.y - this.rainStartY) / Math.max(1, landY - this.rainStartY)));
+      const sway = Math.sin(t * this.rainSwayFreq + this.seed) * this.rainSwayAmp * kk * (1 - prog * 0.8);
+      this.x = this.rainStartX + (this.landX - this.rainStartX) * smooth(0, 1, prog) + sway;
 
       if (this.midAirStar) {
         // Turns into a dot -> star somewhere in the air, twinkles while falling, then fades away
-        const trig = this.rainStartY + (groundLevelPx - this.rainStartY) * this.starFrac;
+        const trig = this.rainStartY + (landY - this.rainStartY) * this.starFrac;
         this.morph = smooth(trig, trig + 45 * kk, this.y);
         const fadeStart = trig + 70 * kk;
         this.fade = 1 - smooth(fadeStart, fadeStart + this.starFadeLen * kk, this.y);
@@ -569,21 +610,21 @@ class Particle {
           return;
         }
       } else {
-        // From ~110px above the ground the glyph slowly turns into a star/dot
+        // From ~110px above the landing spot the glyph slowly turns into a star/dot
         const fallZone = 110 * kk;
-        this.morph = smooth(groundLevelPx - fallZone, groundLevelPx - 6, this.y);
+        this.morph = smooth(landY - fallZone, landY - 6, this.y);
       }
 
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha = this.baseAlpha * (0.5 + 0.5 * b * b);
 
-      // Touching the ground (zameen): vanish with a bright sparkle
-      if (this.y >= groundLevelPx) {
+      // Touching the surface: vanish with a bright (small) sparkle
+      if (this.y >= landY) {
         if (!this.hasFlashed) {
           this.hasFlashed = true;
-          onSpawnFlash(this.x, groundLevelPx, this.hue);
+          onSpawnFlash(this.x, landY, this.hue);
         }
-        this.u = 1; // Remove glyph immediately on ground impact
+        this.u = 1; // Remove glyph immediately on impact
       }
       return;
     }
@@ -729,7 +770,7 @@ class Particle {
         ctx.drawImage(sp, -w / 2, -h / 2, w, h);
       }
 
-      // (b) Dot -> Star: grows and twinkles as it nears the ground
+      // (b) Dot -> Star: grows and twinkles as it nears the landing spot
       if (m > 0.01) {
         const tw = 0.7 + 0.3 * Math.sin(this.rot * 40 + this.u * 30);
         const s = (2.5 + 6.5 * m) * tw;
@@ -760,6 +801,8 @@ export function MagicalSmoke({
   speed = 0.42,
   showGlyphs = true,
   debug = false,
+  landingSpots = DEFAULT_SPOTS,
+  flashScale = 0.5,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const smokeRef = useRef<HTMLCanvasElement>(null);
@@ -827,6 +870,17 @@ export function MagicalSmoke({
     let ky = 1; // vertical scale
     let topLimit = menuHeight; // y (px) where the smoke path ends at the top
     let groundPx = 0; // y (px) of the ground line
+    let spots: SpotPx[] = []; // landing spots in pixels
+    let totalWeight = 0;
+    const pickSpot = (): SpotPx | null => {
+      if (!spots.length) return null;
+      let r = Math.random() * totalWeight;
+      for (const s of spots) {
+        r -= s.weight;
+        if (r <= 0) return s;
+      }
+      return spots[spots.length - 1];
+    };
     let path: Path = buildPath(0, 0, 1, 1, sgn, reach, ctrl);
     let raf = 0;
     let particles: Particle[] = [];
@@ -883,6 +937,16 @@ export function MagicalSmoke({
       const ox = boxX + boxW * originX;
       const oy = boxY + boxH * originY;
       groundPx = boxY + boxH * groundY;
+
+      // Landing spots (book, inkpot, desert...) converted from 0..1 to pixels
+      spots = landingSpots.map((s) => ({
+        x: boxX + boxW * s.x,
+        y: boxY + boxH * s.y,
+        spread: boxW * (s.spread ?? 0.03),
+        weight: s.weight ?? 1,
+      }));
+      totalWeight = spots.reduce((a, s) => a + s.weight, 0);
+
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
 
@@ -962,28 +1026,28 @@ export function MagicalSmoke({
       }
     };
 
+    // Small star burst where a glyph lands (size controlled by flashScale)
     const spawnFlash = (fx: number, fy: number, hue: number) => {
-      // Big central star burst
       const main = new Particle("flash", glyphs);
       main.x = fx;
       main.y = fy;
       main.hue = hue;
-      main.size = rand(1.6, 2.2);
+      main.size = rand(1.6, 2.2) * flashScale;
       main.maxLife = rand(40, 60);
       particles.push(main);
 
-      // Small sparkles that scatter around and fade out
-      const n = 3 + Math.floor(Math.random() * 3);
+      // Tiny sparkles that scatter around and fade out
+      const n = 2 + Math.floor(Math.random() * 3);
       for (let i = 0; i < n; i++) {
         const sp = new Particle("flash", glyphs);
         const a = rand(Math.PI * 1.05, Math.PI * 1.95); // scatter upwards
-        const v = rand(0.15, 0.55);
+        const v = rand(0.15, 0.55) * Math.max(0.5, flashScale);
         sp.x = fx;
         sp.y = fy;
         sp.vx = Math.cos(a) * v;
         sp.vy = Math.sin(a) * v;
         sp.hue = Math.random() < 0.5 ? hue : 45;
-        sp.size = rand(0.5, 1.0);
+        sp.size = rand(0.5, 1.0) * flashScale;
         sp.maxLife = rand(24, 40);
         particles.push(sp);
       }
@@ -1022,7 +1086,7 @@ export function MagicalSmoke({
 
       const groundLevelPx = groundPx;
       for (let i = 0; i < particles.length; i++) {
-        particles[i].update(t, dt, wind, path, k, groundLevelPx, spawnFlash);
+        particles[i].update(t, dt, wind, path, k, groundLevelPx, pickSpot, spawnFlash);
       }
       let alive = 0;
       for (let i = 0; i < particles.length; i++) {
@@ -1050,7 +1114,7 @@ export function MagicalSmoke({
       if (debug) {
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v9 - smooth", 12, 24);
+        ctx.fillText("SMOKE v10 - landing spots", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
@@ -1077,6 +1141,12 @@ export function MagicalSmoke({
         ctx.lineTo(w, topLimit);
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // Landing spots debug indicator (magenta bars)
+        ctx.fillStyle = "rgba(255,0,255,0.9)";
+        for (const s of spots) {
+          ctx.fillRect(s.x - s.spread, s.y - 2, Math.max(4, s.spread * 2), 4);
+        }
       }
 
       wind.power *= Math.pow(0.92, dt);
@@ -1119,7 +1189,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug, landingSpots, flashScale]);
 
   if (!mounted) return null;
 
