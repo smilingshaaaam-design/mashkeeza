@@ -23,7 +23,7 @@ const ASMA_UL_HUSNA = [
   "الْحَقُّ", "الْوَکِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
   "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
   "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
   "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ",
 ];
 
@@ -90,49 +90,28 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top Menu ---------- */
-
+/* ---------- FIXED OVERHEAD PATH: Explicitly flies over the navbar container height completely ---------- */
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
   pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
-  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
-  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -215),      // 5. Rises higher up passing through the right side space safely
-  pt(-45, -315),     // 6. Modified: Extends much higher vertically to bypass standard menu bounds
-  pt(90, -340),      // 7. Modified: Flows beautifully near the real absolute window ceiling
-  pt(270, -340),     // 8. Modified: Glides elegantly across the top header zone from right to left
-  pt(460, -340),     // 9. Modified: Flows toward the upper-left top edge cleanly
-  pt(650, -340),     // 10. Modified: Gently lingers & fades out at the far top ceiling corner
+  pt(55, -22),       // 2. Exits lamp smoothly curving forward
+  pt(125, -78),      // 3. Loops outward wide into the safe right margins
+  pt(105, -155),     // 4. Climbs vertically up the right side corridor
+  pt(45, -235),      // 5. Continues upward, completely bypassing menu bounding limits
+  pt(-55, -315),     // 6. Crosses directly overhead into the absolute top area space
+  pt(90, -360),      // 7. Reaches top-most Y coordinate ceiling well above menu height
+  pt(270, -360),     // 8. Flows natively from right to left across full viewport ceiling
+  pt(460, -360),     // 9. Continues smoothly flowing across top-left ceiling
+  pt(650, -360),     // 10. Lingers & safely dissipates off structural edges at full vertical height
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
-  pt(0, 0),
-  pt(65, -3),
-  pt(135, 4),
-  pt(210, 55),
-  pt(290, 105),
-  pt(360, 40),
-  pt(325, -45),
-  pt(410, -115),
-  pt(510, -65),
-  pt(595, 25),
-  pt(680, -70),
-  pt(760, -175),
-  pt(840, -250),
+  pt(0, 0), pt(65, -3), pt(135, 4), pt(210, 55), pt(290, 105), pt(360, 40), pt(325, -45),
+  pt(410, -115), pt(510, -65), pt(595, 25), pt(680, -70), pt(760, -175), pt(840, -250),
 ];
 
 const CTRL_STRAIGHT_SWING: CtrlPoint[] = [
-  pt(0, 0),
-  pt(65, -2),
-  pt(130, 3),
-  pt(195, 48),
-  pt(265, 85),
-  pt(340, 25),
-  pt(415, -55),
-  pt(490, -110),
-  pt(565, -40),
-  pt(645, -125),
-  pt(730, -205),
+  pt(0, 0), pt(65, -2), pt(130, 3), pt(195, 48), pt(265, 85), pt(340, 25), pt(415, -55),
+  pt(490, -110), pt(565, -40), pt(645, -125), pt(730, -205),
 ];
 
 const CTRL_OVER: CtrlPoint[] = [
@@ -150,8 +129,7 @@ const CTRL_UNDER: CtrlPoint[] = [
 const CTRL_DOWN: CtrlPoint[] = [
   pt(0, 0), pt(25, 30), pt(60, 70), pt(92, 120), pt(60, 150), pt(15, 128),
   pt(28, 88), pt(70, 45), pt(95, -10), pt(80, -70), pt(120, -108), pt(200, -122),
-  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210),
-  pt(730, -235),
+  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210), pt(730, -235),
 ];
 
 const N = 360;
@@ -464,7 +442,7 @@ class Particle {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
       this.baseAlpha = 1.0;
-      this.maxLife = rand(48, 72); 
+      this.maxLife = rand(48, 72);
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -509,7 +487,7 @@ class Particle {
           this.hasFlashed = true;
           onSpawnFlash(this.x, groundLevelPx, this.hue);
         }
-        this.u = 1; 
+        this.u = 1;
       }
       return;
     }
@@ -687,13 +665,6 @@ export function MagicalSmoke({
         ? CTRL_UNDER
         : CTRL_OVER;
 
-    const ext = {
-      up: Math.max(20, -Math.min(...ctrl.map((c) => c.y))),
-      down: Math.max(20, ...ctrl.map((c) => c.y)),
-      fwd: Math.max(1, ...ctrl.map((c) => c.x)),
-      back: Math.max(0, -Math.min(...ctrl.map((c) => c.x))),
-    };
-
     let w = 0;
     let h = 0;
     let k = 1;
@@ -720,17 +691,12 @@ export function MagicalSmoke({
       const ox = w * originX;
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
-      const backAvail = direction === "left" ? w - ox : ox;
       
-      // Amplified bounding checks to prevent menu collision while scaling properly
-      const limits: number[] = [
-        (h * 1.35) / 360,
-        (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
-      ];
-      if (ext.up > 0) limits.push(((oy * 1.45)) / ext.up);
-      if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
-      if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
-      k = Math.max(0.45, Math.min(...limits));
+      // FIXED LIMITS BLOCK: Enforcing safe dynamic responsive scale multiplier to explicitly push above vertical screen boundary constraints safely
+      const rawScaleH = h / 210; 
+      const rawScaleW = (fwdAvail * 0.98) / 125;
+      k = Math.max(1.35, Math.min(rawScaleH, rawScaleW));
+
       path = buildPath(ox, oy, k, sgn, reach, ctrl);
     };
     resize();
