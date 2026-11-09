@@ -3,17 +3,6 @@ import React, { useEffect, useRef } from "react";
 /**
 • MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
 • Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
-• Flow:
-• 
-	1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
-• 
-	2. They travel up along the inverted 'S' curve to the top menu area.
-• 
-	3. At the top, the smoke stays aloft and gently dissipates from right to left.
-• 
-	4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
-• 
-	5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
 */
 const ASMA_UL_HUSNA = [
 "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِکُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَکَبِّرُ",
@@ -524,7 +513,7 @@ const r = this.size * 2.0;
 ctx.globalAlpha = Math.min(1, this.alpha * 0.45);
 ctx.drawImage(getSoftSprite(this.hue, 68), this.x - r, this.y - r, r * 2, r * 2);
 ctx.globalAlpha = Math.min(1, this.alpha);
-const sp = getGlyphSprite(this.text, this.hue, this.size);
+const sp = getGlyphSprite(text, this.hue, this.size);
 const w = sp.width / 2;
 const h = sp.height / 2;
 ctx.save();
