@@ -4,17 +4,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 /**
- * MagicalSmoke - Inverted 'S' Path to Top of Page (below menu bar), with Raining Ism-e-Allah,
- * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
+ * MagicalSmoke - Swirling inverted 'S' path to the top of the page (below menu bar),
+ * with raining Ism-e-Allah, Arabic alphabet, talismanic symbols & ground star sparkles.
  *
  * Flow:
- * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle (continuously).
- * 2. They travel up along the inverted 'S' curve all the way to the top of the page
- *    (stopping just below the menu bar, so they never collide with it).
- * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
- * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
- * 5. Near the ground each glyph gradually turns into a dot -> twinkling star, and on touching the
- *    ground it bursts into a bright sparkle (plus small scattering sparkles) and vanishes.
+ * 1. Smoke + Ism-e-Allah + Haroof + Symbols emerge together from the lamp nozzle.
+ * 2. They swirl upward (bal khate hue), and near the menu/heading the smoke moves to the
+ *    RIGHT side, then rises up to the roof.
+ * 3. At the roof the smoke sticks to the top and starts drifting LEFT, gently dissipating.
+ * 4. Meanwhile glyphs detach and rain down toward the ground.
+ * 5. Near the ground each glyph turns into a dot -> twinkling star, and on touching the
+ *    ground it bursts into a bright sparkle and vanishes.
  */
 
 const ASMA_UL_HUSNA = [
@@ -78,11 +78,11 @@ interface Props {
   originY?: number;
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
-  anchorSelector?: string; // CSS selector of the hero box (e.g. "#hero-stage"). origin/ground are measured inside it, but the smoke canvas covers the page from the very top down to the bottom of this box, so smoke can rise over the header/title
+  anchorSelector?: string; // CSS selector of the hero box (e.g. "#hero-stage"). origin/ground are measured inside it, but the smoke canvas covers the page from the very top down to the bottom of this box
   targetSelector?: string; // CSS selector of the element smoke should rise up to (e.g. "#hero-tagline"). Overrides menuHeight/heightBoost
   zIndex?: number; // Layer order of the smoke. Must be higher than the images it should appear over
   heightBoost?: number; // Vertical stretch multiplier (1 = fit exactly, >1 = taller)
-  topGap?: number; // Extra gap (px) kept between smoke path and menu bar. Smaller = taller smoke
+  topGap?: number; // Extra gap (px) kept between smoke path and menu bar
   glyphs?: string[];
   direction?: "left" | "right";
   spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
@@ -99,19 +99,25 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top of Page ---------- */
+/* ---------- Swirling Inverted 'S' Path ----------
+ * With direction="left": positive x = LEFT, negative x = RIGHT.
+ */
 
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
-  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
-  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -195),      // 5. Rises gracefully toward the upper height
-  pt(-45, -245),     // 6. Reaches top-right side
-  pt(90, -258),      // 7. Flows smoothly from right to left across the top
-  pt(270, -252),     // 8. Continues gliding across the center-top
-  pt(460, -260),     // 9. Flows toward the upper-left area
-  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
+  pt(0, 0),        // lamp nozzle
+  pt(70, -22),     // swirls to the left
+  pt(115, -65),
+  pt(60, -108),    // curls back
+  pt(-10, -135),
+  pt(70, -165),    // swirls left again
+  pt(30, -195),
+  pt(-90, -215),   // near menu/heading: moves to the RIGHT side
+  pt(-85, -255),   // straight up on the right side to the roof
+  pt(-20, -266),   // touches the roof and turns
+  pt(110, -262),   // glides LEFT along the roof
+  pt(290, -266),
+  pt(470, -260),
+  pt(650, -266),   // dissipates far left
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -462,8 +468,8 @@ class Particle {
 
   // Glyph ascent-then-rain state
   isRaining = false;
-  releaseU = rand(0.46, 0.86); // Detaches along the upper portion of the smoke path
-  rainFallSpeed = rand(1.15, 2.05);
+  releaseU = rand(0.55, 0.92); // Detaches while the smoke glides along the roof
+  rainFallSpeed = rand(1.0, 1.9);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
   rainSwayAmp = rand(5, 13);
@@ -485,7 +491,7 @@ class Particle {
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
       this.hue = pick(GLYPH_HUES);
-      this.size = rand(11, 18); // 2pt smaller
+      this.size = rand(11, 18);
       this.baseAlpha = rand(0.84, 1.0);
       this.blinkRate = rand(1.1, 2.4);
       this.maxLife = rand(680, 900);
@@ -527,7 +533,7 @@ class Particle {
       return;
     }
 
-    // 2. Glyph: First rises inside smoke from lamp to top, then rains down to the ground
+    // 2. Glyph: first rises inside smoke from lamp to top, then rains down to the ground
     if (this.kind === "glyph" && this.isRaining) {
       this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
@@ -551,7 +557,7 @@ class Particle {
       return;
     }
 
-    // 3. Standard path progression (from lamp up the inverted 'S' to the top of the page)
+    // 3. Standard path progression (from lamp along the swirling 'S' to the roof)
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -573,21 +579,25 @@ class Particle {
     let offN = 0;
     let offT = 0;
     if (this.kind === "puff" || this.kind === "wisp") {
-      const spread = (this.kind === "puff" ? 4 + 62 * chaos + 38 * roamBoost : 3 + 42 * chaos + 26 * roamBoost) * this.depth;
+      // Tighter spread so the swirling S shape stays visible
+      const spread =
+        (this.kind === "puff"
+          ? 4 + 30 * chaos + 22 * roamBoost
+          : 3 + 22 * chaos + 14 * roamBoost) * this.depth;
       const r = this.rad * k * spread;
       const th = this.th0 + TAU * this.turns * u + t * this.spin;
       const randWave =
-        Math.sin(t * 0.95 + this.seed + u * 8.5) * k * (18 * chaos + 20 * roamBoost) +
-        Math.cos(t * 0.65 + this.seed * 1.4 - u * 5.5) * k * (14 * chaos + 16 * roamBoost);
+        Math.sin(t * 0.95 + this.seed + u * 8.5) * k * (8 * chaos + 10 * roamBoost) +
+        Math.cos(t * 0.65 + this.seed * 1.4 - u * 5.5) * k * (6 * chaos + 8 * roamBoost);
       offN = Math.cos(th) * r + randWave;
       offT = Math.sin(th) * r * 0.82;
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (6 + 44 * chaos) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 11 * chaos;
-      offT = Math.cos(t * 0.65 + this.seed) * k * 11 * chaos;
+      offN = this.off * k * (6 + 30 * chaos) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 9 * chaos;
+      offT = Math.cos(t * 0.65 + this.seed) * k * 9 * chaos;
     } else {
       offN =
-        this.off * k * (6 + 68 * chaos + 42 * roamBoost) * this.depth +
-        Math.sin(t * 0.95 + this.seed + u * 6) * k * 14 * chaos;
+        this.off * k * (6 + 40 * chaos + 26 * roamBoost) * this.depth +
+        Math.sin(t * 0.95 + this.seed + u * 6) * k * 12 * chaos;
       offT = Math.cos(t * 0.75 + this.seed) * k * 12 * chaos;
     }
 
@@ -608,8 +618,8 @@ class Particle {
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.65 + this.seed) * k * (11 * chaos + 9 * roamBoost);
-      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (11 * chaos + 9 * roamBoost);
+      wx = Math.sin(t * 0.65 + this.seed) * k * (9 * chaos + 7 * roamBoost);
+      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (9 * chaos + 7 * roamBoost);
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
@@ -622,8 +632,7 @@ class Particle {
       return;
     }
 
-    // Near the lamp nozzle everything is dimmed (instead of boosted), so there is no
-    // bright glare there and the Ism-e-Allah / letters stay clearly visible.
+    // Near the lamp nozzle everything is dimmed so there is no bright glare there
     const originDensityBoost =
       this.kind === "puff" || this.kind === "wisp"
         ? 0.3 + 0.7 * smooth(0.02, 0.26, u)
@@ -631,7 +640,7 @@ class Particle {
         ? 0.25 + 0.75 * smooth(0.03, 0.22, u)
         : 1;
 
-    // Smoke stays aloft at the top and gently fades out as it travels left
+    // Smoke stays aloft at the roof and gently fades out as it travels left
     const fadeOut = 1 - smooth(0.68, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
@@ -706,8 +715,8 @@ export function MagicalSmoke({
   originY = 0.64,
   groundY = 0.94,
   menuHeight = 90,
-  topGap = 0,
-  heightBoost = 1.4,
+  topGap = 8,
+  heightBoost = 1,
   targetSelector,
   anchorSelector,
   zIndex = 100,
@@ -722,7 +731,7 @@ export function MagicalSmoke({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // With anchorSelector the smoke is rendered through a portal straight into <body>,
-  // so no parent (z-index, transform, overflow, isolate) can ever put it behind the header image.
+  // so no parent (z-index, transform, overflow, isolate) can put it behind the header image.
   const usePortal = !!anchorSelector;
   const [mounted, setMounted] = useState(!usePortal);
   useEffect(() => {
@@ -826,7 +835,7 @@ export function MagicalSmoke({
       const fwdAvail = direction === "left" ? ox : w - ox;
       const backAvail = direction === "left" ? w - ox : ox;
 
-      // Horizontal scale (vertical-up limit removed so the path can reach the top)
+      // Horizontal scale
       const limits: number[] = [
         boxH / 360,
         (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
@@ -835,11 +844,11 @@ export function MagicalSmoke({
       k = Math.max(0.45, Math.min(...limits));
 
       // Vertical scale: origin -> top of page (just below the menu bar)
-      let topMargin = menuHeight + topGap; // menu + optional gap (smaller = taller)
+      let topMargin = menuHeight + topGap;
       let boost = heightBoost;
       const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
       if (targetEl) {
-        // Smoke rises ABOVE the target element (e.g. the tagline): one element-height over its top edge
+        // Smoke rises ABOVE the target element: one element-height over its top edge
         const tr = targetEl.getBoundingClientRect();
         const pr = parent.getBoundingClientRect();
         topMargin = tr.top - pr.top - tr.height + topGap;
@@ -847,7 +856,7 @@ export function MagicalSmoke({
       }
       topLimit = topMargin;
       const upAvail = Math.max(60, oy - topMargin);
-      ky = (upAvail / ext.up) * boost; // extra stretch for more height
+      ky = (upAvail / ext.up) * boost;
 
       // Paths that go downward (e.g. "down") must not exit the bottom of the page
       if (ext.down > 20) {
@@ -941,7 +950,7 @@ export function MagicalSmoke({
 
       acc.puff += dt * 1.2 * rate;
       acc.wisp += dt * 1.4 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.3 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.5 * rate; // denser glyph rain
       acc.spark += dt * 1.0 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
@@ -974,10 +983,9 @@ export function MagicalSmoke({
       ctx.globalCompositeOperation = "source-over";
 
       if (debug) {
-        // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v7 - low glare", 12, 24);
+        ctx.fillText("SMOKE v8 - swirl", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
