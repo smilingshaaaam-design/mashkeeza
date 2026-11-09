@@ -77,10 +77,21 @@ export default function HomePage() {
     <div className="min-h-screen overflow-x-hidden bg-night">
       <SiteHeader />
 
+      {/*
+        Smoke is rendered through a portal into <body> (anchorSelector), so it is not clipped by
+        the overflow-hidden box below and can rise over the header's hero-sky image.
+        zIndex={10}: above the sky image/stars, below the heading and menu (z-20 in SiteHeader).
+        menuHeight: how far from the top of the page the smoke rises (px). Increase it to stop lower.
+      */}
+      <PaintedSmoke anchorSelector="#hero-stage" zIndex={10} menuHeight={90} />
+
       <main>
         <section aria-label="روحانی منظر" className="relative -mt-2">
           <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[16/8]">
-            <div className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size]">
+            <div
+              id="hero-stage"
+              className="absolute inset-y-0 left-1/2 aspect-[1584/672] h-full -translate-x-1/2 [container-type:inline-size]"
+            >
               <Image
                 src="/images/desert-scene.png"
                 alt="صحرا میں روشن قدیم کتابیں، جادوئی چراغ اور سنہری روشنی کا دریا"
@@ -90,7 +101,6 @@ export default function HomePage() {
               />
               <Starfield count={90} seed={11} className="inset-x-0 top-0 h-[38%]" />
               <Mashk />
-              <PaintedSmoke />
             </div>
             <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-night/60 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-night to-transparent" />
