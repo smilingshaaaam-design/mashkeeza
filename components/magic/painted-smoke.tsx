@@ -622,9 +622,13 @@ class Particle {
       return;
     }
 
+    // Near the lamp nozzle everything is dimmed (instead of boosted), so there is no
+    // bright glare there and the Ism-e-Allah / letters stay clearly visible.
     const originDensityBoost =
       this.kind === "puff" || this.kind === "wisp"
-        ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
+        ? 0.3 + 0.7 * smooth(0.02, 0.26, u)
+        : this.kind === "spark"
+        ? 0.25 + 0.75 * smooth(0.03, 0.22, u)
         : 1;
 
     // Smoke stays aloft at the top and gently fades out as it travels left
@@ -973,7 +977,7 @@ export function MagicalSmoke({
         // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v6 - slow+smooth", 12, 24);
+        ctx.fillText("SMOKE v7 - low glare", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
