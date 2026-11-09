@@ -77,6 +77,7 @@ interface Props {
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
   targetSelector?: string; // CSS selector of the element smoke should rise up to (e.g. "#hero-tagline"). Overrides menuHeight/heightBoost
+  zIndex?: number; // Layer order of the smoke. Must be higher than the images it should appear over
   heightBoost?: number; // Vertical stretch multiplier (1 = fit exactly, >1 = taller)
   topGap?: number; // Extra gap (px) kept between smoke path and menu bar. Smaller = taller smoke
   glyphs?: string[];
@@ -678,6 +679,7 @@ export function MagicalSmoke({
   topGap = 0,
   heightBoost = 1.4,
   targetSelector,
+  zIndex = 50,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
@@ -897,7 +899,11 @@ export function MagicalSmoke({
   }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ zIndex }}
+      aria-hidden="true"
+    >
       <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
