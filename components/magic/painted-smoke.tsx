@@ -292,7 +292,7 @@ const getNoiseSprite = (hue: number, variant: number): HTMLCanvasElement => {
   const key = `${hue}|${variant}`;
   let c = noiseSprites.get(key);
   if (c) return c;
-  const S = 128;
+  const S = 96;
   c = makeCanvas(S, S);
   const g = c.getContext("2d")!;
   const img = g.createImageData(S, S);
@@ -397,13 +397,15 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   return c;
 };
 
+const GLYPH_BASE = 24; // sprites are made once at this size and scaled when drawn
+const GLYPH_SC = 2;
 const glyphSprites = new Map<string, HTMLCanvasElement>();
-const getGlyphSprite = (text: string, hue: number, size: number): HTMLCanvasElement => {
-  const px = Math.round(size);
-  const key = `${text}|${hue}|${px}`;
+const getGlyphSprite = (text: string, hue: number): HTMLCanvasElement => {
+  const key = `${text}|${hue}`;
   let c = glyphSprites.get(key);
   if (c) return c;
-  const SC = 2;
+  const SC = GLYPH_SC;
+  const px = GLYPH_BASE;
   const pad = 16;
   const font = `${px * SC}px "Amiri","Noto Naskh Arabic","Times New Roman",serif`;
   const probe = makeCanvas(1, 1).getContext("2d")!;
@@ -420,6 +422,13 @@ const getGlyphSprite = (text: string, hue: number, size: number): HTMLCanvasElem
   g.fillText(text, c.width / 2, c.height / 2);
   glyphSprites.set(key, c);
   return c;
+};
+
+// Fast rotate+translate without ctx.save()/restore()
+const place = (ctx: CanvasRenderingContext2D, dpr: number, x: number, y: number, rot: number): void => {
+  const c = Math.cos(rot) * dpr;
+  const s = Math.sin(rot) * dpr;
+  ctx.setTransform(c, s, -s, c, x * dpr, y * dpr);
 };
 
 /* ---------- Particle ---------- */
@@ -465,13 +474,13 @@ class Particle {
 
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(1.0, 1.55) * this.depth;
-      this.baseAlpha = rand(0.08, 0.16);
+      this.size = rand(1.25, 1.9) * this.depth;
+      this.baseAlpha = rand(0.1, 0.2);
       this.maxLife = rand(720, 960);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.85, 1.4) * this.depth;
-      this.baseAlpha = rand(0.12, 0.24);
+      this.size = rand(1.05, 1.7) * this.depth;
+      this.baseAlpha = rand(0.15, 0.3);
       this.maxLife = rand(680, 920);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
@@ -632,7 +641,7 @@ class Particle {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D, k: number): void {
+  draw(ctx: CanvasRenderingContext2D, k: number, dpr: number): void {
     if (this.alpha <= 0.003) return;
     const u = this.u;
 
@@ -642,25 +651,19 @@ class Particle {
           ? k * (11 + 52 * u) * this.size
           : k * (5 + 22 * u) * this.size;
       ctx.globalAlpha = Math.min(0.65, this.alpha);
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.rot);
+      place(ctx, dpr, this.x, this.y, this.rot);
       ctx.drawImage(getNoiseSprite(this.hue, this.variant), -s, -s, s * 2, s * 2);
-      ctx.restore();
     } else if (this.kind === "spark") {
       const s = this.size * 3.0;
       ctx.globalAlpha = Math.min(1, this.alpha);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else if (this.kind === "flash") {
-      // Expand sharply on impact, twinkle like a star, then shrink/fade away
       const expand = this.u < 0.22 ? 0.4 + (this.u / 0.22) * 1.1 : 1.5 - (this.u - 0.22) * 0.65;
       const s = this.size * 6.5 * Math.max(0.25, expand);
       ctx.globalAlpha = Math.min(1, this.alpha);
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(this.u * 0.8);
+      place(ctx, dpr, this.x, this.y, this.u * 0.8);
       ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
-      ctx.restore();
     } else {
       const m = this.morph;
 
@@ -668,17 +671,16 @@ class Particle {
       const ga = this.alpha * (1 - m);
       if (ga > 0.003) {
         const r = this.size * 2.0;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.globalAlpha = Math.min(1, ga * 0.45);
         ctx.drawImage(getSoftSprite(this.hue, 68), this.x - r, this.y - r, r * 2, r * 2);
         ctx.globalAlpha = Math.min(1, ga);
-        const sp = getGlyphSprite(this.text, this.hue, this.size * (1 - 0.35 * m));
-        const w = sp.width / 2;
-        const h = sp.height / 2;
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(Math.sin(this.rot * 18) * 0.12);
+        const sp = getGlyphSprite(this.text, this.hue);
+        const sc = (this.size / GLYPH_BASE) * (1 - 0.35 * m);
+        const w = (sp.width / GLYPH_SC) * sc;
+        const h = (sp.height / GLYPH_SC) * sc;
+        place(ctx, dpr, this.x, this.y, Math.sin(this.rot * 18) * 0.12);
         ctx.drawImage(sp, -w / 2, -h / 2, w, h);
-        ctx.restore();
       }
 
       // (b) Dot -> Star: grows and twinkles as it nears the ground
@@ -686,11 +688,8 @@ class Particle {
         const tw = 0.7 + 0.3 * Math.sin(this.rot * 40 + this.u * 30);
         const s = (3 + 9 * m) * tw;
         ctx.globalAlpha = Math.min(1, m * 1.3) * this.baseAlpha;
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rot * 6);
+        place(ctx, dpr, this.x, this.y, this.rot * 6);
         ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
-        ctx.restore();
       }
     }
   }
@@ -737,15 +736,15 @@ export function MagicalSmoke({
 
     // Separate cap per particle type, so sparks/glyphs can never block the smoke
     const CAP: Record<Kind, number> = {
-      puff: reduced ? 150 : 2200,
-      wisp: reduced ? 150 : 2200,
+      puff: reduced ? 150 : 1500,
+      wisp: reduced ? 150 : 1500,
       glyph: reduced ? 40 : 320,
-      spark: reduced ? 80 : 900,
+      spark: reduced ? 80 : 600,
       flash: reduced ? 60 : 500,
     };
     const cnt: Record<Kind, number> = { puff: 0, wisp: 0, glyph: 0, spark: 0, flash: 0 };
 
-    const rate = reduced ? 0.3 : 1;
+    const rate = reduced ? 0.3 : window.innerWidth < 768 ? 0.6 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
     const ctrl: CtrlPoint[] =
@@ -770,6 +769,7 @@ export function MagicalSmoke({
 
     let w = 0;
     let h = 0;
+    let dpr = 1;
     let k = 1;
     let ky = 1; // vertical scale
     let topLimit = menuHeight; // y (px) where the smoke path ends at the top
@@ -782,12 +782,11 @@ export function MagicalSmoke({
     const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
     const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
-    for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
     for (const dh of DOT_HUES) getDotSprite(dh);
     for (const gh of GLYPH_HUES) getStarFlashSprite(gh);
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       // Anchored mode: canvas spans from page top to the bottom of the anchor (hero) box
       const host = parent.parentElement;
       const anchorEl = anchorSelector ? document.querySelector(anchorSelector) : null;
@@ -800,7 +799,8 @@ export function MagicalSmoke({
         ay = ar.top - hr.top;
         aw = ar.width;
         ah = ar.height;
-        parent.style.height = `${Math.round(ay + ah)}px`;
+        const hpx = `${Math.round(ay + ah)}px`;
+        if (parent.style.height !== hpx) parent.style.height = hpx;
       } else if (anchorSelector) {
         // anchor id not found: still cover the page so the smoke is never invisible
         parent.style.height = `${Math.min(4000, document.documentElement.scrollHeight)}px`;
@@ -854,7 +854,12 @@ export function MagicalSmoke({
     resize();
     window.addEventListener("resize", resize);
     window.addEventListener("load", resize);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    let rz = 0;
+    const scheduleResize = () => {
+      cancelAnimationFrame(rz);
+      rz = requestAnimationFrame(resize);
+    };
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(scheduleResize) : null;
     ro?.observe(parent);
     if (parent.parentElement) ro?.observe(parent.parentElement);
     if (anchorSelector) {
@@ -926,10 +931,10 @@ export function MagicalSmoke({
       cnt.puff = cnt.wisp = cnt.glyph = cnt.spark = cnt.flash = 0;
       for (let i = 0; i < particles.length; i++) cnt[particles[i].kind]++;
 
-      acc.puff += dt * 1.9 * rate;
-      acc.wisp += dt * 2.2 * rate;
+      acc.puff += dt * 1.2 * rate;
+      acc.wisp += dt * 1.4 * rate;
       if (showGlyphs) acc.glyph += dt * 0.3 * rate;
-      acc.spark += dt * 1.3 * rate;
+      acc.spark += dt * 1.0 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
@@ -940,17 +945,23 @@ export function MagicalSmoke({
       for (let i = 0; i < particles.length; i++) {
         particles[i].update(t, dt, wind, path, k, groundLevelPx, spawnFlash);
       }
-      particles = particles.filter((p) => p.u < 1);
+      let alive = 0;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (p.u < 1) particles[alive++] = p;
+      }
+      particles.length = alive;
 
       ctx.globalCompositeOperation = "screen";
-      for (const p of particles) if (p.kind === "puff") p.draw(ctx, k);
-      for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k);
+      for (const p of particles) if (p.kind === "puff") p.draw(ctx, k, dpr);
+      for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k, dpr);
 
       ctx.globalCompositeOperation = "lighter";
-      for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k);
-      for (const p of particles) if (p.kind === "spark") p.draw(ctx, k);
-      for (const p of particles) if (p.kind === "flash") p.draw(ctx, k);
+      for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k, dpr);
+      for (const p of particles) if (p.kind === "spark") p.draw(ctx, k, dpr);
+      for (const p of particles) if (p.kind === "flash") p.draw(ctx, k, dpr);
 
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
 
@@ -958,7 +969,7 @@ export function MagicalSmoke({
         // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v4 - portal OK", 12, 24);
+        ctx.fillText("SMOKE v5 - smooth", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
@@ -990,10 +1001,28 @@ export function MagicalSmoke({
       wind.power *= Math.pow(0.92, dt);
       raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+
+    // Smoke sprites are built one per tick BEFORE the animation starts (no freeze at start)
+    let cancelled = false;
+    const warm: Array<() => void> = [];
+    for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) warm.push(() => { getNoiseSprite(hue, v); });
+    const runWarm = () => {
+      if (cancelled) return;
+      const job = warm.shift();
+      if (job) {
+        job();
+        setTimeout(runWarm, 0);
+      } else {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    runWarm();
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(rz);
       window.removeEventListener("resize", resize);
       window.removeEventListener("load", resize);
       ro?.disconnect();
