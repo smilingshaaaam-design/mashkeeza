@@ -1,5 +1,20 @@
 "use client";
 import React, { useEffect, useRef } from "react";
+/**
+• MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
+• Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
+• Flow:
+• 
+	1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
+• 
+	2. They travel up along the inverted 'S' curve to the top menu area.
+• 
+	3. At the top, the smoke stays aloft and gently dissipates from right to left.
+• 
+	4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
+• 
+	5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
+*/
 const ASMA_UL_HUSNA = [
 "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِکُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَکَبِّرُ",
 "الْخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
