@@ -29,7 +29,7 @@ const ASMA_UL_HUSNA = [
 
 const ARABIC_ALPHABET = [
   "ا", "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ", "ر", "ز", "س", "ش", "ص",
-  "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ك", "ل", "م", "ن", "ه", "و", "ي",
+  "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "ل", "م", "ن", "ه", "و", "ي",
 ];
 
 const TALISMAN_SYMBOLS = [
@@ -94,15 +94,15 @@ const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
   pt(0, 0),          // 1. Lamp nozzle origin
-  pt(60, -35),       // 2. Exits lamp smoothly curving right/up
-  pt(130, -105),     // 3. Curves out wide to the right side of the screen
-  pt(110, -195),     // 4. Sweeps upward, staying well clear of standard central limits
-  pt(45, -285),      // 5. Rises high up towards full vertical height
-  pt(-35, -370),     // 6. Crosses way above the menu boundaries vertically
-  pt(100, -420),     // 7. Sweeps across the extreme top edge of the window
-  pt(300, -420),     // 8. Flows fully from right to left at full page ceiling
-  pt(520, -420),     // 9. Glides further away to the top left area
-  pt(750, -420),     // 10. Dissipates completely off-screen at the very top edge
+  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -215),      // 5. Rises higher up passing through the right side space safely
+  pt(-45, -315),     // 6. Modified: Extends much higher vertically to bypass standard menu bounds
+  pt(90, -340),      // 7. Modified: Flows beautifully near the real absolute window ceiling
+  pt(270, -340),     // 8. Modified: Glides elegantly across the top header zone from right to left
+  pt(460, -340),     // 9. Modified: Flows toward the upper-left top edge cleanly
+  pt(650, -340),     // 10. Modified: Gently lingers & fades out at the far top ceiling corner
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -214,7 +214,7 @@ function buildPath(
   return { x, y, nx, ny };
 }
 
-/* ---------- Smoke, Firefly Dot, Star Sparkle & Glyph Textures ---------- */
+/* ---------- Procedural Smoke, Firefly Dot, Star Sparkle & Glyph Textures ---------- */
 
 const makeCanvas = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement("canvas");
@@ -433,7 +433,7 @@ class Particle {
   blinkRate = 2;
 
   isRaining = false;
-  releaseU = rand(0.55, 0.88); 
+  releaseU = rand(0.46, 0.86); 
   rainFallSpeed = rand(1.15, 2.05);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
@@ -464,7 +464,7 @@ class Particle {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
       this.baseAlpha = 1.0;
-      this.maxLife = rand(48, 72);
+      this.maxLife = rand(48, 72); 
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -509,7 +509,7 @@ class Particle {
           this.hasFlashed = true;
           onSpawnFlash(this.x, groundLevelPx, this.hue);
         }
-        this.u = 1;
+        this.u = 1; 
       }
       return;
     }
@@ -588,7 +588,7 @@ class Particle {
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    const fadeOut = 1 - smooth(0.72, 1.0, u);
+    const fadeOut = 1 - smooth(0.68, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
@@ -655,7 +655,7 @@ export function MagicalSmoke({
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
-  drift = 1.35,
+  drift = 1.25,
   speed = 0.55,
   showGlyphs = true,
   debug = false,
@@ -670,7 +670,7 @@ export function MagicalSmoke({
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 350 : 2500;
+    const MAX = reduced ? 350 : 2800;
     const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
@@ -686,6 +686,13 @@ export function MagicalSmoke({
         : spiral === "under"
         ? CTRL_UNDER
         : CTRL_OVER;
+
+    const ext = {
+      up: Math.max(20, -Math.min(...ctrl.map((c) => c.y))),
+      down: Math.max(20, ...ctrl.map((c) => c.y)),
+      fwd: Math.max(1, ...ctrl.map((c) => c.x)),
+      back: Math.max(0, -Math.min(...ctrl.map((c) => c.x))),
+    };
 
     let w = 0;
     let h = 0;
@@ -705,16 +712,25 @@ export function MagicalSmoke({
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = parent.clientWidth;
-      h = parent.clientHeight || window.innerHeight;
+      h = parent.clientHeight || 450;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const ox = w * originX;
       const oy = h * originY;
-      
       const fwdAvail = direction === "left" ? ox : w - ox;
-      k = Math.max(0.75, (fwdAvail * 1.1) / 360, h / 380);
+      const backAvail = direction === "left" ? w - ox : ox;
+      
+      // Amplified bounding checks to prevent menu collision while scaling properly
+      const limits: number[] = [
+        (h * 1.35) / 360,
+        (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
+      ];
+      if (ext.up > 0) limits.push(((oy * 1.45)) / ext.up);
+      if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
+      if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
+      k = Math.max(0.45, Math.min(...limits));
       path = buildPath(ox, oy, k, sgn, reach, ctrl);
     };
     resize();
@@ -736,7 +752,7 @@ export function MagicalSmoke({
         onMove(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
-    window.addEventListener("mousemove", mm, { passive: true });
+    window.addEventListener("mousemove", mm);
     window.addEventListener("touchmove", tm, { passive: true });
 
     const emit = (kind: Kind) => {
