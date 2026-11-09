@@ -118,6 +118,7 @@ interface Props {
   debug?: boolean;
   landingSpots?: LandingSpot[]; // Places (book, inkpot, desert...) where the stars land. Pass a stable constant / useMemo
   flashScale?: number; // Size of the star that appears after landing (default 0.5 = half size)
+  starScale?: number; // Size of the falling star (glyph turning into a star while falling). Default 0.5
   glyphGap?: number; // Min gap between two glyphs leaving the lamp, as a fraction (0..1) of the smoke path (default 0.07). Bigger = more space, fewer glyphs
 }
 
@@ -500,8 +501,8 @@ class Particle {
   releaseU = rand(0.55, 0.92); // Detaches while the smoke glides along the roof
   rainFallSpeed = rand(0.8, 1.45);
   rainDriftX = rand(-0.22, 0.22);
-  rainSwayFreq = rand(1.1, 2.3);
-  rainSwayAmp = rand(5, 13);
+  rainSwayFreq = rand(0.8, 1.6);
+  rainSwayAmp = rand(1.5, 4.5);
   hasFlashed = false;
   // Some glyphs turn into a star in mid-air (before touching the surface)
   midAirStar = Math.random() < 0.4;
@@ -512,6 +513,7 @@ class Particle {
   landX = 0; // chosen landing spot (x)
   landY = 0; // chosen landing spot (y)
   fade = 1;
+  starScale = 0.5;
   noiseSpr?: HTMLCanvasElement;
   glyphSpr?: HTMLCanvasElement;
   softSpr?: HTMLCanvasElement;
@@ -775,7 +777,7 @@ class Particle {
       // (b) Dot -> Star: grows and twinkles as it nears the landing spot
       if (m > 0.01) {
         const tw = 0.7 + 0.3 * Math.sin(this.rot * 40 + this.u * 30);
-        const s = (2.5 + 6.5 * m) * tw;
+        const s = (1.6 + 4.2 * m) * tw * (this.starScale / 0.5);
         ctx.globalAlpha = Math.min(1, m * 1.3) * this.baseAlpha * this.fade;
         place(ctx, dpr, this.x, this.y, this.rot * 6);
         ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
@@ -806,6 +808,7 @@ export function MagicalSmoke({
   landingSpots = DEFAULT_SPOTS,
   flashScale = 0.5,
   glyphGap = 0.07,
+  starScale = 0.5,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const smokeRef = useRef<HTMLCanvasElement>(null);
@@ -1024,7 +1027,9 @@ export function MagicalSmoke({
 
     const emit = (kind: Kind) => {
       if (cnt[kind] < CAP[kind]) {
-        particles.push(new Particle(kind, glyphs));
+        const np = new Particle(kind, glyphs);
+        np.starScale = starScale;
+        particles.push(np);
         cnt[kind]++;
       }
     };
@@ -1201,7 +1206,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug, landingSpots, flashScale, glyphGap]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug, landingSpots, flashScale, glyphGap, starScale]);
 
   if (!mounted) return null;
 
