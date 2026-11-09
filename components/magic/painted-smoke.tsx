@@ -97,12 +97,10 @@ const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
   pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
   pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
   pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -195),      // 5. Rises gracefully toward the upper menu height
-  pt(-45, -245),     // 6. Reaches top-right side above the navigation/menu
-  pt(90, -258),      // 7. Flows smoothly from right to left across the top menu
-  pt(270, -252),     // 8. Continues gliding across the center-top menu
-  pt(460, -260),     // 9. Flows toward the upper-left menu area
-  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
+  pt(35, -195),      // 5. Rises gracefully 
+  pt(-10, -260),     // 6. Continues rising straight up (passing behind the menu bar)
+  pt(-25, -340),     // 7. Passes through the menu area towards the top
+  pt(-40, -420),     // 8. Reaches the top of the screen
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -846,7 +844,7 @@ export function MagicalSmoke({
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
-      <canvas ref={canvasRef} className="w-full h-full opacity-95" />
+      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
 }
