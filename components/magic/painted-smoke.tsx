@@ -8,12 +8,13 @@ import { createPortal } from "react-dom";
  * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
  *
  * Flow:
- * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
+ * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle (continuously).
  * 2. They travel up along the inverted 'S' curve all the way to the top of the page
  *    (stopping just below the menu bar, so they never collide with it).
  * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
  * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
- * 5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
+ * 5. Near the ground each glyph gradually turns into a dot -> twinkling star, and on touching the
+ *    ground it bursts into a bright sparkle (plus small scattering sparkles) and vanishes.
  */
 
 const ASMA_UL_HUSNA = [
@@ -375,7 +376,7 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
 
-  // Crisp 4-point star rays (sitaray jaisi chamak)
+  // Crisp 4-point star rays
   g.save();
   g.translate(mid, mid);
   g.fillStyle = `hsla(${hue}, 100%, 96%, 0.95)`;
@@ -446,6 +447,9 @@ class Particle {
   off = rand(-1, 1);
   text = "";
   blinkRate = 2;
+  morph = 0; // 0 = Arabic glyph, 1 = fully turned into a star/dot
+  vx = 0; // movement of the small ground-burst sparkles
+  vy = 0;
 
   // Glyph ascent-then-rain state
   isRaining = false;
@@ -461,13 +465,13 @@ class Particle {
 
     if (kind === "puff") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.85, 1.3) * this.depth;
-      this.baseAlpha = rand(0.055, 0.115);
+      this.size = rand(1.0, 1.55) * this.depth;
+      this.baseAlpha = rand(0.08, 0.16);
       this.maxLife = rand(720, 960);
     } else if (kind === "wisp") {
       this.hue = pick(SMOKE_HUES);
-      this.size = rand(0.75, 1.25) * this.depth;
-      this.baseAlpha = rand(0.095, 0.19);
+      this.size = rand(0.85, 1.4) * this.depth;
+      this.baseAlpha = rand(0.12, 0.24);
       this.maxLife = rand(680, 920);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
@@ -500,14 +504,16 @@ class Particle {
     groundLevelPx: number,
     onSpawnFlash: (x: number, y: number, hue: number) => void
   ): void {
-    // 1. Ground star flash particle (sitaray jaisa jagmagana)
+    // 1. Ground star flash particle (twinkles, scatters slightly, then fades)
     if (this.kind === "flash") {
       this.u += dt / this.maxLife;
       if (this.u >= 1) return;
-      const peak = smooth(0, 0.16, this.u);
-      const fade = 1 - smooth(0.28, 1.0, this.u);
-      // Rapid star-like shimmer pulse before vanishing
-      const twinkle = 0.65 + 0.35 * Math.sin(this.u * Math.PI * 5);
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      this.vy += 0.03 * dt; // slight gravity
+      const peak = smooth(0, 0.12, this.u);
+      const fade = 1 - smooth(0.3, 1.0, this.u);
+      const twinkle = 0.6 + 0.4 * Math.sin(this.u * Math.PI * 6);
       this.alpha = this.baseAlpha * peak * fade * twinkle;
       return;
     }
@@ -518,13 +524,14 @@ class Particle {
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
       this.rot += this.rotSpeed * 0.45 * dt;
 
-      // Keep full visibility while falling, fade slightly right at ground contact
-      const distToGround = groundLevelPx - this.y;
-      const groundApproach = distToGround < 32 ? Math.max(0, distToGround / 32) : 1;
-      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
-      this.alpha = this.baseAlpha * groundApproach * (0.45 + 0.55 * b * b);
+      // From ~110px above the ground the glyph slowly turns into a star/dot
+      const fallZone = 110 * Math.max(0.8, k);
+      this.morph = smooth(groundLevelPx - fallZone, groundLevelPx - 6, this.y);
 
-      // Hit the ground (zameen): vanish and burst into a twinkling star sparkle
+      const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
+      this.alpha = this.baseAlpha * (0.5 + 0.5 * b * b);
+
+      // Touching the ground (zameen): vanish with a bright sparkle
       if (this.y >= groundLevelPx) {
         if (!this.hasFlashed) {
           this.hasFlashed = true;
@@ -655,18 +662,36 @@ class Particle {
       ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
       ctx.restore();
     } else {
-      const r = this.size * 2.0;
-      ctx.globalAlpha = Math.min(1, this.alpha * 0.45);
-      ctx.drawImage(getSoftSprite(this.hue, 68), this.x - r, this.y - r, r * 2, r * 2);
-      ctx.globalAlpha = Math.min(1, this.alpha);
-      const sp = getGlyphSprite(this.text, this.hue, this.size);
-      const w = sp.width / 2;
-      const h = sp.height / 2;
-      ctx.save();
-      ctx.translate(this.x, this.y);
-      ctx.rotate(Math.sin(this.rot * 18) * 0.12);
-      ctx.drawImage(sp, -w / 2, -h / 2, w, h);
-      ctx.restore();
+      const m = this.morph;
+
+      // (a) Arabic glyph: fades away as it turns into a star
+      const ga = this.alpha * (1 - m);
+      if (ga > 0.003) {
+        const r = this.size * 2.0;
+        ctx.globalAlpha = Math.min(1, ga * 0.45);
+        ctx.drawImage(getSoftSprite(this.hue, 68), this.x - r, this.y - r, r * 2, r * 2);
+        ctx.globalAlpha = Math.min(1, ga);
+        const sp = getGlyphSprite(this.text, this.hue, this.size * (1 - 0.35 * m));
+        const w = sp.width / 2;
+        const h = sp.height / 2;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(Math.sin(this.rot * 18) * 0.12);
+        ctx.drawImage(sp, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+
+      // (b) Dot -> Star: grows and twinkles as it nears the ground
+      if (m > 0.01) {
+        const tw = 0.7 + 0.3 * Math.sin(this.rot * 40 + this.u * 30);
+        const s = (3 + 9 * m) * tw;
+        ctx.globalAlpha = Math.min(1, m * 1.3) * this.baseAlpha;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rot * 6);
+        ctx.drawImage(getStarFlashSprite(this.hue), -s, -s, s * 2, s * 2);
+        ctx.restore();
+      }
     }
   }
 }
@@ -709,7 +734,17 @@ export function MagicalSmoke({
     if (!ctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const MAX = reduced ? 350 : 2800;
+
+    // Separate cap per particle type, so sparks/glyphs can never block the smoke
+    const CAP: Record<Kind, number> = {
+      puff: reduced ? 150 : 2200,
+      wisp: reduced ? 150 : 2200,
+      glyph: reduced ? 40 : 320,
+      spark: reduced ? 80 : 900,
+      flash: reduced ? 60 : 500,
+    };
+    const cnt: Record<Kind, number> = { puff: 0, wisp: 0, glyph: 0, spark: 0, flash: 0 };
+
     const rate = reduced ? 0.3 : 1;
     const reach = Math.max(0.3, drift);
     const sgn = direction === "left" ? -1 : 1;
@@ -847,15 +882,37 @@ export function MagicalSmoke({
     window.addEventListener("touchmove", tm, { passive: true });
 
     const emit = (kind: Kind) => {
-      if (particles.length < MAX) particles.push(new Particle(kind, glyphs));
+      if (cnt[kind] < CAP[kind]) {
+        particles.push(new Particle(kind, glyphs));
+        cnt[kind]++;
+      }
     };
 
     const spawnFlash = (fx: number, fy: number, hue: number) => {
-      const flash = new Particle("flash", glyphs);
-      flash.x = fx;
-      flash.y = fy;
-      flash.hue = hue;
-      particles.push(flash);
+      // Big central star burst
+      const main = new Particle("flash", glyphs);
+      main.x = fx;
+      main.y = fy;
+      main.hue = hue;
+      main.size = rand(3.4, 4.6);
+      main.maxLife = rand(55, 80);
+      particles.push(main);
+
+      // Small sparkles that scatter around and fade out
+      const n = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n; i++) {
+        const sp = new Particle("flash", glyphs);
+        const a = rand(Math.PI * 1.05, Math.PI * 1.95); // scatter upwards
+        const v = rand(0.25, 0.9);
+        sp.x = fx;
+        sp.y = fy;
+        sp.vx = Math.cos(a) * v;
+        sp.vy = Math.sin(a) * v;
+        sp.hue = Math.random() < 0.5 ? hue : 45;
+        sp.size = rand(1.0, 1.9);
+        sp.maxLife = rand(30, 52);
+        particles.push(sp);
+      }
     };
 
     const frame = (now: number) => {
@@ -865,10 +922,14 @@ export function MagicalSmoke({
 
       ctx.clearRect(0, 0, w, h);
 
-      acc.puff += dt * 1.45 * rate;
-      acc.wisp += dt * 1.7 * rate;
-      if (showGlyphs) acc.glyph += dt * 0.28 * rate;
-      acc.spark += dt * 1.15 * rate;
+      // Count per type, so one type can never stop the smoke
+      cnt.puff = cnt.wisp = cnt.glyph = cnt.spark = cnt.flash = 0;
+      for (let i = 0; i < particles.length; i++) cnt[particles[i].kind]++;
+
+      acc.puff += dt * 1.9 * rate;
+      acc.wisp += dt * 2.2 * rate;
+      if (showGlyphs) acc.glyph += dt * 0.3 * rate;
+      acc.spark += dt * 1.3 * rate;
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
@@ -897,7 +958,7 @@ export function MagicalSmoke({
         // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v3 - portal OK", 12, 24);
+        ctx.fillText("SMOKE v4 - portal OK", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
