@@ -76,6 +76,7 @@ interface Props {
   originY?: number;
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
+  targetSelector?: string; // CSS selector of the element smoke should rise up to (e.g. "#hero-tagline"). Overrides menuHeight/heightBoost
   heightBoost?: number; // Vertical stretch multiplier (1 = fit exactly, >1 = taller)
   topGap?: number; // Extra gap (px) kept between smoke path and menu bar. Smaller = taller smoke
   glyphs?: string[];
@@ -676,6 +677,7 @@ export function MagicalSmoke({
   menuHeight = 90,
   topGap = 0,
   heightBoost = 1.4,
+  targetSelector,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
@@ -722,6 +724,7 @@ export function MagicalSmoke({
     let h = 0;
     let k = 1;
     let ky = 1; // vertical scale
+    let topLimit = menuHeight; // y (px) where the smoke path ends at the top
     let path: Path = buildPath(0, 0, 1, 1, sgn, reach, ctrl);
     let raf = 0;
     let particles: Particle[] = [];
@@ -756,9 +759,19 @@ export function MagicalSmoke({
       k = Math.max(0.45, Math.min(...limits));
 
       // Vertical scale: origin -> top of page (just below the menu bar)
-      const topMargin = menuHeight + topGap; // menu + optional gap (smaller = taller)
+      let topMargin = menuHeight + topGap; // menu + optional gap (smaller = taller)
+      let boost = heightBoost;
+      const targetEl = targetSelector ? document.querySelector(targetSelector) : null;
+      if (targetEl) {
+        // Smoke rises ABOVE the target element (e.g. the tagline): one element-height over its top edge
+        const tr = targetEl.getBoundingClientRect();
+        const pr = parent.getBoundingClientRect();
+        topMargin = tr.top - pr.top - tr.height + topGap;
+        boost = 1;
+      }
+      topLimit = topMargin;
       const upAvail = Math.max(60, oy - topMargin);
-      ky = (upAvail / ext.up) * heightBoost; // extra stretch for more height
+      ky = (upAvail / ext.up) * boost; // extra stretch for more height
 
       // Paths that go downward (e.g. "down") must not exit the bottom of the page
       if (ext.down > 20) {
@@ -769,6 +782,13 @@ export function MagicalSmoke({
     };
     resize();
     window.addEventListener("resize", resize);
+    window.addEventListener("load", resize);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    ro?.observe(parent);
+    if (targetSelector) {
+      const el = document.querySelector(targetSelector);
+      if (el) ro?.observe(el);
+    }
 
     const onMove = (cx: number, cy: number) => {
       const r = canvas.getBoundingClientRect();
@@ -854,8 +874,8 @@ export function MagicalSmoke({
         // Menu bar limit debug indicator
         ctx.strokeStyle = "cyan";
         ctx.beginPath();
-        ctx.moveTo(0, menuHeight);
-        ctx.lineTo(w, menuHeight);
+        ctx.moveTo(0, topLimit);
+        ctx.lineTo(w, topLimit);
         ctx.stroke();
         ctx.setLineDash([]);
       }
@@ -868,11 +888,13 @@ export function MagicalSmoke({
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("load", resize);
+      ro?.disconnect();
       window.removeEventListener("mousemove", mm);
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
