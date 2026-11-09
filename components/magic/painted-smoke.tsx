@@ -15,7 +15,7 @@ import React, { useEffect, useRef } from "react";
  */
 
 const ASMA_UL_HUSNA = [
-  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَكَبِّرُ",
+  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِکُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَکَبِّرُ",
   "الْخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
   "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَکَمُ", "الْعَدْلُ", "اللَّطِيفُ",
   "الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّکُورُ", "الْعَلِيُّ", "الْکَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
@@ -23,7 +23,7 @@ const ASMA_UL_HUSNA = [
   "الْحَقُّ", "الْوَکِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
   "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
   "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
   "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ",
 ];
 
@@ -90,28 +90,49 @@ type CtrlPoint = { x: number; y: number };
 
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
-/* ---------- FIXED OVERHEAD PATH: Explicitly flies over the navbar container height completely ---------- */
+/* ---------- Inverted 'S' Path Rising Left & Flowing Across Top Menu ---------- */
+// Vertically shifted higher up to cross beyond absolute layout bounds (-500 max depth)
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
   pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -22),       // 2. Exits lamp smoothly curving forward
-  pt(125, -78),      // 3. Loops outward wide into the safe right margins
-  pt(105, -155),     // 4. Climbs vertically up the right side corridor
-  pt(45, -235),      // 5. Continues upward, completely bypassing menu bounding limits
-  pt(-55, -315),     // 6. Crosses directly overhead into the absolute top area space
-  pt(90, -360),      // 7. Reaches top-most Y coordinate ceiling well above menu height
-  pt(270, -360),     // 8. Flows natively from right to left across full viewport ceiling
-  pt(460, -360),     // 9. Continues smoothly flowing across top-left ceiling
-  pt(650, -360),     // 10. Lingers & safely dissipates off structural edges at full vertical height
+  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -210),      // 5. Rises gracefully way over standard landing areas
+  pt(-45, -340),     // 6. Modified: Overrides central limits to go high above the navigation/menu
+  pt(90, -480),      // 7. Modified: Forces curve directly below the extreme screen header bounds
+  pt(270, -490),     // 8. Modified: Flows seamlessly across the true page ceiling 
+  pt(460, -500),     // 9. Modified: Flows fully toward far upper-left layout corners
+  pt(650, -510),     // 10. Modified: Gently lingers & fades out deep within the absolute header bounds
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
-  pt(0, 0), pt(65, -3), pt(135, 4), pt(210, 55), pt(290, 105), pt(360, 40), pt(325, -45),
-  pt(410, -115), pt(510, -65), pt(595, 25), pt(680, -70), pt(760, -175), pt(840, -250),
+  pt(0, 0),
+  pt(65, -3),
+  pt(135, 4),
+  pt(210, 55),
+  pt(290, 105),
+  pt(360, 40),
+  pt(325, -45),
+  pt(410, -115),
+  pt(510, -65),
+  pt(595, 25),
+  pt(680, -70),
+  pt(760, -175),
+  pt(840, -250),
 ];
 
 const CTRL_STRAIGHT_SWING: CtrlPoint[] = [
-  pt(0, 0), pt(65, -2), pt(130, 3), pt(195, 48), pt(265, 85), pt(340, 25), pt(415, -55),
-  pt(490, -110), pt(565, -40), pt(645, -125), pt(730, -205),
+  pt(0, 0),
+  pt(65, -2),
+  pt(130, 3),
+  pt(195, 48),
+  pt(265, 85),
+  pt(340, 25),
+  pt(415, -55),
+  pt(490, -110),
+  pt(565, -40),
+  pt(645, -125),
+  pt(730, -205),
 ];
 
 const CTRL_OVER: CtrlPoint[] = [
@@ -129,7 +150,8 @@ const CTRL_UNDER: CtrlPoint[] = [
 const CTRL_DOWN: CtrlPoint[] = [
   pt(0, 0), pt(25, 30), pt(60, 70), pt(92, 120), pt(60, 150), pt(15, 128),
   pt(28, 88), pt(70, 45), pt(95, -10), pt(80, -70), pt(120, -108), pt(200, -122),
-  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210), pt(730, -235),
+  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210),
+  pt(730, -235),
 ];
 
 const N = 360;
@@ -322,6 +344,7 @@ const getDotSprite = (hue: number): HTMLCanvasElement => {
   return c;
 };
 
+// Twinkling 4-point star sparkle sprite for ground impact
 const starFlashSprites = new Map<number, HTMLCanvasElement>();
 const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   let c = starFlashSprites.get(hue);
@@ -331,6 +354,7 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   c = makeCanvas(S, S);
   const g = c.getContext("2d")!;
 
+  // Soft outer star halo
   const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
   gr.addColorStop(0, `hsla(${hue}, 100%, 97%, 1)`);
   gr.addColorStop(0.18, `hsla(${hue}, 100%, 78%, 0.85)`);
@@ -339,6 +363,7 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
 
+  // Crisp 4-point star rays (sitaray jaisi chamak)
   g.save();
   g.translate(mid, mid);
   g.fillStyle = `hsla(${hue}, 100%, 96%, 0.95)`;
@@ -410,8 +435,9 @@ class Particle {
   text = "";
   blinkRate = 2;
 
+  // Glyph ascent-then-rain state
   isRaining = false;
-  releaseU = rand(0.46, 0.86); 
+  releaseU = rand(0.46, 0.86); // Detaches along the upper menu portion of the smoke path
   rainFallSpeed = rand(1.15, 2.05);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
@@ -442,7 +468,7 @@ class Particle {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
       this.baseAlpha = 1.0;
-      this.maxLife = rand(48, 72);
+      this.maxLife = rand(48, 72); // Twinkles brightly on the ground then fades out
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -462,36 +488,42 @@ class Particle {
     groundLevelPx: number,
     onSpawnFlash: (x: number, y: number, hue: number) => void
   ): void {
+    // 1. Ground star flash particle (sitaray jaisa jagmagana)
     if (this.kind === "flash") {
       this.u += dt / this.maxLife;
       if (this.u >= 1) return;
       const peak = smooth(0, 0.16, this.u);
       const fade = 1 - smooth(0.28, 1.0, this.u);
+      // Rapid star-like shimmer pulse before vanishing
       const twinkle = 0.65 + 0.35 * Math.sin(this.u * Math.PI * 5);
       this.alpha = this.baseAlpha * peak * fade * twinkle;
       return;
     }
 
+    // 2. Glyph: First rises inside smoke from lamp to top menu, then rains down to the ground
     if (this.kind === "glyph" && this.isRaining) {
       this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
       this.rot += this.rotSpeed * 0.45 * dt;
 
+      // Keep full visibility while falling, fade slightly right at ground contact
       const distToGround = groundLevelPx - this.y;
       const groundApproach = distToGround < 32 ? Math.max(0, distToGround / 32) : 1;
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha = this.baseAlpha * groundApproach * (0.45 + 0.55 * b * b);
 
+      // Hit the ground (zameen): vanish and burst into a twinkling star sparkle
       if (this.y >= groundLevelPx) {
         if (!this.hasFlashed) {
           this.hasFlashed = true;
           onSpawnFlash(this.x, groundLevelPx, this.hue);
         }
-        this.u = 1;
+        this.u = 1; // Remove glyph immediately on ground impact
       }
       return;
     }
 
+    // 3. Standard path progression (from lamp up the inverted 'S' to the top menu)
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -556,6 +588,7 @@ class Particle {
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
+    // Once glyph reaches the top menu portion of the smoke, detach & start raining down
     if (this.kind === "glyph" && u >= this.releaseU) {
       this.isRaining = true;
       return;
@@ -566,6 +599,7 @@ class Particle {
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
+    // Smoke stays aloft at the top menu and gently fades out as it travels left
     const fadeOut = 1 - smooth(0.68, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
@@ -599,6 +633,7 @@ class Particle {
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else if (this.kind === "flash") {
+      // Expand sharply on impact, twinkle like a star, then shrink/fade away
       const expand = this.u < 0.22 ? 0.4 + (this.u / 0.22) * 1.1 : 1.5 - (this.u - 0.22) * 0.65;
       const s = this.size * 6.5 * Math.max(0.25, expand);
       ctx.globalAlpha = Math.min(1, this.alpha);
@@ -665,6 +700,13 @@ export function MagicalSmoke({
         ? CTRL_UNDER
         : CTRL_OVER;
 
+    const ext = {
+      up: Math.max(20, -Math.min(...ctrl.map((c) => c.y))),
+      down: Math.max(20, ...ctrl.map((c) => c.y)),
+      fwd: Math.max(1, ...ctrl.map((c) => c.x)),
+      back: Math.max(0, -Math.min(...ctrl.map((c) => c.x))),
+    };
+
     let w = 0;
     let h = 0;
     let k = 1;
@@ -691,12 +733,15 @@ export function MagicalSmoke({
       const ox = w * originX;
       const oy = h * originY;
       const fwdAvail = direction === "left" ? ox : w - ox;
-      
-      // FIXED LIMITS BLOCK: Enforcing safe dynamic responsive scale multiplier to explicitly push above vertical screen boundary constraints safely
-      const rawScaleH = h / 210; 
-      const rawScaleW = (fwdAvail * 0.98) / 125;
-      k = Math.max(1.35, Math.min(rawScaleH, rawScaleW));
-
+      const backAvail = direction === "left" ? w - ox : ox;
+      const limits: number[] = [
+        h / 360,
+        (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
+      ];
+      if (ext.up > 0) limits.push((oy * 1.5) / ext.up); // Boosted upper factor to expand vectors past header bars safely
+      if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
+      if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
+      k = Math.max(0.45, Math.min(...limits));
       path = buildPath(ox, oy, k, sgn, reach, ctrl);
     };
     resize();
@@ -714,7 +759,7 @@ export function MagicalSmoke({
     };
     const mm = (e: MouseEvent) => onMove(e.clientX, e.clientY);
     const tm = (e: TouchEvent) => {
-      if (e.touches && e.touches.length > 0) {
+      if (e.touches && e.touches[0]) {
         onMove(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
@@ -779,6 +824,7 @@ export function MagicalSmoke({
         ctx.lineTo(path.x[0], path.y[0] + 14);
         ctx.stroke();
 
+        // Ground line debug indicator
         ctx.strokeStyle = "gold";
         ctx.setLineDash([6, 6]);
         ctx.beginPath();
