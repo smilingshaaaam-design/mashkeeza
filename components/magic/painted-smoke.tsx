@@ -485,7 +485,7 @@ class Particle {
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
       this.hue = pick(GLYPH_HUES);
-      this.size = rand(13, 20);
+      this.size = rand(11, 18); // 2pt smaller
       this.baseAlpha = rand(0.84, 1.0);
       this.blinkRate = rand(1.1, 2.4);
       this.maxLife = rand(680, 900);
@@ -711,7 +711,7 @@ export function MagicalSmoke({
   direction = "left",
   spiral = "inverted-s-top",
   drift = 1.25,
-  speed = 0.55,
+  speed = 0.42,
   showGlyphs = true,
   debug = false,
 }: Props) {
@@ -779,6 +779,7 @@ export function MagicalSmoke({
     let particles: Particle[] = [];
     let t = 0;
     let last = performance.now();
+    let avgDelta = 1; // smoothed frame time (in 60fps frames)
     const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
     const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 
@@ -921,8 +922,11 @@ export function MagicalSmoke({
     };
 
     const frame = (now: number) => {
-      const dt = Math.min((now - last) / 16.667, 3) * speed;
+      // Smooth the frame time so a single slow frame doesn't make the motion jump
+      const rawDelta = Math.min((now - last) / 16.667, 2.5);
       last = now;
+      avgDelta += (rawDelta - avgDelta) * 0.12;
+      const dt = avgDelta * speed;
       t += dt / 60;
 
       ctx.clearRect(0, 0, w, h);
@@ -969,7 +973,7 @@ export function MagicalSmoke({
         // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v5 - smooth", 12, 24);
+        ctx.fillText("SMOKE v6 - slow+smooth", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
