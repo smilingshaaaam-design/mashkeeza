@@ -79,7 +79,7 @@ export type LandingSpot = {
   x: number;       // 0..1 (relative to hero box width)
   y: number;       // 0..1 (relative to hero box height) 
   spread?: number; // horizontal spread
-  ySpread?: number;// vertical spread (MODIFICATION 2: Randomize Y level so they don't hit in a straight flat line)
+  ySpread?: number;// vertical spread (Randomize Y level so they don't hit in a straight flat line)
   weight?: number; // chance of landing here
 };
 type SpotPx = { x: number; y: number; spread: number; ySpread: number; weight: number };
@@ -335,7 +335,7 @@ class Particle {
         const s = pickSpot();
         if (s) {
           this.landX = s.x + rand(-1, 1) * s.spread;
-          // MODIFICATION 2: Apply ySpread so they land at slightly different levels
+          // Apply ySpread so they land at slightly different levels
           this.landY = Math.max(s.y + rand(-1, 1) * s.ySpread, this.y + 40); 
         } else {
           this.landX = this.x; this.landY = groundLevelPx;
@@ -455,9 +455,7 @@ export function MagicalSmoke({
   targetSelector, anchorSelector, zIndex = 100, glyphs = DEFAULT_GLYPHS, direction = "left",
   spiral = "inverted-s-top", drift = 1.25, speed = 0.3, showGlyphs = true, debug = false,
   landingSpots = DEFAULT_SPOTS, 
-  // MODIFICATION 3: Halved flashScale from 0.5 to 0.25 to make burst smaller
   flashScale = 0.25, 
-  // MODIFICATION 1: Increased glyph gap so they are further apart
   glyphGap = 0.15, 
   starScale = 0.5,
 }: Props) {
@@ -549,14 +547,18 @@ export function MagicalSmoke({
 
     const spawnFlash = (fx: number, fy: number, hue: number) => {
       const main = new Particle("flash", glyphs); main.x = fx; main.y = fy; main.hue = hue;
-      // MODIFICATION 3: Using flashScale to make the initial burst much smaller
-      main.size = rand(1.0, 1.5) * flashScale; main.maxLife = rand(40, 60); particles.push(main);
+      
+      // === EXPLOSION SIZE YAHAN REDUCE KIYA GAYA HAI ===
+      // Main Star base size reduced to approx ~0.25
+      main.size = rand(0.2, 0.3) * flashScale; main.maxLife = rand(40, 60); particles.push(main);
+      
       const n = 2 + Math.floor(Math.random() * 3);
       for (let i = 0; i < n; i++) {
         const sp = new Particle("flash", glyphs), a = rand(Math.PI * 1.05, Math.PI * 1.95), v = rand(0.15, 0.55) * Math.max(0.5, flashScale);
         sp.x = fx; sp.y = fy; sp.vx = Math.cos(a) * v; sp.vy = Math.sin(a) * v; sp.hue = Math.random() < 0.5 ? hue : 45;
-        // MODIFICATION 3: Scaling down mini scatter sparks as well
-        sp.size = rand(0.3, 0.7) * flashScale; sp.maxLife = rand(24, 40); particles.push(sp);
+        
+        // Scatter Sparks proportionally reduced
+        sp.size = rand(0.05, 0.15) * flashScale; sp.maxLife = rand(24, 40); particles.push(sp);
       }
     };
 
@@ -567,7 +569,6 @@ export function MagicalSmoke({
       cnt.puff = cnt.wisp = cnt.glyph = cnt.spark = cnt.flash = 0;
       for (let i = 0; i < particles.length; i++) cnt[particles[i].kind]++;
 
-      // MODIFICATION 1: Increased smoke density rate
       acc.puff += dt * 1.2 * rate; 
       acc.wisp += dt * 1.4 * rate; 
       if (showGlyphs) acc.glyph += dt * 0.5 * rate;
