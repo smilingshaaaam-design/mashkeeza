@@ -118,6 +118,7 @@ interface Props {
   debug?: boolean;
   landingSpots?: LandingSpot[]; // Places (book, inkpot, desert...) where the stars land. Pass a stable constant / useMemo
   flashScale?: number; // Size of the star that appears after landing (default 0.5 = half size)
+  glyphGap?: number; // Min gap between two glyphs leaving the lamp, as a fraction (0..1) of the smoke path (default 0.07). Bigger = more space, fewer glyphs
 }
 
 type Kind = "puff" | "wisp" | "glyph" | "spark" | "flash";
@@ -497,7 +498,7 @@ class Particle {
   // Glyph ascent-then-rain state
   isRaining = false;
   releaseU = rand(0.55, 0.92); // Detaches while the smoke glides along the roof
-  rainFallSpeed = rand(1.0, 1.9);
+  rainFallSpeed = rand(0.8, 1.45);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
   rainSwayAmp = rand(5, 13);
@@ -534,7 +535,7 @@ class Particle {
       this.size = rand(11, 18);
       this.baseAlpha = rand(0.84, 1.0);
       this.blinkRate = rand(1.1, 2.4);
-      this.maxLife = rand(680, 900);
+      this.maxLife = rand(790, 810); // nearly equal speed -> glyphs keep their spacing on the path
     } else if (kind === "flash") {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
@@ -664,8 +665,8 @@ class Particle {
       offN = Math.cos(th) * r + randWave;
       offT = Math.sin(th) * r * 0.82;
     } else if (this.kind === "glyph") {
-      offN = this.off * k * (6 + 30 * chaos) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 9 * chaos;
-      offT = Math.cos(t * 0.65 + this.seed) * k * 9 * chaos;
+      offN = this.off * k * (3 + 10 * chaos) + Math.sin(t * 0.85 + this.seed + u * 5) * k * 4 * chaos;
+      offT = 0; // no back/forth shift, so the spacing stays even
     } else {
       offN =
         this.off * k * (6 + 40 * chaos + 26 * roamBoost) * this.depth +
@@ -690,8 +691,9 @@ class Particle {
     let wx = 0;
     let wy = 0;
     if (this.kind === "glyph" || this.kind === "spark") {
-      wx = Math.sin(t * 0.65 + this.seed) * k * (9 * chaos + 7 * roamBoost);
-      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (9 * chaos + 7 * roamBoost);
+      const wm = this.kind === "glyph" ? 0.3 : 1; // glyphs wander much less
+      wx = Math.sin(t * 0.65 + this.seed) * k * (9 * chaos + 7 * roamBoost) * wm;
+      wy = Math.cos(t * 0.55 + this.seed * 1.7) * k * (9 * chaos + 7 * roamBoost) * wm;
     }
 
     this.x = px + nx * offN + tx * offT + this.dx + wx;
@@ -714,7 +716,7 @@ class Particle {
 
     // Smoke stays aloft at the roof and gently fades out as it travels left
     const fadeOut = 1 - smooth(0.68, 1.0, u);
-    const env = smooth(0, 0.03, u) * fadeOut;
+    const env = smooth(0, this.kind === "glyph" ? 0.08 : 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
     if (this.kind === "spark") {
@@ -798,11 +800,12 @@ export function MagicalSmoke({
   direction = "left",
   spiral = "inverted-s-top",
   drift = 1.25,
-  speed = 0.42,
+  speed = 0.3,
   showGlyphs = true,
   debug = false,
   landingSpots = DEFAULT_SPOTS,
   flashScale = 0.5,
+  glyphGap = 0.07,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const smokeRef = useRef<HTMLCanvasElement>(null);
@@ -1063,7 +1066,7 @@ export function MagicalSmoke({
       // Smooth the frame time so a single slow frame doesn't make the motion jump
       const rawDelta = Math.min((now - last) / 16.667, 2.5);
       last = now;
-      avgDelta += (rawDelta - avgDelta) * 0.12;
+      avgDelta += (rawDelta - avgDelta) * 0.07;
       const dt = avgDelta * speed;
       t += dt / 60;
 
@@ -1081,7 +1084,16 @@ export function MagicalSmoke({
 
       while (acc.puff >= 1) { acc.puff--; emit("puff"); }
       while (acc.wisp >= 1) { acc.wisp--; emit("wisp"); }
-      while (acc.glyph >= 1) { acc.glyph--; emit("glyph"); }
+      if (acc.glyph >= 1) {
+        // Emit a glyph only when the previous one has moved far enough from the nozzle
+        let free = true;
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          if (p.kind === "glyph" && !p.isRaining && p.u < glyphGap) { free = false; break; }
+        }
+        if (free) { acc.glyph = 0; emit("glyph"); }
+        else acc.glyph = 1; // wait, don't pile up
+      }
       while (acc.spark >= 1) { acc.spark--; emit("spark"); }
 
       const groundLevelPx = groundPx;
@@ -1189,7 +1201,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug, landingSpots, flashScale]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, targetSelector, anchorSelector, mounted, glyphs, direction, spiral, drift, speed, showGlyphs, debug, landingSpots, flashScale, glyphGap]);
 
   if (!mounted) return null;
 
