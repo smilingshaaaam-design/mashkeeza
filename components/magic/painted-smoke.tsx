@@ -20,10 +20,10 @@ const ASMA_UL_HUSNA = [
   "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَكَمُ", "الْعَدْلُ", "اللَّطِيفُ",
   "الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّكُورُ", "الْعَلِيُّ", "الْكَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
   "الْجَلِيلُ", "الْكَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ", "الْوَاسِعُ", "الْحَكِيمُ", "الْوَدُودُ", "الْمَجِيدُ", "الْبَاعِثُ", "الشَّهِيدُ",
-  "الْحَقُّ", "الْوَكِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
+  "الْحَقُّ", "الْوَکِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
   "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
   "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِكُ الْمُلْكِ", "ذُو الْجَلَالِ وَالْإِكْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِكُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
   "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ",
 ];
 
@@ -94,15 +94,15 @@ const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
   pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
-  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
-  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -195),      // 5. Rises gracefully toward the upper menu height
-  pt(-45, -245),     // 6. Reaches top-right side above the navigation/menu
-  pt(90, -258),      // 7. Flows smoothly from right to left across the top menu
-  pt(270, -252),     // 8. Continues gliding across the center-top menu
-  pt(460, -260),     // 9. Flows toward the upper-left menu area
-  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
+  pt(55, -25),       // 2. Exits lamp slightly forward (left) and curves upward
+  pt(115, -85),      // 3. Curves smoothly into the lower belly of the inverted 'S'
+  pt(95, -165),      // 4. Sweeps inward/upward to form the middle S-bend
+  pt(35, -245),      // 5. Rises gracefully toward the upper menu height
+  pt(-25, -315),     // 6. Modified: Goes further up right side to pass above the menu
+  pt(90, -360),      // 7. Modified: Reaches much higher Y level near the very top of full page
+  pt(270, -360),     // 8. Modified: Glides from right to left across the absolute top border
+  pt(460, -360),     // 9. Modified: Keeps gliding at the extreme top-left height
+  pt(650, -360),     // 10. Modified: Gently lingers & fades out at the absolute top-left edge
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
