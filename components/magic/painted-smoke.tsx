@@ -679,7 +679,7 @@ export function MagicalSmoke({
   topGap = 0,
   heightBoost = 1.4,
   targetSelector,
-  zIndex = 50,
+  zIndex = 100,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
