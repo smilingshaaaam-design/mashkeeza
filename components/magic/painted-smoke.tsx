@@ -66,6 +66,13 @@ const GLYPH_HUES: number[] = [
 ];
 
 const TAU = Math.PI * 2;
+const SMOKE_RES = 0.5; // smoke is drawn at half resolution (it is soft anyway) -> ~4x less GPU work
+const SMOKE_SIZE = 1.12; // slightly bigger puffs to compensate for the lower emission rate
+const glyphHueFor = (text: string): number => {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) | 0;
+  return GLYPH_HUES[Math.abs(h) % GLYPH_HUES.length];
+};
 const rand = (a: number, b: number): number => Math.random() * (b - a) + a;
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const smooth = (a: number, b: number, x: number): number => {
@@ -474,6 +481,9 @@ class Particle {
   rainSwayFreq = rand(1.1, 2.3);
   rainSwayAmp = rand(5, 13);
   hasFlashed = false;
+  noiseSpr?: HTMLCanvasElement;
+  glyphSpr?: HTMLCanvasElement;
+  softSpr?: HTMLCanvasElement;
 
   constructor(public kind: Kind, glyphs: string[]) {
     this.depth = rand(0.7, 1.32);
@@ -490,7 +500,7 @@ class Particle {
       this.maxLife = rand(680, 920);
     } else if (kind === "glyph") {
       this.text = pick(glyphs);
-      this.hue = pick(GLYPH_HUES);
+      this.hue = glyphHueFor(this.text);
       this.size = rand(11, 18);
       this.baseAlpha = rand(0.84, 1.0);
       this.blinkRate = rand(1.1, 2.4);
@@ -661,11 +671,12 @@ class Particle {
     if (this.kind === "puff" || this.kind === "wisp") {
       const s =
         this.kind === "puff"
-          ? k * (11 + 52 * u) * this.size
-          : k * (5 + 22 * u) * this.size;
+          ? k * (11 + 52 * u) * this.size * SMOKE_SIZE
+          : k * (5 + 22 * u) * this.size * SMOKE_SIZE;
       ctx.globalAlpha = Math.min(0.65, this.alpha);
       place(ctx, dpr, this.x, this.y, this.rot);
-      ctx.drawImage(getNoiseSprite(this.hue, this.variant), -s, -s, s * 2, s * 2);
+      const ns = this.noiseSpr || (this.noiseSpr = getNoiseSprite(this.hue, this.variant));
+      ctx.drawImage(ns, -s, -s, s * 2, s * 2);
     } else if (this.kind === "spark") {
       const s = this.size * 3.0;
       ctx.globalAlpha = Math.min(1, this.alpha);
@@ -686,9 +697,10 @@ class Particle {
         const r = this.size * 2.0;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.globalAlpha = Math.min(1, ga * 0.45);
-        ctx.drawImage(getSoftSprite(this.hue, 68), this.x - r, this.y - r, r * 2, r * 2);
+        const ss = this.softSpr || (this.softSpr = getSoftSprite(this.hue, 68));
+        ctx.drawImage(ss, this.x - r, this.y - r, r * 2, r * 2);
         ctx.globalAlpha = Math.min(1, ga);
-        const sp = getGlyphSprite(this.text, this.hue);
+        const sp = this.glyphSpr || (this.glyphSpr = getGlyphSprite(this.text, this.hue));
         const sc = (this.size / GLYPH_BASE) * (1 - 0.35 * m);
         const w = (sp.width / GLYPH_SC) * sc;
         const h = (sp.height / GLYPH_SC) * sc;
@@ -729,6 +741,7 @@ export function MagicalSmoke({
   debug = false,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const smokeRef = useRef<HTMLCanvasElement>(null);
 
   // With anchorSelector the smoke is rendered through a portal straight into <body>,
   // so no parent (z-index, transform, overflow, isolate) can put it behind the header image.
@@ -743,7 +756,9 @@ export function MagicalSmoke({
     const parent = canvas?.parentElement;
     if (!canvas || !parent) return;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const smokeCanvas = smokeRef.current;
+    const sctx = smokeCanvas?.getContext("2d");
+    if (!ctx || !smokeCanvas || !sctx) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -783,6 +798,10 @@ export function MagicalSmoke({
     let w = 0;
     let h = 0;
     let dpr = 1;
+    let sdpr = SMOKE_RES;
+    let pageLeft = 0;
+    let pageTop = 0;
+    let visible = true;
     let k = 1;
     let ky = 1; // vertical scale
     let topLimit = menuHeight; // y (px) where the smoke path ends at the top
@@ -828,6 +847,17 @@ export function MagicalSmoke({
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Smoke layer: half resolution, stretched by CSS
+      sdpr = Math.min(dpr, 1) * SMOKE_RES;
+      smokeCanvas.width = Math.max(1, Math.round(w * sdpr));
+      smokeCanvas.height = Math.max(1, Math.round(h * sdpr));
+      sctx.setTransform(sdpr, 0, 0, sdpr, 0, 0);
+
+      // Cache canvas page position (used by mouse "wind", avoids layout reads on every mousemove)
+      const cr = canvas.getBoundingClientRect();
+      pageLeft = cr.left + window.scrollX;
+      pageTop = cr.top + window.scrollY;
 
       const ox = boxX + boxW * originX;
       const oy = boxY + boxH * originY;
@@ -885,10 +915,14 @@ export function MagicalSmoke({
       if (el) ro?.observe(el);
     }
 
+    const io = typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver((es) => { visible = es[0]?.isIntersecting ?? true; })
+      : null;
+    io?.observe(parent);
+
     const onMove = (cx: number, cy: number) => {
-      const r = canvas.getBoundingClientRect();
-      const x = cx - r.left;
-      const y = cy - r.top;
+      const x = cx + window.scrollX - pageLeft;
+      const y = cy + window.scrollY - pageTop;
       wind.x = x - wind.px;
       wind.y = y - wind.py;
       wind.px = x;
@@ -935,6 +969,12 @@ export function MagicalSmoke({
     };
 
     const frame = (now: number) => {
+      if (!visible) {
+        // Off-screen: do nothing (saves CPU/GPU), resume smoothly when visible again
+        last = now;
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       // Smooth the frame time so a single slow frame doesn't make the motion jump
       const rawDelta = Math.min((now - last) / 16.667, 2.5);
       last = now;
@@ -943,13 +983,14 @@ export function MagicalSmoke({
       t += dt / 60;
 
       ctx.clearRect(0, 0, w, h);
+      sctx.clearRect(0, 0, w, h);
 
       // Count per type, so one type can never stop the smoke
       cnt.puff = cnt.wisp = cnt.glyph = cnt.spark = cnt.flash = 0;
       for (let i = 0; i < particles.length; i++) cnt[particles[i].kind]++;
 
-      acc.puff += dt * 1.2 * rate;
-      acc.wisp += dt * 1.4 * rate;
+      acc.puff += dt * 0.9 * rate;
+      acc.wisp += dt * 1.05 * rate;
       if (showGlyphs) acc.glyph += dt * 0.5 * rate; // denser glyph rain
       acc.spark += dt * 1.0 * rate;
 
@@ -969,9 +1010,12 @@ export function MagicalSmoke({
       }
       particles.length = alive;
 
-      ctx.globalCompositeOperation = "screen";
-      for (const p of particles) if (p.kind === "puff") p.draw(ctx, k, dpr);
-      for (const p of particles) if (p.kind === "wisp") p.draw(ctx, k, dpr);
+      sctx.globalCompositeOperation = "screen";
+      for (const p of particles) if (p.kind === "puff") p.draw(sctx, k, sdpr);
+      for (const p of particles) if (p.kind === "wisp") p.draw(sctx, k, sdpr);
+      sctx.setTransform(sdpr, 0, 0, sdpr, 0, 0);
+      sctx.globalAlpha = 1;
+      sctx.globalCompositeOperation = "source-over";
 
       ctx.globalCompositeOperation = "lighter";
       for (const p of particles) if (p.kind === "glyph") p.draw(ctx, k, dpr);
@@ -985,7 +1029,7 @@ export function MagicalSmoke({
       if (debug) {
         ctx.fillStyle = "#00ff66";
         ctx.font = "bold 16px sans-serif";
-        ctx.fillText("SMOKE v8 - swirl", 12, 24);
+        ctx.fillText("SMOKE v9 - smooth", 12, 24);
 
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
@@ -1022,6 +1066,13 @@ export function MagicalSmoke({
     let cancelled = false;
     const warm: Array<() => void> = [];
     for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) warm.push(() => { getNoiseSprite(hue, v); });
+    for (const text of new Set(glyphs)) {
+      warm.push(() => {
+        const hh = glyphHueFor(text);
+        getGlyphSprite(text, hh);
+        getSoftSprite(hh, 68);
+      });
+    }
     const runWarm = () => {
       if (cancelled) return;
       const job = warm.shift();
@@ -1042,6 +1093,7 @@ export function MagicalSmoke({
       window.removeEventListener("resize", resize);
       window.removeEventListener("load", resize);
       ro?.disconnect();
+      io?.disconnect();
       window.removeEventListener("mousemove", mm);
       window.removeEventListener("touchmove", tm);
       particles = [];
@@ -1060,7 +1112,14 @@ export function MagicalSmoke({
       style={{ zIndex }}
       aria-hidden="true"
     >
-      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
+      <canvas
+        ref={smokeRef}
+        className="absolute left-0 top-0 w-full h-full mix-blend-screen opacity-95"
+      />
+      <canvas
+        ref={canvasRef}
+        className="absolute left-0 top-0 w-full h-full mix-blend-screen opacity-95"
+      />
     </div>
   );
 
