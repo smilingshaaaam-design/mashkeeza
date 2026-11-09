@@ -125,7 +125,7 @@ y: cr(p0.y, p1.y, p2.y, p3.y),
 }
 }
 dense.push(pts[pts.length - 1]);
-const len =;
+const len = [];
 for (let i = 1; i < dense.length; i++) {
 len.push(len[i - 1] + Math.hypot(dense[i].x - dense[i - 1].x, dense[i].y - dense[i - 1].y));
 }
