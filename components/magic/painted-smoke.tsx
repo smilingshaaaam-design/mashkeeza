@@ -1,266 +1,204 @@
 "use client";
-
 import React, { useEffect, useRef } from "react";
-
-/**
- * MagicalSmoke - Inverted 'S' Path to Top Menu with Raining Ism-e-Allah,
- * Arabic Alphabet (Alif to Ya), Talismantic Symbols & Ground Star Sparkles.
- *
- * Flow:
- * 1. Smoke + Ism-e-Allah + Haroof-e-Tahajji + Symbols all emerge together from the lamp nozzle.
- * 2. They travel up along the inverted 'S' curve to the top menu area.
- * 3. At the top, the smoke stays aloft and gently dissipates from right to left.
- * 4. Meanwhile, the Ism-e-Allah, Arabic letters, and symbols detach and rain downward toward the ground (zameen).
- * 5. Upon reaching the ground, each glyph vanishes and bursts into a twinkling star sparkle that fades out.
- */
-
-const ASMA_UL_HUSNA: string[] = [
-  "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَکَبِّرُ",
-  "الْخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِیمُ", "الْقَابِضُ",
-  "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِیعُ", "الْبَصِیرُ", "الْحَکَمُ", "الْعَدْلُ", "اللَّطِیفُ",
-  "الْخَبِیرُ", "الْحَلِیمُ", "الْعَظِیمُ", "الْغَفُورُ", "الشَّکُورُ", "الْعَلِيُّ", "الْکَبِیرُ", "الْحَفِیظُ", "الْمُقِیتُ", "الْحَسِیبُ",
-  "الْجَلِيلُ", "الْکَرِیمُ", "الرَّقِیبُ", "الْمُجِیبُ", "الْوَاسِعُ", "الْحَکِیمُ", "الْوَدُودُ", "الْمَجِیدُ", "الْبَاعِثُ", "الشَّهِیدُ",
-  "الْحَقُّ", "الْوَکِیلُ", "الْقَوِیُّ", "الْمَتِینُ", "الْوَلِيُّ", "الْحَمِیدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِیدُ", "الْمُحْيِي",
-  "الْمُمِیتُ", "الْحَيُّ", "الْقَیُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
-  "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
-  "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِیعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِیدُ", "الصَّبُورُ",
+const ASMA_UL_HUSNA = [
+"الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِکُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَکَبِّرُ",
+"الْخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
+"الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَکَمُ", "الْعَدْلُ", "اللَّطِيفُ",
+"الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّکُورُ", "الْعَلِيُّ", "الْکَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
+"الْجَلِيلُ", "الْکَرِیمُ", "الرَّقِيبُ", "الْمُجِيبُ", "الْوَاسِعُ", "الْحَکِيمُ", "الْوَدُودُ", "الْمَجِيدُ", "الْبَاعِثُ", "الشَّهِيدُ",
+"الْحَقُّ", "الْوَکِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
+"الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
+"الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
+"الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+"النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ",
 ];
-
-const ARABIC_ALPHABET: string[] = [
-  "ا", "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ", "ر", "ز", "س", "ش", "ص",
-  "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "ل", "م", "ن", "ه", "و", "ی",
+const ARABIC_ALPHABET = [
+"ا", "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ", "ر", "ز", "س", "ش", "ص",
+"ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "ل", "م", "ن", "ه", "و", "ي",
 ];
-
-const TALISMAN_SYMBOLS: string[] = [
-  "☉", "☽", "☿", "♀", "♂", "♃", "♄", "✦", "✧", "۞", "۩", "⚶", "⚸", "⚹", "✺", "❂", "✵", "◈", "❖",
+const TALISMAN_SYMBOLS = [
+"☉", "☽", "☿", "♀", "♂", "♃", "♄", "✦", "✧", "۞", "۩", "⚶", "⚸", "⚹", "✺", "❂", "✵", "◈", "❖",
 ];
-
-const DEFAULT_GLYPHS: string[] = [
-  ...ASMA_UL_HUSNA,
-  ...ARABIC_ALPHABET,
-  ...TALISMAN_SYMBOLS,
+const DEFAULT_GLYPHS = [
+...ASMA_UL_HUSNA,
+...ARABIC_ALPHABET,
+...TALISMAN_SYMBOLS,
 ];
-
-const SMOKE_HUES: number[] = [
-  272, 280, 288, 265, // Deep & Royal Purple
-  218, 226, 234,      // Rich Royal Blue
-  188, 194, 200,      // Vibrant Cyan
-  42, 46, 38,         // Warm Golden
+const SMOKE_HUES = [
+272, 280, 288, 265,
+218, 226, 234,
+188, 194, 200,
+42, 46, 38,
 ];
-
-const DOT_HUES: number[] = [
-  44, 48, 38,         // Golden fireflies
-  190, 198,           // Cyan sparkles
-  278, 290, 325,      // Purple & Magenta
-  220,                // Blue
+const DOT_HUES = [
+44, 48, 38,
+190, 198,
+278, 290, 325,
+220,
 ];
-
-const GLYPH_HUES: number[] = [
-  45, 48, 42,         // Golden calligraphy
-  192, 198,           // Cyan glow
-  282, 295,           // Violet-purple glow
+const GLYPH_HUES = [
+45, 48, 42,
+192, 198,
+282, 295,
 ];
-
 const TAU = Math.PI * 2;
-const rand = (a: number, b: number): number => Math.random() * (b - a) + a;
-const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const smooth = (a: number, b: number, x: number): number => {
-  const v = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return v * v * (3 - 2 * v);
+const rand = (a, b) => Math.random() * (b - a) + a;
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const smooth = (a, b, x) => {
+const v = Math.min(1, Math.max(0, (x - a) / (b - a)));
+return v * v * (3 - 2 * v);
 };
-
-interface Props {
-  originX?: number;
-  originY?: number;
-  groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
-  glyphs?: string[];
-  direction?: "left" | "right";
-  spiral?: "inverted-s-top" | "full-roam" | "straight-swing" | "down" | "under" | "over";
-  drift?: number;
-  speed?: number;
-  showGlyphs?: boolean;
-  debug?: boolean;
-}
-
-type Kind = "puff" | "wisp" | "glyph" | "spark" | "flash";
-type Wind = { x: number; y: number; px: number; py: number; power: number };
-type Path = { x: Float32Array; y: Float32Array; nx: Float32Array; ny: Float32Array };
-type CtrlPoint = { x: number; y: number };
-
-const pt = (x: number, y: number): CtrlPoint => ({ x, y });
-
-/* ---------- Inverted 'S' Path Stretched Far Upward Past Menu Layout Bounds ---------- */
-
-const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -40),       // 2. Exits lamp slightly forward (left) and curves upward
-  pt(115, -110),     // 3. Curves smoothly into the lower belly of the inverted 'S'
-  pt(95, -220),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -340),      // 5. Rises gracefully way past the menu bounding height
-  pt(-45, -440),     // 6. Reaches absolute top-right side above heading limits
-  pt(90, -460),      // 7. Flows smoothly from right to left across topmost canvas
-  pt(270, -450),     // 8. Continues gliding across the center-top screen
-  pt(460, -460),     // 9. Flows toward the upper-left boundary area
-  pt(650, -450),     // 10. Gently lingers & fades out on the far upper-left ceiling
+const pt = (x, y) => ({ x, y });
+const CTRL_INVERTED_S_TOP = [
+pt(0, 0),
+pt(55, -18),
+pt(115, -68),
+pt(95, -135),
+pt(35, -195),
+pt(-45, -245),
+pt(90, -258),
+pt(270, -252),
+pt(460, -260),
+pt(650, -252),
 ];
-
-const CTRL_FULL_ROAM: CtrlPoint[] = [
-  pt(0, 0), pt(65, -3), pt(135, 4), pt(210, 55), pt(290, 105), pt(360, 40),
-  pt(325, -45), pt(410, -115), pt(510, -65), pt(595, 25), pt(680, -70), pt(760, -175), pt(840, -250),
+const CTRL_FULL_ROAM = [
+pt(0, 0), pt(65, -3), pt(135, 4), pt(210, 55), pt(290, 105), pt(360, 40),
+pt(325, -45), pt(410, -115), pt(510, -65), pt(595, 25), pt(680, -70), pt(760, -175), pt(840, -250)
 ];
-
-const CTRL_STRAIGHT_SWING: CtrlPoint[] = [
-  pt(0, 0), pt(65, -2), pt(130, 3), pt(195, 48), pt(265, 85), pt(340, 25),
-  pt(415, -55), pt(490, -110), pt(565, -40), pt(645, -125), pt(730, -205),
+const CTRL_STRAIGHT_SWING = [
+pt(0, 0), pt(65, -2), pt(130, 3), pt(195, 48), pt(265, 85), pt(340, 25),
+pt(415, -55), pt(490, -110), pt(565, -40), pt(645, -125), pt(730, -205)
 ];
-
-const CTRL_OVER: CtrlPoint[] = [
-  pt(0, 0), pt(45, -35), pt(80, -75), pt(80, -125), pt(45, -165), pt(-5, -178),
-  pt(-55, -150), pt(-75, -105), pt(100, -85), pt(180, -85), pt(260, -120), pt(350, -165),
-  pt(450, -190), pt(560, -225), pt(680, -250),
+const CTRL_OVER = [
+pt(0, 0), pt(45, -35), pt(80, -75), pt(80, -125), pt(45, -165), pt(-5, -178),
+pt(-55, -150), pt(-75, -105), pt(100, -85), pt(180, -85), pt(260, -120), pt(350, -165),
+pt(450, -190), pt(560, -225), pt(680, -250)
 ];
-
-const CTRL_UNDER: CtrlPoint[] = [
-  pt(0, 0), pt(-22, -40), pt(-42, -88), pt(-28, -135), pt(20, -152), pt(65, -122),
-  pt(62, -72), pt(18, -58), pt(85, -68), pt(160, -95), pt(240, -112), pt(330, -147),
-  pt(430, -177), pt(530, -202), pt(630, -232), pt(720, -250),
+const CTRL_UNDER = [
+pt(0, 0), pt(-22, -40), pt(-42, -88), pt(-28, -135), pt(20, -152), pt(65, -122),
+pt(62, -72), pt(18, -58), pt(85, -68), pt(160, -95), pt(240, -112), pt(330, -147),
+pt(430, -177), pt(530, -202), pt(630, -232), pt(720, -250)
 ];
-
-const CTRL_DOWN: CtrlPoint[] = [
-  pt(0, 0), pt(25, 30), pt(60, 70), pt(92, 120), pt(60, 150), pt(15, 128),
-  pt(28, 88), pt(70, 45), pt(95, -10), pt(80, -70), pt(120, -108), pt(200, -122),
-  pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210), pt(730, -235),
+const CTRL_DOWN = [
+pt(0, 0), pt(25, 30), pt(60, 70), pt(92, 120), pt(60, 150), pt(15, 128),
+pt(28, 88), pt(70, 45), pt(95, -10), pt(80, -70), pt(120, -108), pt(200, -122),
+pt(290, -118), pt(380, -130), pt(470, -155), pt(560, -185), pt(650, -210), pt(730, -235)
 ];
-
 const N = 360;
-
-function buildPath(
-  ox: number, oy: number, k: number, sgn: number, reach: number, ctrl: CtrlPoint[]
-): Path {
-  const pts: CtrlPoint[] = ctrl.map((c: CtrlPoint) => ({
-    x: ox + sgn * c.x * k * reach,
-    y: oy + c.y * k,
-  }));
-  const P = (i: number): CtrlPoint => pts[Math.max(0, Math.min(pts.length - 1, i))];
-  const dense: CtrlPoint[] = [];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = P(i - 1);
-    const p1 = P(i);
-    const p2 = P(i + 1);
-    const p3 = P(i + 2);
-    for (let s = 0; s < 24; s++) {
-      const t = s / 24;
-      const t2 = t * t;
-      const t3 = t2 * t;
-      const cr = (a: number, b: number, c: number, d: number): number =>
-        0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
-      dense.push({
-        x: cr(p0.x, p1.x, p2.x, p3.x),
-        y: cr(p0.y, p1.y, p2.y, p3.y),
-      });
-    }
-  }
-  dense.push(pts[pts.length - 1]);
-
-  const len: number[] =;
-  for (let i = 1; i < dense.length; i++) {
-    len.push(len[i - 1] + Math.hypot(dense[i].x - dense[i - 1].x, dense[i].y - dense[i - 1].y));
-  }
-  const total = len[len.length - 1];
-
-  const x = new Float32Array(N);
-  const y = new Float32Array(N);
-  let seg = 0;
-  for (let j = 0; j < N; j++) {
-    const target = (total * j) / (N - 1);
-    while (seg < len.length - 2 && len[seg + 1] < target) seg++;
-    const f = (target - len[seg]) / Math.max(1e-6, len[seg + 1] - len[seg]);
-    x[j] = dense[seg].x + (dense[seg + 1].x - dense[seg].x) * f;
-    y[j] = dense[seg].y + (dense[seg + 1].y - dense[seg].y) * f;
-  }
-  const nx = new Float32Array(N);
-  const ny = new Float32Array(N);
-  for (let j = 0; j < N; j++) {
-    const a = Math.max(0, j - 1);
-    const b = Math.min(N - 1, j + 1);
-    const tx = x[b] - x[a];
-    const ty = y[b] - y[a];
-    const l = Math.hypot(tx, ty) || 1;
-    nx[j] = -ty / l;
-    ny[j] = tx / l;
-  }
-  return { x, y, nx, ny };
+function buildPath(ox, oy, k, sgn, reach, ctrl) {
+const pts = ctrl.map((c) => ({
+x: ox + sgn * c.x * k * reach,
+y: oy + c.y * k,
+}));
+const P = (i) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+const dense = [];
+for (let i = 0; i < pts.length - 1; i++) {
+const p0 = P(i - 1);
+const p1 = P(i);
+const p2 = P(i + 1);
+const p3 = P(i + 2);
+for (let s = 0; s < 24; s++) {
+const t = s / 24;
+const t2 = t * t;
+const t3 = t2 * t;
+const cr = (a, b, c, d) =>
+0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+dense.push({
+x: cr(p0.x, p1.x, p2.x, p3.x),
+y: cr(p0.y, p1.y, p2.y, p3.y),
+});
 }
-
-/* ---------- Procedural Smoke, Firefly Dot, Star Sparkle & Glyph Textures ---------- */
-
-const makeCanvas = (w: number, h: number): HTMLCanvasElement => {
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
-  return c;
+}
+dense.push(pts[pts.length - 1]);
+const len =;
+for (let i = 1; i < dense.length; i++) {
+len.push(len[i - 1] + Math.hypot(dense[i].x - dense[i - 1].x, dense[i].y - dense[i - 1].y));
+}
+const total = len[len.length - 1];
+const x = new Float32Array(N);
+const y = new Float32Array(N);
+let seg = 0;
+for (let j = 0; j < N; j++) {
+const target = (total * j) / (N - 1);
+while (seg < len.length - 2 && len[seg + 1] < target) seg++;
+const f = (target - len[seg]) / Math.max(1e-6, len[seg + 1] - len[seg]);
+x[j] = dense[seg].x + (dense[seg + 1].x - dense[seg].x) * f;
+y[j] = dense[seg].y + (dense[seg + 1].y - dense[seg].y) * f;
+}
+const nx = new Float32Array(N);
+const ny = new Float32Array(N);
+for (let j = 0; j < N; j++) {
+const a = Math.max(0, j - 1);
+const b = Math.min(N - 1, j + 1);
+const tx = x[b] - x[a];
+const ty = y[b] - y[a];
+const l = Math.hypot(tx, ty) || 1;
+nx[j] = -ty / l;
+ny[j] = tx / l;
+}
+return { x, y, nx, ny };
+}
+const makeCanvas = (w, h) => {
+const c = document.createElement("canvas");
+c.width = w;
+c.height = h;
+return c;
 };
-
-const hash = (x: number, y: number, s: number): number => {
-  let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(s, 1442695041);
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+const hash = (x, y, s) => {
+let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(s, 1442695041);
+h = Math.imul(h ^ (h >>> 13), 1274126177);
+return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 };
-
-const vnoise = (x: number, y: number, s: number): number => {
-  const xi = Math.floor(x);
-  const yi = Math.floor(y);
-  const xf = x - xi;
-  const yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf);
-  const v = yf * yf * (3 - 2 * yf);
-  const a = hash(xi, yi, s);
-  const b = hash(xi + 1, yi, s);
-  const c = hash(xi, yi + 1, s);
-  const d = hash(xi + 1, yi + 1, s);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+const vnoise = (x, y, s) => {
+const xi = Math.floor(x);
+const yi = Math.floor(y);
+const xf = x - xi;
+const yf = y - yi;
+const u = xf * xf * (3 - 2 * xf);
+const v = yf * yf * (3 - 2 * yf);
+const a = hash(xi, yi, s);
+const b = hash(xi + 1, yi, s);
+const c = hash(xi, yi + 1, s);
+const d = hash(xi + 1, yi + 1, s);
+return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
 };
-
-const fbm = (x: number, y: number, s: number): number => {
-  let v = 0;
-  let a = 0.5;
-  let f = 1;
-  for (let o = 0; o < 4; o++) {
-    v += a * vnoise(x * f, y * f, s + o * 17);
-    f *= 2;
-    a *= 0.5;
-  }
-  return v;
+const fbm = (x, y, s) => {
+let v = 0;
+let a = 0.5;
+let f = 1;
+for (let o = 0; o < 4; o++) {
+v += a * vnoise(x * f, y * f, s + o * 17);
+f *= 2;
+a *= 0.5;
+}
+return v;
 };
-
-const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
-  h = ((h % 360) + 360) % 360;
-  s /= 100;
-  l /= 100;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (h < 60) [r, g, b] = [c, x, 0];
-  else if (h < 120) [r, g, b] = [x, c, 0];
-  else if (h < 180) [r, g, b] = [0, c, x];
-  else if (h < 240) [r, g, b] = [0, x, c];
-  else if (h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+const hslToRgb = (h, s, l) => {
+h = ((h % 360) + 360) % 360;
+s /= 100;
+l /= 100;
+const c = (1 - Math.abs(2 * l - 1)) * s;
+const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+const m = l - c / 2;
+let r = 0;
+let g = 0;
+let b = 0;
+if (h < 60) [r, g, b] = [c, x, 0];
+else if (h < 120) [r, g, b] = [x, c, 0];
+else if (h < 180) [r, g, b] = [0, c, x];
+else if (h < 240) [r, g, b] = [0, x, c];
+else if (h < 300) [r, g, b] = [x, 0, c];
+else [r, g, b] = [c, 0, x];
+return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
 };
-
-const noiseSprites = new Map<string, HTMLCanvasElement>();
-const getNoiseSprite = (hue: number, variant: number): HTMLCanvasElement => {
+const noiseSprites = new Map();
+const getNoiseSprite = (hue, variant) => {
 const key = ${hue}|${variant};
 let c = noiseSprites.get(key);
 if (c) return c;
 const S = 128;
 c = makeCanvas(S, S);
-const g = c.getContext("2d")!;
+const g = c.getContext("2d");
 const img = g.createImageData(S, S);
 const seed = variant * 101 + hue;
 for (let py = 0; py < S; py++) {
@@ -284,14 +222,14 @@ g.putImageData(img, 0, 0);
 noiseSprites.set(key, c);
 return c;
 };
-const softSprites = new Map<string, HTMLCanvasElement>();
-const getSoftSprite = (hue: number, light: number): HTMLCanvasElement => {
+const softSprites = new Map();
+const getSoftSprite = (hue, light) => {
 const key = ${hue}|${light};
 let c = softSprites.get(key);
 if (c) return c;
 const S = 96;
 c = makeCanvas(S, S);
-const g = c.getContext("2d")!;
+const g = c.getContext("2d");
 const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
 gr.addColorStop(0, hsla(${hue},95%,${light}%,0.9));
 gr.addColorStop(0.35, hsla(${hue},90%,${light - 14}%,0.35));
@@ -302,14 +240,14 @@ g.fillRect(0, 0, S, S);
 softSprites.set(key, c);
 return c;
 };
-const dotSprites = new Map<number, HTMLCanvasElement>();
-const getDotSprite = (hue: number): HTMLCanvasElement => {
+const dotSprites = new Map();
+const getDotSprite = (hue) => {
 let c = dotSprites.get(hue);
 if (c) return c;
 const S = 48;
 const mid = S / 2;
 c = makeCanvas(S, S);
-const g = c.getContext("2d")!;
+const g = c.getContext("2d");
 const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
 gr.addColorStop(0, hsla(${hue}, 100%, 92%, 1));
 gr.addColorStop(0.22, hsla(${hue}, 100%, 72%, 0.9));
@@ -320,14 +258,14 @@ g.fillRect(0, 0, S, S);
 dotSprites.set(hue, c);
 return c;
 };
-const starFlashSprites = new Map<number, HTMLCanvasElement>();
-const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
+const starFlashSprites = new Map();
+const getStarFlashSprite = (hue) => {
 let c = starFlashSprites.get(hue);
 if (c) return c;
 const S = 72;
 const mid = S / 2;
 c = makeCanvas(S, S);
-const g = c.getContext("2d")!;
+const g = c.getContext("2d");
 const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
 gr.addColorStop(0, hsla(${hue}, 100%, 97%, 1));
 gr.addColorStop(0.18, hsla(${hue}, 100%, 78%, 0.85));
@@ -353,8 +291,8 @@ g.restore();
 starFlashSprites.set(hue, c);
 return c;
 };
-const glyphSprites = new Map<string, HTMLCanvasElement>();
-const getGlyphSprite = (text: string, hue: number, size: number): HTMLCanvasElement => {
+const glyphSprites = new Map();
+const getGlyphSprite = (text, hue, size) => {
 const px = Math.round(size);
 const key = ${text}|${hue}|${px};
 let c = glyphSprites.get(key);
@@ -366,7 +304,7 @@ const probe = makeCanvas(1, 1).getContext("2d")!;
 probe.font = font;
 const tw = Math.ceil(probe.measureText(text).width);
 c = makeCanvas(tw + pad * 2 * SC, px * SC * 2 + pad * 2 * SC);
-const g = c.getContext("2d")!;
+const g = c.getContext("2d");
 g.font = font;
 g.textAlign = "center";
 g.textBaseline = "middle";
@@ -377,38 +315,33 @@ g.fillText(text, c.width / 2, c.height / 2);
 glyphSprites.set(key, c);
 return c;
 };
-/* ---------- Particle ---------- */
 class Particle {
-x = 0;
-y = 0;
-u = 0;
-dx = 0;
-dy = 0;
-alpha = 0;
-baseAlpha: number;
-maxLife: number;
-size = 1;
-depth = 1;
-hue: number;
-variant = Math.floor(rand(0, 3));
-seed = rand(0, 1000);
-rad = Math.sqrt(rand(0.02, 1));
-th0 = rand(0, TAU);
-turns = rand(0.9, 2.2) * (Math.random() < 0.5 ? -1 : 1);
-spin = rand(0.18, 0.45) * (Math.random() < 0.5 ? -1 : 1);
-rot = rand(0, TAU);
-rotSpeed = rand(-0.004, 0.004);
-off = rand(-1, 1);
-text = "";
-blinkRate = 2;
-isRaining = false;
-releaseU = rand(0.65, 0.92);
-rainFallSpeed = rand(1.15, 2.05);
-rainDriftX = rand(-0.22, 0.22);
-rainSwayFreq = rand(1.1, 2.3);
-rainSwayAmp = rand(5, 13);
-hasFlashed = false;
-constructor(public kind: Kind, glyphs: string[]) {
+constructor(kind, glyphs) {
+this.kind = kind;
+this.x = 0;
+this.y = 0;
+this.u = 0;
+this.dx = 0;
+this.dy = 0;
+this.alpha = 0;
+this.variant = Math.floor(rand(0, 3));
+this.seed = rand(0, 1000);
+this.rad = Math.sqrt(rand(0.02, 1));
+this.th0 = rand(0, TAU);
+this.turns = rand(0.9, 2.2) * (Math.random() < 0.5 ? -1 : 1);
+this.spin = rand(0.18, 0.45) * (Math.random() < 0.5 ? -1 : 1);
+this.rot = rand(0, TAU);
+this.rotSpeed = rand(-0.004, 0.004);
+this.off = rand(-1, 1);
+this.text = "";
+this.blinkRate = 2;
+this.isRaining = false;
+this.releaseU = rand(0.46, 0.86);
+this.rainFallSpeed = rand(1.15, 2.05);
+this.rainDriftX = rand(-0.22, 0.22);
+this.rainSwayFreq = rand(1.1, 2.3);
+this.rainSwayAmp = rand(5, 13);
+this.hasFlashed = false;
 this.depth = rand(0.7, 1.32);
 if (kind === "puff") {
 this.hue = pick(SMOKE_HUES);
@@ -441,15 +374,7 @@ this.blinkRate = rand(2.2, 5.0);
 this.maxLife = rand(660, 900);
 }
 }
-update(
-t: number,
-dt: number,
-wind: Wind,
-path: Path,
-k: number,
-groundLevelPx: number,
-onSpawnFlash: (x: number, y: number, hue: number) => void
-): void {
+update(t, dt, wind, path, k, groundLevelPx, onSpawnFlash) {
 if (this.kind === "flash") {
 this.u += dt / this.maxLife;
 if (this.u >= 1) return;
@@ -541,7 +466,7 @@ const originDensityBoost =
 this.kind === "puff" || this.kind === "wisp"
 ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
 : 1;
-const fadeOut = 1 - smooth(0.72, 1.0, u);
+const fadeOut = 1 - smooth(0.68, 1.0, u);
 const env = smooth(0, 0.03, u) * fadeOut;
 this.alpha = this.baseAlpha * env * originDensityBoost;
 if (this.kind === "spark") {
@@ -552,7 +477,7 @@ const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
 this.alpha *= 0.35 + 0.65 * b * b;
 }
 }
-draw(ctx: CanvasRenderingContext2D, k: number): void {
+draw(ctx, k) {
 if (this.alpha <= 0.003) return;
 const u = this.u;
 if (this.kind === "puff" || this.kind === "wisp") {
@@ -595,7 +520,6 @@ ctx.restore();
 }
 }
 }
-/* ---------- Component ---------- */
 export function MagicalSmoke({
 originX = 0.76,
 originY = 0.64,
@@ -607,7 +531,7 @@ drift = 1.25,
 speed = 0.55,
 showGlyphs = true,
 debug = false,
-}: Props) {
+}) {
 const canvasRef = useRef(null);
 useEffect(() => {
 const canvas = canvasRef.current;
@@ -615,12 +539,12 @@ const parent = canvas?.parentElement;
 if (!canvas || !parent) return;
 const ctx = canvas.getContext("2d");
 if (!ctx) return;
-const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const MAX = reduced ? 350 : 2800;
 const rate = reduced ? 0.3 : 1;
 const reach = Math.max(0.3, drift);
 const sgn = direction === "left" ? -1 : 1;
-const ctrl: CtrlPoint[] =
+const ctrl =
 spiral === "inverted-s-top"
 ? CTRL_INVERTED_S_TOP
 : spiral === "full-roam"
@@ -633,26 +557,26 @@ spiral === "inverted-s-top"
 ? CTRL_UNDER
 : CTRL_OVER;
 const ext = {
-up: Math.max(20, -Math.min(...ctrl.map((c: CtrlPoint) => c.y))),
-down: Math.max(20, ...ctrl.map((c: CtrlPoint) => c.y)),
-fwd: Math.max(1, ...ctrl.map((c: CtrlPoint) => c.x)),
-back: Math.max(0, -Math.min(...ctrl.map((c: CtrlPoint) => c.x))),
+up: Math.max(20, -Math.min(...ctrl.map((c) => c.y))),
+down: Math.max(20, ...ctrl.map((c) => c.y)),
+fwd: Math.max(1, ...ctrl.map((c) => c.x)),
+back: Math.max(0, -Math.min(...ctrl.map((c) => c.x))),
 };
 let w = 0;
 let h = 0;
 let k = 1;
-let path: Path = buildPath(0, 0, 1, sgn, reach, ctrl);
+let path = buildPath(0, 0, 1, sgn, reach, ctrl);
 let raf = 0;
-let particles: Particle[] = [];
+let particles = [];
 let t = 0;
 let last = performance.now();
 const acc = { puff: 0, wisp: 0, glyph: 0, spark: 0 };
-const wind: Wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
+const wind = { x: 0, y: 0, px: -999, py: -999, power: 0 };
 for (const hue of SMOKE_HUES) for (let v = 0; v < 3; v++) getNoiseSprite(hue, v);
 for (const dh of DOT_HUES) getDotSprite(dh);
 for (const gh of GLYPH_HUES) getStarFlashSprite(gh);
 const resize = () => {
-const dpr = Math.min(window.devicePixelRatio || 1, 2);
+const dpr = Math.min(devicePixelRatio || 1, 2);
 w = parent.clientWidth;
 h = parent.clientHeight || 450;
 canvas.width = w * dpr;
@@ -662,18 +586,19 @@ const ox = w * originX;
 const oy = h * originY;
 const fwdAvail = direction === "left" ? ox : w - ox;
 const backAvail = direction === "left" ? w - ox : ox;
-const limits: number[] = [
+const limits = [
 h / 360,
 (fwdAvail * 0.96) / Math.max(1, ext.fwd * reach),
 ];
+if (ext.up > 0) limits.push((oy * 0.92) / ext.up);
 if (ext.back > 0) limits.push((backAvail * 0.94) / Math.max(1, ext.back * reach));
 if (ext.down > 0) limits.push(((h - oy) * 0.96) / ext.down);
 k = Math.max(0.45, Math.min(...limits));
 path = buildPath(ox, oy, k, sgn, reach, ctrl);
 };
 resize();
-window.addEventListener("resize", resize);
-const onMove = (cx: number, cy: number) => {
+addEventListener("resize", resize);
+const onMove = (cx, cy) => {
 const r = canvas.getBoundingClientRect();
 const x = cx - r.left;
 const y = cy - r.top;
@@ -683,25 +608,25 @@ wind.px = x;
 wind.py = y;
 wind.power = Math.min(1, Math.hypot(wind.x, wind.y) / 25);
 };
-const mm = (e: MouseEvent) => onMove(e.clientX, e.clientY);
-const tm = (e: TouchEvent) => {
+const mm = (e) => onMove(e.clientX, e.clientY);
+const tm = (e) => {
 if (e.touches.length > 0) {
-onMove(e.touches[0].clientX, e.touches[0].clientY);
+onMove(e.touches.clientX, e.touches.clientY);
 }
 };
-window.addEventListener("mousemove", mm);
-window.addEventListener("touchmove", tm, { passive: true });
-const emit = (kind: Kind) => {
+addEventListener("mousemove", mm);
+addEventListener("touchmove", tm, { passive: true });
+const emit = (kind) => {
 if (particles.length < MAX) particles.push(new Particle(kind, glyphs));
 };
-const spawnFlash = (fx: number, fy: number, hue: number) => {
+const spawnFlash = (fx, fy, hue) => {
 const flash = new Particle("flash", glyphs);
 flash.x = fx;
 flash.y = fy;
 flash.hue = hue;
 particles.push(flash);
 };
-const frame = (now: number) => {
+const frame = (now) => {
 const dt = Math.min((now - last) / 16.667, 3) * speed;
 last = now;
 t += dt / 60;
@@ -732,15 +657,14 @@ if (debug) {
 ctx.strokeStyle = "red";
 ctx.lineWidth = 2;
 ctx.beginPath();
-ctx.arc(path.x[0], path.y[0], 8, 0, TAU);
-ctx.moveTo(path.x[0] - 14, path.y[0]);
-ctx.lineTo(path.x[0] + 14, path.y[0]);
-ctx.moveTo(path.x[0], path.y[0] - 14);
-ctx.lineTo(path.x[0], path.y[0] + 14);
+ctx.arc(path.x, path.y, 8, 0, TAU);
+ctx.moveTo(path.x - 14, path.y);
+ctx.lineTo(path.x + 14, path.y);
+ctx.moveTo(path.x, path.y - 14);
+ctx.lineTo(path.x, path.y + 14);
 ctx.stroke();
-// Ground line debug indicator
 ctx.strokeStyle = "gold";
-ctx.setLineDash([6, 6]);
+ctx.setLineDash();
 ctx.beginPath();
 ctx.moveTo(0, groundLevelPx);
 ctx.lineTo(w, groundLevelPx);
@@ -753,9 +677,9 @@ raf = requestAnimationFrame(frame);
 raf = requestAnimationFrame(frame);
 return () => {
 cancelAnimationFrame(raf);
-window.removeEventListener("resize", resize);
-window.removeEventListener("mousemove", mm);
-window.removeEventListener("touchmove", tm);
+removeEventListener("resize", resize);
+removeEventListener("mousemove", mm);
+removeEventListener("touchmove", tm);
 particles = [];
 };
 }, [originX, originY, groundY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
