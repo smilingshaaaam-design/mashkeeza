@@ -1,6 +1,4 @@
-import pathlib
-
-tsx_code = """"use client";
+"use client";
 
 import React, { useEffect, useRef } from "react";
 
@@ -853,7 +851,4 @@ export function MagicalSmoke({
 
 export const PaintedSmoke = MagicalSmoke;
 
-export default MagicalSmoke;"""
-
-pathlib.Path("MagicalSmoke.tsx").write_text(tsx_code, encoding="utf-8")
-print("[file-tag: MagicalSmoke.tsx]")
+export default MagicalSmoke;
