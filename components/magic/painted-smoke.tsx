@@ -766,6 +766,9 @@ export function MagicalSmoke({
         aw = ar.width;
         ah = ar.height;
         parent.style.height = `${Math.round(ay + ah)}px`;
+      } else if (anchorSelector) {
+        // anchor id not found: still cover the page so the smoke is never invisible
+        parent.style.height = `${Math.min(4000, document.documentElement.scrollHeight)}px`;
       }
       w = parent.clientWidth;
       h = anchored ? Math.round(ay + ah) : parent.clientHeight || 450;
@@ -891,6 +894,11 @@ export function MagicalSmoke({
       ctx.globalCompositeOperation = "source-over";
 
       if (debug) {
+        // Version label: if you can read this at the TOP-LEFT of the header image, the new code is live
+        ctx.fillStyle = "#00ff66";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText("SMOKE v3 - portal OK", 12, 24);
+
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.beginPath();
