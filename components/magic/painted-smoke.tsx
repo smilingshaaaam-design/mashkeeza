@@ -1,5 +1,6 @@
+import pathlib
 
-"use client";
+tsx_code = """"use client";
 
 import React, { useEffect, useRef } from "react";
 
@@ -18,19 +19,19 @@ import React, { useEffect, useRef } from "react";
 const ASMA_UL_HUSNA = [
   "الرَّحْمَٰنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَكَبِّرُ",
   "الْخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ",
-  "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَکَمُ", "الْعَدْلُ", "اللَّطِيفُ",
-  "الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّکُورُ", "الْعَلِيُّ", "الْکَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
-  "الْجَلِيلُ", "الْکَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ", "الْوَاسِعُ", "الْحَکِيمُ", "الْوَدُودُ", "الْمَجِيدُ", "الْبَاعِثُ", "الشَّهِيدُ",
-  "الْحَقُّ", "الْوَکِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
+  "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَكَمُ", "الْعَدْلُ", "اللَّطِيفُ",
+  "الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّكُورُ", "الْعَلِيُّ", "الْكَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ",
+  "الْجَلِيلُ", "الْكَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ", "الْوَاسِعُ", "الْحَكِيمُ", "الْوَدُودُ", "الْمَجِيدُ", "الْبَاعِثُ", "الشَّهِيدُ",
+  "الْحَقُّ", "الْوَكِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي",
   "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُقَدِّمُ",
   "الْمُؤَخِّرُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ",
-  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِکُ الْمُلْکِ", "ذُو الْجَلَالِ وَالْإِکْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
+  "الْعَفُوُّ", "الرَّءُوفُ", "مَالِكُ الْمُلْكِ", "ذُو الْجَلَالِ وَالْإِكْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ",
   "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الْوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ",
 ];
 
 const ARABIC_ALPHABET = [
   "ا", "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ", "ر", "ز", "س", "ش", "ص",
-  "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ک", "ل", "م", "ن", "ه", "و", "ي",
+  "ض", "ط", "ظ", "ع", "غ", "ف", "ق", "ك", "ل", "م", "ن", "ه", "و", "ي",
 ];
 
 const TALISMAN_SYMBOLS = [
@@ -92,18 +93,15 @@ type CtrlPoint = { x: number; y: number };
 const pt = (x: number, y: number): CtrlPoint => ({ x, y });
 
 /* ---------- Inverted 'S' Path Rising Left & Flowing Across Top Menu ---------- */
-
+// MODIFIED: Straight vertical wave path, no sideways deflection.
 const CTRL_INVERTED_S_TOP: CtrlPoint[] = [
-  pt(0, 0),          // 1. Lamp nozzle origin
-  pt(55, -18),       // 2. Exits lamp slightly forward (left) and curves upward
-  pt(115, -68),      // 3. Curves smoothly into the lower belly of the inverted 'S'
-  pt(95, -135),      // 4. Sweeps inward/upward to form the middle S-bend
-  pt(35, -195),      // 5. Rises gracefully toward the upper menu height
-  pt(-45, -245),     // 6. Reaches top-right side above the navigation/menu
-  pt(90, -258),      // 7. Flows smoothly from right to left across the top menu
-  pt(270, -252),     // 8. Continues gliding across the center-top menu
-  pt(460, -260),     // 9. Flows toward the upper-left menu area
-  pt(650, -252),     // 10. Gently lingers & fades out on the far upper-left
+  pt(0, 0),
+  pt(25, -60),
+  pt(-15, -140),
+  pt(20, -220),
+  pt(-10, -300),
+  pt(5, -380),
+  pt(0, -460) // Goes straight off the top
 ];
 
 const CTRL_FULL_ROAM: CtrlPoint[] = [
@@ -345,6 +343,7 @@ const getDotSprite = (hue: number): HTMLCanvasElement => {
   return c;
 };
 
+// Twinkling 4-point star sparkle sprite for ground impact
 const starFlashSprites = new Map<number, HTMLCanvasElement>();
 const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   let c = starFlashSprites.get(hue);
@@ -354,6 +353,7 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   c = makeCanvas(S, S);
   const g = c.getContext("2d")!;
 
+  // Soft outer star halo
   const gr = g.createRadialGradient(mid, mid, 0, mid, mid, mid);
   gr.addColorStop(0, `hsla(${hue}, 100%, 97%, 1)`);
   gr.addColorStop(0.18, `hsla(${hue}, 100%, 78%, 0.85)`);
@@ -362,6 +362,7 @@ const getStarFlashSprite = (hue: number): HTMLCanvasElement => {
   g.fillStyle = gr;
   g.fillRect(0, 0, S, S);
 
+  // Crisp 4-point star rays (sitaray jaisi chamak)
   g.save();
   g.translate(mid, mid);
   g.fillStyle = `hsla(${hue}, 100%, 96%, 0.95)`;
@@ -433,8 +434,9 @@ class Particle {
   text = "";
   blinkRate = 2;
 
+  // Glyph ascent-then-rain state
   isRaining = false;
-  releaseU = rand(0.46, 0.86);
+  releaseU = rand(0.46, 0.86); // Detaches along the upper menu portion of the smoke path
   rainFallSpeed = rand(1.15, 2.05);
   rainDriftX = rand(-0.22, 0.22);
   rainSwayFreq = rand(1.1, 2.3);
@@ -465,7 +467,7 @@ class Particle {
       this.hue = 45;
       this.size = rand(2.4, 3.8);
       this.baseAlpha = 1.0;
-      this.maxLife = rand(48, 72);
+      this.maxLife = rand(48, 72); // Twinkles brightly on the ground then fades out
     } else {
       const isLarge = Math.random() < 0.12;
       this.hue = pick(DOT_HUES);
@@ -485,36 +487,42 @@ class Particle {
     groundLevelPx: number,
     onSpawnFlash: (x: number, y: number, hue: number) => void
   ): void {
+    // 1. Ground star flash particle (sitaray jaisa jagmagana)
     if (this.kind === "flash") {
       this.u += dt / this.maxLife;
       if (this.u >= 1) return;
       const peak = smooth(0, 0.16, this.u);
       const fade = 1 - smooth(0.28, 1.0, this.u);
+      // Rapid star-like shimmer pulse before vanishing
       const twinkle = 0.65 + 0.35 * Math.sin(this.u * Math.PI * 5);
       this.alpha = this.baseAlpha * peak * fade * twinkle;
       return;
     }
 
+    // 2. Glyph: First rises inside smoke from lamp to top menu, then rains down to the ground
     if (this.kind === "glyph" && this.isRaining) {
       this.y += this.rainFallSpeed * dt * Math.max(0.75, k);
       this.x += (this.rainDriftX + Math.sin(t * this.rainSwayFreq + this.seed) * 0.28) * dt;
       this.rot += this.rotSpeed * 0.45 * dt;
 
+      // Keep full visibility while falling, fade slightly right at ground contact
       const distToGround = groundLevelPx - this.y;
       const groundApproach = distToGround < 32 ? Math.max(0, distToGround / 32) : 1;
       const b = 0.5 + 0.5 * Math.sin(t * this.blinkRate + this.seed);
       this.alpha = this.baseAlpha * groundApproach * (0.45 + 0.55 * b * b);
 
+      // Hit the ground (zameen): vanish and burst into a twinkling star sparkle
       if (this.y >= groundLevelPx) {
         if (!this.hasFlashed) {
           this.hasFlashed = true;
           onSpawnFlash(this.x, groundLevelPx, this.hue);
         }
-        this.u = 1;
+        this.u = 1; // Remove glyph immediately on ground impact
       }
       return;
     }
 
+    // 3. Standard path progression (from lamp up the inverted 'S' to the top menu)
     this.u += (dt / this.maxLife) * (this.kind === "spark" ? 0.88 : 1);
     const u = this.u;
     if (u >= 1) return;
@@ -554,7 +562,16 @@ class Particle {
       offT = Math.cos(t * 0.75 + this.seed) * k * 12 * chaos;
     }
 
-    // REMOVED mouse collision/wind calculations completely so that user's interaction/menu tracking does not deflect smoke particles.
+    if (wind.power > 0.01) {
+      const ddx = px - wind.px;
+      const ddy = py - wind.py;
+      const d2 = ddx * ddx + ddy * ddy;
+      if (d2 < 170 * 170) {
+        const fo = (1 - Math.sqrt(d2) / 170) * wind.power;
+        this.dx += wind.x * fo * 0.3 * dt;
+        this.dy += wind.y * fo * 0.3 * dt;
+      }
+    }
     const relax = Math.pow(0.97, dt);
     this.dx *= relax;
     this.dy *= relax;
@@ -570,6 +587,7 @@ class Particle {
     this.y = py + ny * offN + ty * offT + this.dy + wy;
     this.rot += this.rotSpeed * dt;
 
+    // Once glyph reaches the top menu portion of the smoke, detach & start raining down
     if (this.kind === "glyph" && u >= this.releaseU) {
       this.isRaining = true;
       return;
@@ -580,7 +598,8 @@ class Particle {
         ? 1 + 0.5 * (1 - smooth(0.05, 0.22, u))
         : 1;
 
-    const fadeOut = 1 - smooth(0.68, 1.0, u);
+    // MODIFIED: fadeOut happens much later (at 90% of life instead of 68%) so it doesn't vanish below the menu bar
+    const fadeOut = 1 - smooth(0.90, 1.0, u);
     const env = smooth(0, 0.03, u) * fadeOut;
     this.alpha = this.baseAlpha * env * originDensityBoost;
 
@@ -613,6 +632,7 @@ class Particle {
       ctx.globalAlpha = Math.min(1, this.alpha);
       ctx.drawImage(getDotSprite(this.hue), this.x - s, this.y - s, s * 2, s * 2);
     } else if (this.kind === "flash") {
+      // Expand sharply on impact, twinkle like a star, then shrink/fade away
       const expand = this.u < 0.22 ? 0.4 + (this.u / 0.22) * 1.1 : 1.5 - (this.u - 0.22) * 0.65;
       const s = this.size * 6.5 * Math.max(0.25, expand);
       ctx.globalAlpha = Math.min(1, this.alpha);
@@ -648,7 +668,7 @@ export function MagicalSmoke({
   direction = "left",
   spiral = "inverted-s-top",
   drift = 1.25,
-  speed = 0.55,
+  speed = 1.15, // MODIFIED: Increased default speed to compensate for the shorter vertical path length
   showGlyphs = true,
   debug = false,
 }: Props) {
@@ -799,6 +819,7 @@ export function MagicalSmoke({
         ctx.lineTo(path.x[0], path.y[0] + 14);
         ctx.stroke();
 
+        // Ground line debug indicator
         ctx.strokeStyle = "gold";
         ctx.setLineDash([6, 6]);
         ctx.beginPath();
@@ -823,12 +844,16 @@ export function MagicalSmoke({
   }, [originX, originY, groundY, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true" style={{ mixBlendMode: 'normal' }}>
-      <canvas ref={canvasRef} className="w-full h-full opacity-95" />
+    // Z-index set to 0 ensures it renders behind elements with higher z-index (like navigation menus).
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+      <canvas ref={canvasRef} className="w-full h-full mix-blend-screen opacity-95" />
     </div>
   );
 }
 
 export const PaintedSmoke = MagicalSmoke;
 
-export default MagicalSmoke;
+export default MagicalSmoke;"""
+
+pathlib.Path("MagicalSmoke.tsx").write_text(tsx_code, encoding="utf-8")
+print("[file-tag: MagicalSmoke.tsx]")
