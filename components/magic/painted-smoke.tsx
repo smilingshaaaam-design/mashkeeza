@@ -76,6 +76,7 @@ interface Props {
   originY?: number;
   groundY?: number; // Normalized ground level (0 to 1, default 0.94 near bottom of screen)
   menuHeight?: number; // Top menu bar height in px. Smoke rises to just below this line (0 = very top of page)
+  heightBoost?: number; // Vertical stretch multiplier (1 = fit exactly, >1 = taller)
   topGap?: number; // Extra gap (px) kept between smoke path and menu bar. Smaller = taller smoke
   glyphs?: string[];
   direction?: "left" | "right";
@@ -674,6 +675,7 @@ export function MagicalSmoke({
   groundY = 0.94,
   menuHeight = 90,
   topGap = 0,
+  heightBoost = 1.4,
   glyphs = DEFAULT_GLYPHS,
   direction = "left",
   spiral = "inverted-s-top",
@@ -756,7 +758,7 @@ export function MagicalSmoke({
       // Vertical scale: origin -> top of page (just below the menu bar)
       const topMargin = menuHeight + topGap; // menu + optional gap (smaller = taller)
       const upAvail = Math.max(60, oy - topMargin);
-      ky = (upAvail / ext.up) * 1.12; // extra stretch for more height
+      ky = (upAvail / ext.up) * heightBoost; // extra stretch for more height
 
       // Paths that go downward (e.g. "down") must not exit the bottom of the page
       if (ext.down > 20) {
@@ -870,7 +872,7 @@ export function MagicalSmoke({
       window.removeEventListener("touchmove", tm);
       particles = [];
     };
-  }, [originX, originY, groundY, menuHeight, topGap, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
+  }, [originX, originY, groundY, menuHeight, topGap, heightBoost, glyphs, direction, spiral, drift, speed, showGlyphs, debug]);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-20" aria-hidden="true">
