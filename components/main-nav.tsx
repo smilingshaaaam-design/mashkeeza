@@ -56,9 +56,9 @@ export function MainNav() {
     <nav aria-label="مرکزی مینو" className="relative z-30 px-2 md:px-4">
       <div className="gold-frame-strong mx-auto max-w-7xl rounded-md bg-gradient-to-b from-[#1a1206] via-[#0b0904] to-[#1a1206]">
 
-        <ul className="flex flex-nowrap items-center gap-1 overflow-x-auto overscroll-x-contain px-2 py-2 [scrollbar-width:thin] [scrollbar-color:#c99a42_#120c03] lg:flex-wrap lg:justify-center lg:overflow-visible">
+        <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1 px-2 py-2">
           {navItems.map((item, index) => (
-            <li key={item.label} className="group relative shrink-0">
+            <li key={item.label} className="group relative">
               <div className="flex items-center">
                 <a
                   href={item.href}
@@ -68,17 +68,6 @@ export function MainNav() {
                     <Home className="size-4 shrink-0 text-gold" aria-hidden="true" />
                   )}
                   {item.label}
-
-                  {item.children && (
-                    <ChevronDown
-                      className={cn(
-                        'size-3.5 shrink-0 text-gold transition-transform',
-                        expanded === item.label && 'rotate-180',
-                        'lg:group-hover:rotate-180'
-                      )}
-                      aria-hidden="true"
-                    />
-                  )}
                 </a>
 
                 {item.children && (
@@ -93,11 +82,18 @@ export function MainNav() {
                   >
                     <ChevronDown
                       className={cn(
-                        'size-3 transition-transform',
+                        'size-3.5 transition-transform',
                         expanded === item.label && 'rotate-180'
                       )}
                     />
                   </button>
+                )}
+
+                {item.children && (
+                  <ChevronDown
+                    className="hidden size-3.5 text-gold transition-transform lg:block lg:group-hover:rotate-180"
+                    aria-hidden="true"
+                  />
                 )}
               </div>
 
