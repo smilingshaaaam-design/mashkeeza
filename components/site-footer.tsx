@@ -14,7 +14,7 @@ export function SiteFooter() {
 
       <div className="absolute inset-x-0 top-0 -z-10 h-32 bg-gradient-to-b from-night to-transparent" />
 
-      <div className="flex min-h-72 items-end justify-center px-4 pt-14 pb-6 md:min-h-96 md:pb-8">
+      <div className="flex min-h-72 items-end justify-center px-4 pt-14 pb-1 md:min-h-96 md:pb-2">
         <div className="gold-frame-strong relative rounded-full bg-black/85 px-8 py-3 md:px-14">
           <span
             aria-hidden="true"
