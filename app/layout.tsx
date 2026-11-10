@@ -1,3 +1,4 @@
+
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Gulzar, Noto_Nastaliq_Urdu } from 'next/font/google'
@@ -20,14 +21,18 @@ export const metadata: Metadata = {
   title: 'مشکیزہ روحانیت | علم و معرفت کا روحانی مرکز',
   description:
     'مشکیزہ روحانیت — اسم اعظم، علم جفر، علم الاعداد، تعویذات، طلسمات اور ورد و وظائف کا روحانی مرکز۔',
-  generator: 'v0.app',
+
   icons: {
-    icon: [
-      { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-32x32.png', media: '(prefers-color-scheme: dark)' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/mashkeeza-logo.png',
+    shortcut: '/mashkeeza-logo.png',
+    apple: '/mashkeeza-logo.png',
+  },
+
+  openGraph: {
+    title: 'مشکیزہ روحانیت',
+    description: 'علم و معرفت کا روحانی مرکز',
+    images: ['/mashkeeza-logo.png'],
+    type: 'website',
   },
 }
 
