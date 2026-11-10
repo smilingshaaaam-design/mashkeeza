@@ -1,3 +1,4 @@
+
 import Image from 'next/image'
 import { SiteHeader } from '@/components/site-header'
 import { FeatureCard, type Feature } from '@/components/feature-card'
@@ -74,18 +75,12 @@ const secondaryFeatures: Feature[] = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-night">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-night">
       <SiteHeader />
 
-      {/*
-        Smoke is rendered through a portal into <body> (anchorSelector), so it is not clipped by
-        the overflow-hidden box below and can rise over the header's hero-sky image.
-        zIndex={10}: above the sky image/stars, below the heading and menu (z-20 in SiteHeader).
-        menuHeight: how far from the top of the page the smoke rises (px). Increase it to stop lower.
-      */}
       <PaintedSmoke anchorSelector="#hero-stage" zIndex={10} menuHeight={90} />
 
-      <main>
+      <main className="flex-1">
         <section aria-label="روحانی منظر" className="relative -mt-2">
           <div className="relative aspect-[16/10] w-full overflow-hidden md:aspect-[16/8]">
             <div
@@ -109,11 +104,12 @@ export default function HomePage() {
 
         <section
           aria-labelledby="services-heading"
-          className="relative mx-auto -mt-16 max-w-7xl px-4 pb-12 md:-mt-28"
+          className="relative mx-auto mt-10 max-w-7xl px-4 pb-20 md:mt-14"
         >
           <h2 id="services-heading" className="sr-only">
             ہماری روحانی خدمات
           </h2>
+
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
             {primaryFeatures.map((feature) => (
               <FeatureCard key={feature.id} feature={feature} />
